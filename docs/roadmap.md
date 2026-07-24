@@ -78,8 +78,8 @@ Status: complete. Local, fork, and GitHub Linux validation are green.
 
 ## Stage 3.3 — keeper and monitoring
 
-Status: implementation complete; local Telegram delivery confirmation and
-post-deployment address configuration remain.
+Status: implementation and Telegram delivery validation complete. Deployed
+address configuration remains a Stage 4 operation.
 
 - [x] Creator reminders before each GM window and deadline.
 - [x] Permissionless default-finalization review after missed deadlines.
@@ -88,7 +88,7 @@ post-deployment address configuration remain.
 - [x] Primary/fallback RPC handling and duplicate/cooldown-safe Telegram alerts.
 - [x] No keeper action is required for asset safety; delayed execution affects
   freshness only.
-- [ ] Owner confirms receipt of the local Telegram setup alert.
+- [x] Owner confirms receipt of the local Telegram setup alert.
 - [ ] Fill and verify deployed addresses after Stage 4 deployment.
 
 ## Stage 3.4 — indexer, API, and public UI

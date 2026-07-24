@@ -14,6 +14,9 @@ signed or broadcast.
 - Existing contract runtime sizes remain unchanged and within their budgets.
 - Live Telegram Bot API setup delivery succeeded for
   `@DoomStreakKeeperBot`; the token was not printed or committed.
+- Owner confirmed the expected read-only test message was visible in Telegram.
+- GitHub Actions keeper, rewards, Foundry, Slither, and Aderyn jobs passed:
+  `https://github.com/Qazza1/doom-launchpad/actions/runs/30114309054`.
 
 ## Keeper coverage
 
@@ -27,10 +30,8 @@ signed or broadcast.
 - LP-fee collection reminders.
 - One-launch read-only RPC/ABI reconstruction.
 
-## Remaining Stage 3.3 confirmations
+## Remaining deployment input
 
-- Owner confirms the harmless Telegram setup alert is visible in the app.
-- GitHub Linux CI passes on the Stage 3.3 branch.
 - Exact deployed addresses and deployment block are unavailable until Stage 4.
 
 The keeper remains read-only by design. Live scheduling and persistent hosting
