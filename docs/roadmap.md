@@ -93,14 +93,22 @@ address configuration remains a Stage 4 operation.
 
 ## Stage 3.4 — indexer, API, and public UI
 
-Status: planned.
+Status: implementation complete locally; backend branch, website deployment,
+and CI handoff remain open. No launch transaction is enabled.
 
-- Reorg-aware event ingestion and rollback.
-- Confirmation depth and indexed-block freshness reporting.
-- Public per-launch page showing permanent LP proof, creator commitment,
-  next deadline, default eligibility, fee-routing state, and confidence.
-- Direct-contract interaction documentation so the website is not the only door.
-- Launch writing remains disabled until Stage 4 approval.
+- [x] Reorg-aware event ingestion, rewind, and derived-state rebuild.
+- [x] Idempotent raw event storage by chain, transaction hash, and log index.
+- [x] Confirmation depth and indexed-block freshness/confidence reporting.
+- [x] Launchpad health, list, launch, token, and creator API routes.
+- [x] Public per-launch page showing permanent LP state, creator commitment,
+  next deadline, fee-routing totals, risk context, and confidence.
+- [x] Token detail integration and honest pre-deployment/empty/error states.
+- [x] Direct-contract interaction documentation so the website is not the only door.
+- [x] Launch writing remains disabled until separate Stage 4/5 approval.
+- [ ] Push the indexer branch and obtain green CI.
+- [ ] Deploy the read-only indexer with no factory configuration.
+- [ ] Deploy the public website after production API validation.
+- [ ] Fill verified addresses and deployment block only after Stage 4.
 
 ## Stage 4 — independent review and deployment preparation
 

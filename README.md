@@ -87,6 +87,7 @@ RPC inputs, signer preparation, exact gas funding, verified source/bytecode, and
 the owner's explicit final approval are required before any broadcast script is
 introduced.
 
-The website, API, and existing indexer are not modified by this module.
-Integration artifacts under `integration/` are additive plans for the later UI
-and indexer stage.
+Stage 3.4 integrates the event schema into a separate read-only indexer branch
+and the static DoomStreak website. No launch transaction is enabled. See
+[`docs/indexer-public-ui.md`](docs/indexer-public-ui.md) for the reorg model,
+public API, direct-contract reads, and fail-closed deployment order.
