@@ -105,7 +105,8 @@ and CI handoff remain open. No launch transaction is enabled.
 - [x] Token detail integration and honest pre-deployment/empty/error states.
 - [x] Direct-contract interaction documentation so the website is not the only door.
 - [x] Launch writing remains disabled until separate Stage 4/5 approval.
-- [ ] Push the indexer branch and obtain green CI.
+- [x] Push the indexer branch and add a deterministic Node CI workflow.
+- [ ] Obtain and record the green indexer CI run.
 - [ ] Deploy the read-only indexer with no factory configuration.
 - [ ] Deploy the public website after production API validation.
 - [ ] Fill verified addresses and deployment block only after Stage 4.
