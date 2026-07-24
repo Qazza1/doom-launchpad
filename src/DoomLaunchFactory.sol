@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {DoomToken} from "./DoomToken.sol";
 import {GmEscrow} from "./GmEscrow.sol";
 import {IDoomRewards} from "./interfaces/IDoomRewards.sol";
@@ -17,23 +18,28 @@ import {IWrappedNative} from "./interfaces/IWrappedNative.sol";
 /// @dev Economic terms are constants. The operator cannot alter launched tokens, escrows, or LP locks.
 contract DoomLaunchFactory is ReentrancyGuard {
     using SafeERC20 for IERC20;
+    using SafeCast for uint256;
 
     uint16 public constant BPS_DENOMINATOR = 10_000;
     uint16 public constant CREATOR_LIQUID_BPS = 1_000;
     uint16 public constant LIQUIDITY_BPS = 4_000;
     uint16 public constant GM_ESCROW_BPS = 5_000;
-    uint16 public constant CREATION_FEE_BPS = 1_000;
+    uint16 public constant CREATION_FEE_BPS = 300;
     uint16 public constant NFT_REWARD_FEE_SHARE_BPS = 5_000;
     uint32 public constant REQUIRED_GM_CHECK_INS = 3;
     uint32 public constant GM_CADENCE_SECONDS = 1 days;
     uint32 public constant GM_GRACE_PERIOD_SECONDS = 12 hours;
-    uint64 public constant LP_LOCK_DURATION = 365 days;
-    uint24 public constant POOL_FEE = 3_000;
-    int24 public constant TICK_SPACING = 60;
-    int24 public constant FULL_RANGE_TICK_LOWER = -887220;
-    int24 public constant FULL_RANGE_TICK_UPPER = 887220;
-    uint160 public constant MIN_SQRT_RATIO = 4_295_128_739;
-    uint160 public constant MAX_SQRT_RATIO = 1_461_446_703_485_210_103_287_273_052_203_988_822_378_723_970_342;
+    uint24 public constant POOL_FEE = 10_000;
+    int24 public constant TICK_SPACING = 200;
+    int24 public constant FULL_RANGE_TICK_LOWER = -887200;
+    int24 public constant FULL_RANGE_TICK_UPPER = 887200;
+    uint160 public constant FULL_RANGE_MIN_SQRT_RATIO = 4_310_618_292;
+    uint160 public constant FULL_RANGE_MAX_SQRT_RATIO =
+        1_456_195_216_270_955_103_206_513_029_158_776_779_468_408_838_535;
+    uint256 public constant MIN_TOTAL_SUPPLY = 1_000_000 ether;
+    uint256 public constant MAX_TOTAL_SUPPLY = 1_000_000_000_000_000 ether;
+    uint256 public constant CANARY_NATIVE_LIQUIDITY = 0.01 ether;
+    uint32 public constant CANARY_MAX_LAUNCHES = 3;
     uint256 public constant UTILIZATION_DENOMINATOR = 1_000_000;
     uint256 public constant MINIMUM_LIQUIDITY_UTILIZATION = 999_999;
     uint256 private constant Q192 = 1 << 192;
@@ -43,6 +49,7 @@ contract DoomLaunchFactory is ReentrancyGuard {
     error InvalidNameLength(uint256 length);
     error InvalidSymbolLength(uint256 length);
     error InvalidSupply();
+    error SupplyOutsideCanaryBounds(uint256 minimum, uint256 maximum, uint256 supplied);
     error ZeroAllocationAmount();
     error InitialPriceOutOfRange(uint256 sqrtPriceX96);
     error InvalidLiquidityConfiguration();
@@ -71,19 +78,15 @@ contract DoomLaunchFactory is ReentrancyGuard {
     error LiquidityRemainderMismatch(uint256 expected, uint256 actual);
     error PositionNotLocked(uint256 positionId);
     error PoolHasNoCode(address pool);
-    error PositionLockTermsMismatch(
-        uint256 positionId,
-        address expectedPool,
-        address recordedPool,
-        address expectedBeneficiary,
-        address recordedBeneficiary,
-        uint64 expectedUnlockTime,
-        uint64 recordedUnlockTime
-    );
+    error PermanentPositionTermsMismatch(uint256 positionId);
     error PositionLockerMismatch(address expected, address actual);
+    error PositionRegistrarMismatch(address expected, address actual);
+    error PositionLockerDependencyMismatch(bytes32 dependency, address expected, address actual);
     error RewardTokenMismatch(address expected, address actual);
     error WrappedRewardDepositMismatch(uint256 expected, uint256 received);
     error UnexpectedNativeSender(address sender);
+    error ContractCreatorNotAllowed(address creator);
+    error InvalidCanaryLiquidity(uint256 expected, uint256 supplied);
 
     struct FactoryConfig {
         address operator;
@@ -124,7 +127,7 @@ contract DoomLaunchFactory is ReentrancyGuard {
         uint256 treasuryFee;
         uint256 nftRewardFee;
         uint64 createdAt;
-        uint64 lpUnlockTime;
+        bool liquidityPermanent;
         uint160 sqrtPriceX96;
         bytes32 configurationHash;
     }
@@ -182,8 +185,8 @@ contract DoomLaunchFactory is ReentrancyGuard {
     );
     event LaunchLiquidityConfigured(
         uint256 indexed launchId,
-        uint64 lpUnlockTime,
-        address lpBeneficiary,
+        bool permanent,
+        address feeRecipient,
         uint24 poolFee,
         int24 tickLower,
         int24 tickUpper,
@@ -223,14 +226,35 @@ contract DoomLaunchFactory is ReentrancyGuard {
         if (config_.wrappedNative.code.length == 0) revert DependencyHasNoCode(config_.wrappedNative);
         if (config_.liquidityManager.code.length == 0) revert DependencyHasNoCode(config_.liquidityManager);
         if (config_.positionLocker.code.length == 0) revert DependencyHasNoCode(config_.positionLocker);
+        if (config_.approvedCreator.code.length != 0) {
+            revert ContractCreatorNotAllowed(config_.approvedCreator);
+        }
         if (
-            config_.maxLaunches == 0 || config_.maxNativeLiquidityPerLaunch == 0
+            config_.maxLaunches != CANARY_MAX_LAUNCHES || config_.maxNativeLiquidityPerLaunch == 0
                 || config_.maxNativeLiquidityGlobal < config_.maxNativeLiquidityPerLaunch
+                || config_.maxNativeLiquidityPerLaunch != CANARY_NATIVE_LIQUIDITY
+                || config_.maxNativeLiquidityGlobal != CANARY_NATIVE_LIQUIDITY * config_.maxLaunches
         ) revert InvalidPilotConfiguration();
 
         address managerLocker = ILiquidityManager(config_.liquidityManager).positionLocker();
         if (managerLocker != config_.positionLocker) {
             revert PositionLockerMismatch(config_.positionLocker, managerLocker);
+        }
+        address lockerRegistrar = IPositionLocker(config_.positionLocker).authorizedRegistrar();
+        if (lockerRegistrar != config_.liquidityManager) {
+            revert PositionRegistrarMismatch(config_.liquidityManager, lockerRegistrar);
+        }
+        address lockerWrappedNative = IPositionLocker(config_.positionLocker).wrappedNative();
+        if (lockerWrappedNative != config_.wrappedNative) {
+            revert PositionLockerDependencyMismatch("WRAPPED_NATIVE", config_.wrappedNative, lockerWrappedNative);
+        }
+        address lockerRewards = IPositionLocker(config_.positionLocker).doomRewards();
+        if (lockerRewards != config_.doomRewards) {
+            revert PositionLockerDependencyMismatch("DOOM_REWARDS", config_.doomRewards, lockerRewards);
+        }
+        address lockerTreasury = IPositionLocker(config_.positionLocker).treasury();
+        if (lockerTreasury != config_.treasury) {
+            revert PositionLockerDependencyMismatch("TREASURY", config_.treasury, lockerTreasury);
         }
         address configuredRewardToken = IDoomRewards(config_.doomRewards).feeRewardToken();
         if (configuredRewardToken != config_.wrappedNative) {
@@ -267,7 +291,7 @@ contract DoomLaunchFactory is ReentrancyGuard {
         emit LaunchPauseChanged(false, msg.sender);
     }
 
-    /// @notice Deploys one fixed-supply token, one three-day GM escrow, and one 365-day locked LP position.
+    /// @notice Deploys one fixed-supply token, one three-day GM escrow, and one permanently locked LP position.
     function launch(LaunchParams calldata params)
         external
         payable
@@ -276,6 +300,7 @@ contract DoomLaunchFactory is ReentrancyGuard {
     {
         if (launchesPaused) revert LaunchesArePaused();
         if (msg.sender != approvedCreator) revert UnauthorizedCreator(msg.sender);
+        if (msg.sender.code.length != 0) revert ContractCreatorNotAllowed(msg.sender);
         if (nextLaunchId > maxLaunches) revert LaunchLimitReached(maxLaunches);
 
         _validateLaunchParams(params);
@@ -294,6 +319,10 @@ contract DoomLaunchFactory is ReentrancyGuard {
         if (msg.value < maximumRequiredValue) revert InsufficientNativeValue(maximumRequiredValue, msg.value);
 
         launchId = nextLaunchId++;
+        // Reserve the full canary request before any external interaction. A revert
+        // rolls this back atomically, and the cap intentionally tracks committed
+        // launch envelopes rather than sub-wei V3 utilization dust.
+        totalNativeLiquidity = requestedTotalLiquidity;
         DoomToken token = new DoomToken(params.name, params.symbol, params.totalSupply, address(this));
         tokenAddress = address(token);
 
@@ -319,19 +348,18 @@ contract DoomLaunchFactory is ReentrancyGuard {
         launchToken.safeTransfer(creatorEscrow, escrowAmount);
         launchToken.forceApprove(address(liquidityManager), liquidityAllocated);
 
-        uint64 lpUnlockTime = uint64(block.timestamp + LP_LOCK_DURATION);
         uint160 sqrtPriceX96 = _computeInitialSqrtPrice(tokenAddress, liquidityAllocated, params.nativeLiquidityAmount);
         ILiquidityManager.CreateLiquidityParams memory liquidityParams = ILiquidityManager.CreateLiquidityParams({
             token: tokenAddress,
             tokenAmount: liquidityAllocated,
             nativeAmount: params.nativeLiquidityAmount,
             creator: msg.sender,
-            lpBeneficiary: msg.sender,
+            gmEscrow: creatorEscrow,
+            launchId: launchId,
             fee: POOL_FEE,
             tickLower: FULL_RANGE_TICK_LOWER,
             tickUpper: FULL_RANGE_TICK_UPPER,
-            sqrtPriceX96: sqrtPriceX96,
-            unlockTime: lpUnlockTime
+            sqrtPriceX96: sqrtPriceX96
         });
 
         uint256 tokenUsed;
@@ -366,12 +394,11 @@ contract DoomLaunchFactory is ReentrancyGuard {
         }
 
         if (pool == address(0) || pool.code.length == 0) revert PoolHasNoCode(pool);
-        _validateLockedPosition(positionId, pool, msg.sender, lpUnlockTime);
+        _validateLockedPosition(positionId, pool, tokenAddress, msg.sender, creatorEscrow, launchId);
 
         bytes32 configurationHash = liquidityManager.configurationHash();
         if (configurationHash == bytes32(0)) revert InvalidLiquidityConfiguration();
 
-        totalNativeLiquidity += nativeUsed;
         uint256 creationFee = Math.mulDiv(nativeUsed, CREATION_FEE_BPS, BPS_DENOMINATOR);
         uint256 nftRewardFee = Math.mulDiv(creationFee, NFT_REWARD_FEE_SHARE_BPS, BPS_DENOMINATOR);
         uint256 treasuryFee = creationFee - nftRewardFee;
@@ -402,7 +429,7 @@ contract DoomLaunchFactory is ReentrancyGuard {
             creationFee,
             treasuryFee,
             nftRewardFee,
-            lpUnlockTime,
+            sqrtPriceX96,
             configurationHash
         );
 
@@ -430,7 +457,7 @@ contract DoomLaunchFactory is ReentrancyGuard {
         );
         emit LaunchLiquidityConfigured(
             launchId,
-            lpUnlockTime,
+            true,
             msg.sender,
             POOL_FEE,
             FULL_RANGE_TICK_LOWER,
@@ -450,6 +477,10 @@ contract DoomLaunchFactory is ReentrancyGuard {
 
     function getLaunch(uint256 launchId) external view returns (LaunchRecord memory) {
         return _launches[launchId];
+    }
+
+    function launchCount() external view returns (uint256) {
+        return nextLaunchId - 1;
     }
 
     function quoteCreationFee(uint256 nativeLiquidityAmount) external pure returns (uint256) {
@@ -472,7 +503,12 @@ contract DoomLaunchFactory is ReentrancyGuard {
         if (nameLength == 0 || nameLength > 64) revert InvalidNameLength(nameLength);
         if (symbolLength == 0 || symbolLength > 12) revert InvalidSymbolLength(symbolLength);
         if (params.totalSupply == 0) revert InvalidSupply();
-        if (params.nativeLiquidityAmount == 0) revert InvalidLiquidityConfiguration();
+        if (params.totalSupply < MIN_TOTAL_SUPPLY || params.totalSupply > MAX_TOTAL_SUPPLY) {
+            revert SupplyOutsideCanaryBounds(MIN_TOTAL_SUPPLY, MAX_TOTAL_SUPPLY, params.totalSupply);
+        }
+        if (params.nativeLiquidityAmount != CANARY_NATIVE_LIQUIDITY) {
+            revert InvalidCanaryLiquidity(CANARY_NATIVE_LIQUIDITY, params.nativeLiquidityAmount);
+        }
         if (params.nativeLiquidityAmount > maxNativeLiquidityPerLaunch) {
             revert PerLaunchLiquidityLimitExceeded(maxNativeLiquidityPerLaunch, params.nativeLiquidityAmount);
         }
@@ -491,31 +527,40 @@ contract DoomLaunchFactory is ReentrancyGuard {
         }
         uint256 priceX192 = Math.mulDiv(amount1, Q192, amount0);
         uint256 calculated = Math.sqrt(priceX192);
-        if (calculated <= MIN_SQRT_RATIO || calculated >= MAX_SQRT_RATIO) {
+        if (calculated <= FULL_RANGE_MIN_SQRT_RATIO || calculated >= FULL_RANGE_MAX_SQRT_RATIO) {
             revert InitialPriceOutOfRange(calculated);
         }
-        sqrtPriceX96 = uint160(calculated);
+        sqrtPriceX96 = calculated.toUint160();
     }
 
-    function _validateLockedPosition(uint256 positionId, address pool, address beneficiary, uint64 unlockTime)
-        internal
-        view
-    {
+    function _validateLockedPosition(
+        uint256 positionId,
+        address pool,
+        address launchToken,
+        address creator,
+        address gmEscrow,
+        uint256 launchId
+    ) internal view {
         (
             address recordedPool,
-            address recordedBeneficiary,
+            address recordedLaunchToken,
+            address recordedCreator,
+            address recordedEscrow,
+            uint256 recordedLaunchId,
             uint64 registeredAt,
-            uint64 recordedUnlockTime,
-            bool released,
+            bool permanent,
             bool currentlyLocked
         ) = IPositionLocker(positionLocker).lockState(positionId);
-        if (!currentlyLocked || released || registeredAt != uint64(block.timestamp)) {
+        // Registration is required to occur atomically in this launch transaction.
+        // forge-lint: disable-next-line(block-timestamp)
+        if (!currentlyLocked || !permanent || registeredAt != uint64(block.timestamp)) {
             revert PositionNotLocked(positionId);
         }
-        if (recordedPool != pool || recordedBeneficiary != beneficiary || recordedUnlockTime != unlockTime) {
-            revert PositionLockTermsMismatch(
-                positionId, pool, recordedPool, beneficiary, recordedBeneficiary, unlockTime, recordedUnlockTime
-            );
+        if (
+            recordedPool != pool || recordedLaunchToken != launchToken || recordedCreator != creator
+                || recordedEscrow != gmEscrow || recordedLaunchId != launchId
+        ) {
+            revert PermanentPositionTermsMismatch(positionId);
         }
     }
 
@@ -535,7 +580,7 @@ contract DoomLaunchFactory is ReentrancyGuard {
         uint256 creationFee,
         uint256 treasuryFee,
         uint256 nftRewardFee,
-        uint64 lpUnlockTime,
+        uint160 sqrtPriceX96,
         bytes32 configurationHash
     ) internal {
         _launches[launchId] = LaunchRecord({
@@ -556,8 +601,8 @@ contract DoomLaunchFactory is ReentrancyGuard {
             treasuryFee: treasuryFee,
             nftRewardFee: nftRewardFee,
             createdAt: uint64(block.timestamp),
-            lpUnlockTime: lpUnlockTime,
-            sqrtPriceX96: _computeInitialSqrtPrice(tokenAddress, liquidityAllocated, params.nativeLiquidityAmount),
+            liquidityPermanent: true,
+            sqrtPriceX96: sqrtPriceX96,
             configurationHash: configurationHash
         });
         launchIdByToken[tokenAddress] = launchId;

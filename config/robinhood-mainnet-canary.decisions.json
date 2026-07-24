@@ -10,12 +10,13 @@
     "enabled": false,
     "broadcast": false,
     "mainnetDeploymentApproved": false,
-    "reason": "Stage 3 implementation, fork tests, and non-broadcast rehearsal are complete. Mainnet broadcasting remains fail-closed until independent review, signed deployment inputs, operational preparation, and an explicit final approval."
+    "reason": "Stage 3.1 audit-candidate rebuild is in progress. Mainnet broadcasting remains fail-closed until local and fork verification, static analysis, independent review, signed deployment inputs, operational preparation, and an explicit final approval."
   },
   "implementationStatus": {
     "stage1": "complete",
     "stage2": "implemented_and_locally_tested",
-    "stage3": "implemented_fork_tested_and_rehearsed",
+    "stage3": "preserved_at_git_tag_stage-3-baseline",
+    "stage3_1": "economics_and_security_rebuild_in_progress",
     "stage4": "not_started",
     "productionReady": false
   },
@@ -57,8 +58,8 @@
     "existingEscrowsClaimsAndLpLocksUnaffected": true
   },
   "creationFee": {
-    "feeBps": 1000,
-    "calculation": "10_percent_on_top_of_creator_native_liquidity",
+    "feeBps": 300,
+    "calculation": "3_percent_of_actual_native_liquidity_used",
     "treasuryShareBps": 5000,
     "nftRewardsShareBps": 5000,
     "nftRewardsAsset": "WETH"
@@ -66,13 +67,26 @@
   "liquidity": {
     "adapter": "UniswapV3",
     "adapterStatus": "implemented_and_robinhood_mainnet_fork_tested",
-    "poolFee": 3000,
-    "tickSpacing": 60,
-    "tickRange": "full_range_-887220_to_887220",
+    "poolFee": 10000,
+    "tickSpacing": 200,
+    "tickRange": "full_range_-887200_to_887200",
     "minimumTokenAndNativeUtilizationPpm": 999999,
     "initialPriceAuthority": "factory_computed_from_fixed_token_and_native_amounts",
-    "lpLockSeconds": 31536000,
-    "lpBeneficiary": "creator",
+    "custody": "permanent_ownerless_position_locker",
+    "releaseSupported": false,
+    "decreaseLiquiditySupported": false,
+    "lpFeeCollection": "permissionless_with_immutable_routing",
+    "eligibleWethFeeSplitBps": {
+      "creator": 6000,
+      "treasury": 2000,
+      "doomRewards": 2000
+    },
+    "ineligibleWethFeeSplitBps": {
+      "creator": 0,
+      "treasury": 2000,
+      "doomRewards": 8000
+    },
+    "launchTokenFeeRecipient": "DoomRewards",
     "weth": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
     "factory": "0x1f7d7550b1b028f7571e69a784071f0205fd2efa",
     "nonfungiblePositionManager": "0x73991a25c818bf1f1128deaab1492d45638de0d3",
@@ -97,12 +111,34 @@
     "officialUniswapDeploymentsSource": "https://developers.uniswap.org/docs/protocols/v3/deployments/v3-robinhood-chain-deployments",
     "deploymentRehearsal": "passed_non_broadcast_robinhood_mainnet_fork"
   },
+  "stage3_1Evidence": {
+    "validatedDateUtc": "2026-07-24",
+    "localTestsPassed": 68,
+    "localTestsFailed": 0,
+    "forkTestsPassed": 2,
+    "forkTestsFailed": 0,
+    "factoryRuntimeBytes": 20574,
+    "factoryAuditCandidateBudgetBytes": 23500,
+    "liquidityManagerRuntimeBytes": 6520,
+    "positionLockerRuntimeBytes": 7268,
+    "slitherVersion": "0.11.5",
+    "slitherHighSeverityGate": "passed_after_triage",
+    "aderynVersion": "0.6.8",
+    "aderynStatus": "pending_linux_ci_windows_unsupported",
+    "deploymentRehearsal": "passed_non_broadcast_robinhood_mainnet_fork",
+    "productionReady": false
+  },
   "pilotLimits": {
     "approvedCreatorOnly": true,
     "approvedCreator": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
     "maxLaunches": 3,
     "maxNativeLiquidityPerLaunchWei": "10000000000000000",
     "maxNativeLiquidityGlobalWei": "30000000000000000"
+  },
+  "supplyLimits": {
+    "decimals": 18,
+    "minimumWholeTokens": "1000000",
+    "maximumWholeTokens": "1000000000000000"
   },
   "rewardCampaigns": {
     "distributionProof": "merkle_root_from_nft_ownership_snapshot",

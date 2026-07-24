@@ -28,10 +28,11 @@ contract V3RobinhoodForkTest is Test {
         address campaignManager = makeAddr("forkCampaignManager");
         address guardian = makeAddr("forkGuardian");
 
-        PositionLocker locker = new PositionLocker(NPM);
+        DoomRewards rewards = new DoomRewards(campaignManager, NFT, treasury, WETH, 7 days);
+        PositionLocker locker = new PositionLocker(NPM, WETH, address(rewards), treasury, address(this));
         V3LiquidityManager manager =
             new V3LiquidityManager(CHAIN_ID, address(this), V3_FACTORY, NPM, WETH, address(locker));
-        DoomRewards rewards = new DoomRewards(campaignManager, NFT, treasury, WETH, 7 days);
+        locker.bindRegistrar(address(manager));
 
         DoomLaunchFactory.FactoryConfig memory config = DoomLaunchFactory.FactoryConfig({
             operator: address(this),
@@ -57,16 +58,24 @@ contract V3RobinhoodForkTest is Test {
         vm.deal(creator, 1 ether);
         vm.prank(creator);
         (uint256 launchId, address token, address pool, uint256 positionId,) =
-            launchFactory.launch{value: 0.011 ether}(params);
+            launchFactory.launch{value: 0.0103 ether}(params);
 
         DoomLaunchFactory.LaunchRecord memory record = launchFactory.getLaunch(launchId);
-        assertEq(pool, IUniswapV3Factory(V3_FACTORY).getPool(token, WETH, 3_000));
+        assertEq(pool, IUniswapV3Factory(V3_FACTORY).getPool(token, WETH, 10_000));
         assertEq(IERC721(NPM).ownerOf(positionId), address(locker));
-        assertTrue(locker.isLocked(positionId));
+        assertTrue(locker.isPermanentlyLocked(positionId));
+        assertTrue(record.liquidityPermanent);
         assertGe(record.liquidityTokenAmountUsed, record.liquidityTokenAmountAllocated * 999_999 / 1_000_000);
         assertGe(record.nativeLiquidityAmountUsed, 0.01 ether * 999_999 / 1_000_000);
         assertEq(address(manager).balance, 0);
-        assertEq(record.creationFee, record.nativeLiquidityAmountUsed / 10);
+        assertEq(record.creationFee, record.nativeLiquidityAmountUsed * 300 / 10_000);
         assertGt(rewards.availableRewards(WETH), 0);
+
+        (uint256 launchTokenFees, uint256 wethFees, uint256 creatorWeth, uint256 treasuryWeth, uint256 rewardsWeth) =
+            locker.collectFees(positionId);
+        assertEq(launchTokenFees, 0);
+        assertEq(wethFees, 0);
+        assertEq(creatorWeth + treasuryWeth + rewardsWeth, 0);
+        assertEq(IERC721(NPM).ownerOf(positionId), address(locker));
     }
 }

@@ -1,46 +1,36 @@
-# Test Matrix
+# Test matrix
 
-These tests are authored but were not executed in this sandbox because the Foundry/Solidity toolchain and dependency downloads were unavailable.
+Local status: 68 tests pass, 0 fail, and two opt-in Robinhood fork tests are
+skipped unless explicitly enabled.
 
-| Requirement | Test coverage |
+| Requirement | Coverage |
 |---|---|
-| Fixed supply/no owner mint | `DoomToken.t.sol` |
-| Untaxed exact transfers | `DoomToken.t.sol::testTransfersAreUntaxedAndExact` |
-| Factory happy path | `DoomLaunchFactory.t.sol::testHappyPathLaunchCreatesExplicitAllocationsAndLockedPosition` |
-| Supply/allocation/commitment/lock/price validation | factory input-validation tests in `DoomLaunchFactory.t.sol` |
-| Insufficient native value and overflow | `testInsufficientNativeValueFails`, `testNativeValueOverflowFailsWithCustomError` |
-| Maximum supply arithmetic | `testMaximumUintSupplyAllocationMathDoesNotOverflow` |
-| Escrow completion | `GmEscrow.t.sol::testCreatorCompletesCommitment` |
-| Early creator unlock blocked | `GmEscrow.t.sol::testCreatorCannotUnlockEarly` |
-| Early default blocked | `GmEscrow.t.sol::testDefaultCannotHappenEarly` |
-| Deadline boundary | `testGmAcceptedAtExactDeadlineAndDefaultStillBlocked`, `testDefaultBecomesAvailableOneSecondAfterDeadline` |
-| Scheduled cadence does not drift | `testLateCheckInDoesNotShiftNextSchedule` |
-| Late check-in rejected | `testCheckInAfterDeadlineFails` |
-| No double completion/default | `testNoDoubleCompletion`, `testNoDoubleDefault` |
-| Failed allocation reaches rewards | `testPermissionlessDefaultFundsRewards` |
-| Failed deposit cannot silently succeed | `testRewardVaultCannotSilentlySkipDeposit` |
-| LP withdrawal blocked before unlock | `PositionLocker.t.sol::testPositionCannotBeWithdrawnBeforeUnlock` |
-| Permissionless post-unlock release | `testPermissionlessReleasePaysPrecommittedBeneficiary` |
-| Merkle claim | `DoomRewards.t.sol::testMerkleClaimAndNoDoubleClaim` |
-| Invalid proof/double claim | `testInvalidProofFails`, `testMerkleClaimAndNoDoubleClaim` |
-| Reward deadline and reservation bounds | `testClaimAfterDeadlineFails`, `testCannotSweepBeforeDeadline`, `testCampaignCannotReserveMoreThanAvailable` |
-| Reward accounting fuzz | `testFuzzClaimAccounting` |
-| Unclaimed treatment | `testUnclaimedRewardsFollowExplicitTreatment` |
-| Invalid V3 configuration | `DoomLaunchFactory.t.sol::testInvalidUniswapConfigurationFailsSafely` |
-| Invalid fee/ticks | `testUnsupportedFeeTierFails`, `testBadTickAlignmentFails` |
-| Spoofed locker metadata | `testSpoofedLockerTermsFailSafely` |
-| Returned pool must be a contract | `testReturnedPoolMustContainCode` |
-| Locker self-beneficiary rejected | `PositionLocker.t.sol::testLockerCannotBeItsOwnReleaseBeneficiary` |
-| Fee/refund accounting | `testFeeAndRefundAccounting` |
-| Native payout failure | `testTreasuryPayoutUsesSafeCallAndDoesNotSilentlyFail` |
-| Reentrancy | `testReentrantManagerCannotReenterLaunch`, `testRewardVaultCannotReenterDefault` |
-| Permissions | creator, campaign-manager, and treasury authorization tests |
-| Allocation fuzz invariant | `testFuzzAllocationAccounting` (512 configured runs) |
-| Stateful supply/accounting invariants | `SupplyAndAccounting.invariant.t.sol` |
+| Fixed supply, untaxed transfers, no owner controls | `DoomToken.t.sol` |
+| Exact 10 / 40 / 50 allocations | factory happy path and 512-run supply fuzz |
+| 3% creation fee and 50 / 50 routing | fee quote, accounting, refund, zero-NFT tests |
+| Exact 0.01 ETH and three-launch envelope | canary liquidity and launch-cap tests |
+| Supply bounds | lower/upper boundary and fuzz tests |
+| EOA-only approved creator | constructor and authorization tests |
+| Factory starts paused; guardian cannot resume | pause permission tests |
+| GM cadence/deadline boundaries | `GmEscrow.t.sol` |
+| Default deposit balance reconciliation | default, non-pulling, and reentrancy tests |
+| Resolved schedule helpers | GM schedule tests |
+| Permanent position ownership | `PositionLocker.t.sol` and V3 adapter test |
+| Registrar cannot be front-run | one-time binding and unauthorized-register tests |
+| Canonical 1% fee and full-range ticks | locker and manager negative tests |
+| Eligible WETH fee split 60 / 20 / 20 | locker fee-routing test |
+| Overdue/default WETH split 0 / 20 / 80 | default and overdue-unfinalized tests |
+| Launch-token fees 100% to rewards | locker token-fee test |
+| Permissionless collector receives nothing | keeper collection test |
+| Domain-separated Merkle leaves | reward claim and invalid-proof tests |
+| Claims, reservations, recycling | `DoomRewards.t.sol` plus 512-run claim fuzz |
+| V3 utilization and dust handling | manager/factory utilization tests |
+| Returned pool/position spoof resistance | factory post-condition tests |
+| Native payout failure and reentrancy | rejecting treasury and malicious-manager tests |
+| Adversarial GM sequencing | randomized boundary handler + accounting invariants |
+| Fixed supply/accounting invariants | 128 runs × 64 calls |
+| Canonical Robinhood dependencies | two opt-in read-only mainnet-fork tests |
 
-## Required additions after V3 implementation
-
-- Robinhood Chain fork tests for pool creation, token ordering, price initialization, every supported fee tier, NFT ownership, lock registration, native wrapping, refunds, dust, existing-pool handling, and malformed dependency addresses.
-- Differential tick/price tests against the exact V3 deployment libraries.
-- Concrete manager reentrancy/malicious-token tests.
-- Gas and bytecode-size reports.
+Before deployment, CI, pinned Slither/Aderyn, both fork tests, source verification,
+contract-size checks, and independent review must also pass against one tagged
+commit.

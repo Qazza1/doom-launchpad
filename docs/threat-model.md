@@ -1,103 +1,83 @@
-# Threat Model and Trust Boundaries
+# Threat model and trust boundaries
 
-**Assessment status:** pre-audit design review. This document does not establish production readiness.
+Assessment status: Stage 3.1 audit candidate, not production-ready.
 
 ## Assets
 
-- Fixed token supply and allocation integrity.
-- Creator escrow allocation.
-- Native asset supplied for liquidity.
-- V3 position NFT and its lock terms.
-- Failed-launch reward inventory.
-- Merkle campaign inventory and claim correctness.
-- Accrued launch fees.
-- Canonical launch/commitment data consumed by OnchainDiligence.
+- Fixed token supply and 10 / 40 / 50 allocation integrity.
+- Creator GM escrow and its terminal outcome.
+- Creator-provided native liquidity and permanent V3 position.
+- Accrued LP fees and deterministic recipient splits.
+- Creation fees and NFT-holder reward inventory.
+- Merkle campaign roots, reservations, claims, and recycled inventory.
+- Canonical launch state consumed by the indexer and UI.
 
-## Actors
+## Roles
 
-- Creator.
-- Token buyer/market participant.
-- DoomStreak NFT holder.
-- Permissionless keeper/finalizer/relayer.
-- Treasury multisig.
-- Campaign-manager multisig.
-- Unclaimed-reward community recipient.
-- Robinhood Chain RPC/indexer operator.
-- Verified V3 deployment contracts.
-- Malicious token metadata submitter, reentrant contract creator, compromised frontend, malicious RPC, and compromised multisig signer.
+- Approved creator EOA: can submit at most three canary launches and record GMs.
+- Operator/deployer: can pause or resume future launches and bind dependencies
+  once during deployment.
+- Emergency guardian: can pause future launches but cannot resume.
+- Treasury: receives its immutable shares and can withdraw accrued creation fees.
+- Campaign manager: can reserve rewards behind a root and deadline.
+- Permissionless keeper/relayer: can finalize defaults, collect LP fees, submit
+  claims, and recycle expired campaign inventory.
 
-## Trust-boundary diagram
-
-```mermaid
-flowchart LR
-    Creator[Creator wallet or contract] -->|launch params + fee + native liquidity| Factory[DoomLaunchFactory]
-    Factory -->|deploy fixed supply| Token[DoomToken]
-    Factory -->|creator allocation| Creator
-    Factory -->|committed allocation| Escrow[GmEscrow per launch]
-    Factory -->|approved liquidity tokens + native asset| LM[V3LiquidityManager - BLOCKED]
-    LM -->|factory/pool calls| V3[Verified V3 Factory + NPM + WETH]
-    LM -->|position NFT direct transfer| Locker[PositionLocker]
-    Keeper[Permissionless keeper] -->|finalize default / release / sweep| Escrow
-    Keeper --> Locker
-    Escrow -->|failed allocation| Rewards[DoomRewards]
-    CampaignMS[Campaign manager multisig] -->|Merkle root + allocation + deadline| Rewards
-    Holder[NFT holder / relayer] -->|Merkle claim| Rewards
-    Rewards -->|claim| Holder
-    Rewards -->|expired remainder| Community[Immutable community recipient]
-    TreasuryMS[Treasury multisig] -->|withdraw accrued fees| Factory
-    Factory -. events .-> Indexer[OnchainDiligence additive event consumer]
-    Escrow -. events .-> Indexer
-    Locker -. events .-> Indexer
-    Rewards -. events .-> Indexer
-    Indexer --> Static[Existing static HTML/JS UI]
-```
-
-The most important unimplemented trust boundary is the concrete V3 adapter. Its dependencies, token ordering, pool derivation, approval lifecycle, native wrapping, mint/refund behavior, and NFT transfer must be independently verified before code is added.
+None of these roles can mint token supply, change a launched escrow, withdraw
+liquidity, change LP-fee percentages, rescue arbitrary assets, or upgrade code.
 
 ## Primary threats and controls
 
-| Threat | Impact | Current control | Remaining work |
+| Threat | Impact | Control | Remaining assurance |
 |---|---|---|---|
-| Hidden token control/mint | Supply theft/dilution | Ownerless ERC-20; one constructor mint | Audit bytecode and deployment args |
-| Allocation arithmetic error | Misallocated supply | BPS sum check; remainder to escrow; fuzz tests | Approve product bounds |
-| Early creator release | Commitment bypass | Scheduled windows and terminal state | Timestamp/sequencer review |
-| Early/duplicate default | Reward theft | Deadline check; terminal state; tests | Keeper monitoring |
-| Reentrancy during launch/refund/withdraw | Duplicate launches/accounting corruption | ReentrancyGuard, CEI, exact approvals, safe calls | V3 adapter review |
-| Malicious/incorrect V3 addresses | Asset loss/fake lock | No addresses embedded; manager validity hook; factory reads the locker directly | Verified address package and code-hash checks |
-| Fake pool/position return | False badge, asset loss | Non-zero return, exact token consumption, direct locker metadata/ownership validation | Concrete manager must verify NPM ownership and pool derivation |
-| LP NFT early withdrawal | Liquidity removal | Ownerless locker; fixed unlock/beneficiary | Decide permanent/time-limited policy |
-| Locked fee extraction backdoor | Hidden value path | Locker has no collect/rescue/admin function | Decide intended fee treatment |
-| Reward double claim | Inventory loss | Per-campaign bitmap-style mapping and Merkle proof | Merkle generator test vectors |
-| Merkle root abuse | Unfair rewards | Immutable campaign-manager multisig | Governance/runbook and published manifest |
-| Unclaimed reward discretion | Treasury leakage | Immutable recipient; permissionless sweep | Approve recipient policy |
-| Reward deposit spoofing | Misleading analytics | Vault requires a real transfer; escrow verifies source/vault balance deltas | Indexer must trust only known escrow source |
-| Smart-contract refund rejection | Launch denial | Atomic revert; exact-value payment supported | Decide alternate refund recipient feature |
-| Treasury rejects native payment | Fees temporarily locked | Withdrawal reverts without losing accounting | Treasury compatibility rehearsal |
-| Malicious metadata | UI injection/phishing | Contracts treat strings as data | Static UI escaping and content policy |
-| RPC/indexer reorg/staleness | Wrong badges/history | Existing cursor/idempotency protections | Add event confirmation and rollback policy |
-| Compromised frontend | Bad params/signatures | Contract validation; public facts | Transaction simulation and human-readable review |
-| Admin key compromise | Campaign abuse/fee access | Immutable least-privilege roles | Multisig, hardware keys, monitoring |
+| Hidden mint/tax/admin | Dilution or confiscation | Constructor-only standard ERC-20; no owner | Audit source and deployed bytecode |
+| Allocation arithmetic error | Supply loss | Fixed BPS, explicit bounds, reconciliation fuzz | Independent review |
+| Early or duplicate escrow resolution | Creator/community theft | Scheduled windows, terminal status, CEI, reentrancy guard | Timestamp behavior and keeper monitoring |
+| Missed deadline not finalized | Creator improperly keeps LP share | Locker treats an overdue active escrow as ineligible | Boundary tests and UI wording |
+| Fake V3 dependency or position | Asset loss / false lock badge | Constructor wiring, one-time bindings, canonical position metadata and ownership checks | Live code hashes and fork rehearsal |
+| LP withdrawal | Rug pull | Permanent locker has no release/decrease/approve/call path | Bytecode review and owner reads |
+| Accidental position transfer | Stranded NFT | Only bound registrar can register; no rescue by design | Prominent operations warning |
+| Fee theft by collector | Lost revenue | Permissionless call has no caller share or recipient inputs | Fee delta and recipient tests |
+| Creator dumps launch-token fees | Sell pressure | 100% of launch-token LP fees go to rewards | Reward campaign policy |
+| Stale escrow status/call failure | Wrong creator fee share | Fail-closed eligibility; creator gets zero on errors | Monitoring |
+| Merkle proof replay | Cross-campaign claim | Leaf includes chain, vault, campaign, account, amount | Round-trip generator tests |
+| Wrong campaign root | Inventory unavailable until expiry | No cancellation or withdrawal; permissionless recycle | Two-person root verification runbook |
+| Direct unsupported token donations | Stranded/unaccounted tokens | Deposits use balance deltas; no rescue | Documented permanent-loss behavior |
+| Reentrancy or rejecting recipient | Duplicate accounting / denial | Reentrancy guards, CEI, exact approvals, atomic reverts | Static analysis and malicious mocks |
+| Compromised UI/RPC | Bad transaction or false badge | Contract-side constants, public reads, confirmation/freshness indicators | Direct-interaction docs and reorg-aware indexer |
+| Operator/guardian compromise | Availability loss | Roles affect only new-launch pause state; guardian cannot resume | Hardware keys and monitoring |
+| Campaign-manager compromise | Unfair reward root | Cannot withdraw; public manifest and independent verification | Multisig/hardware signing before Stage 5 |
 
 ## Invariants
 
-1. Token total supply never changes after construction.
-2. Launch allocations reconcile exactly to total supply.
-3. Factory holds no launch tokens after success.
-4. Escrow terminal state is exactly one of completed/defaulted.
-5. Escrow releases/deposits exactly once.
-6. Default cannot be finalized until after the current deadline.
-7. LP release cannot occur before unlock.
-8. LP release destination cannot be changed.
-9. Claimed plus remaining campaign allocation never exceeds campaign total.
-10. An account cannot claim twice in one campaign.
-11. Accrued fees cannot exceed native balance retained by the factory for fees.
-12. Safety-critical status remains publicly queryable.
+1. Token total supply never changes.
+2. Creator, liquidity, and escrow allocations reconcile exactly.
+3. The factory and manager retain no launch-token or wrapped-native residue after
+   a successful launch.
+4. Each escrow resolves once, never both completed and defaulted.
+5. Default cannot succeed until strictly after the current deadline.
+6. Every registered position remains owned by the permanent locker.
+7. Only the bound manager can register positions.
+8. LP fee collection cannot decrease liquidity or transfer the position.
+9. Eligible WETH fees reconcile to 60 / 20 / 20; ineligible fees reconcile to
+   0 / 20 / 80; launch-token fees reconcile 100% to rewards.
+10. Claimed plus remaining campaign allocation never exceeds its reservation.
+11. A campaign claim cannot be replayed for another chain, vault, campaign, or
+    account.
+12. Creation-fee liabilities never exceed retained native balance.
 
-## Assumptions requiring validation
+## Permanent-stranding assumptions
 
-- Robinhood Chain timestamp behavior is suitable for daily cadence enforcement.
-- The selected V3 deployment matches the interfaces used by the future adapter.
-- The position manager's NFT ownership semantics are standard ERC-721.
-- The wrapped native token does not have non-standard transfer behavior.
-- Treasury, campaign manager, and community recipient are correctly configured multisigs/contracts.
-- Off-chain Merkle generation uses the exact leaf encoding and snapshot policy.
+No rescue path is intentional. Direct token donations to `DoomRewards` bypass
+accounting; excess or post-resolution transfers to `GmEscrow` remain there; an
+unregistered NFT sent to `PositionLocker` remains there. Operators must never
+use these addresses as generic recipients.
+
+## External assumptions
+
+- Robinhood Chain supports Cancun bytecode and usable timestamp semantics.
+- The documented WETH, V3 Factory, and NPM implementations are canonical.
+- WETH and launched tokens behave as standard balance-preserving ERC-20s.
+- Production role addresses and the excluded NFT holder are entered correctly.
+- The root generator uses the exact onchain leaf and deterministic tree rules.
+- The indexer stores raw logs and handles confirmation/reorg rollback.

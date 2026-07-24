@@ -29,6 +29,8 @@ contract ReentrantRewards is IDoomRewards {
     function depositFeeRewards(address, uint256, uint256) external pure override {}
 
     function depositLiquidityRemainder(address, uint256, uint256) external pure override {}
+
+    function depositLpFeeRewards(address, uint256, uint256, uint256) external pure override {}
 }
 
 contract NonPullingRewards is IDoomRewards {
@@ -41,4 +43,6 @@ contract NonPullingRewards is IDoomRewards {
     function depositFeeRewards(address, uint256, uint256) external pure override {}
 
     function depositLiquidityRemainder(address, uint256, uint256) external pure override {}
+
+    function depositLpFeeRewards(address, uint256, uint256, uint256) external pure override {}
 }

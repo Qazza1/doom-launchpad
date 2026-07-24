@@ -37,6 +37,7 @@ contract SupplyAndAccountingInvariantTest is StdInvariant, Test {
     }
 
     function invariantEscrowAndRewardsReconcile() external view {
+        assertLe(escrow.completedCheckIns(), escrow.requiredCheckIns());
         assertEq(
             token.balanceOf(address(rewards)),
             rewards.availableRewards(address(token)) + rewards.reservedRewards(address(token))

@@ -1,5 +1,8 @@
 # Stage 3: canonical V3 adapter and mainnet-fork rehearsal
 
+> Historical validation for commit `3f777fc` / tag `stage-3-baseline`. It does
+> not validate the Stage 3.1 permanent-lock and fee-routing rebuild.
+
 Status: complete on 2026-07-23. No contracts were broadcast and no real funds were used.
 
 ## Outcome

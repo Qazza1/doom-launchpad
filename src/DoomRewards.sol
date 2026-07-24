@@ -41,6 +41,8 @@ contract DoomRewards is ReentrancyGuard {
     }
 
     address public immutable campaignManager;
+    /// @notice NFT collection whose independently generated ownership snapshots define campaign eligibility.
+    /// @dev Stored as immutable onchain metadata; claims are verified against campaign Merkle roots.
     address public immutable nftCollection;
     address public immutable excludedHolder;
     address public immutable feeRewardToken;
@@ -60,6 +62,14 @@ contract DoomRewards is ReentrancyGuard {
     );
     event LiquidityRemainderDeposited(
         uint256 indexed launchId, address indexed token, address indexed source, uint256 amount, uint256 availableAfter
+    );
+    event LpFeeRewardsDeposited(
+        uint256 indexed launchId,
+        uint256 indexed positionId,
+        address indexed token,
+        address source,
+        uint256 amount,
+        uint256 availableAfter
     );
     event CampaignCreated(
         uint256 indexed campaignId,
@@ -119,6 +129,15 @@ contract DoomRewards is ReentrancyGuard {
         emit LiquidityRemainderDeposited(launchId, token, msg.sender, amount, availableAfter);
     }
 
+    /// @notice Deposits fees collected from an ownerless permanent V3 position.
+    function depositLpFeeRewards(address token, uint256 amount, uint256 launchId, uint256 positionId)
+        external
+        nonReentrant
+    {
+        uint256 availableAfter = _pullReward(token, amount);
+        emit LpFeeRewardsDeposited(launchId, positionId, token, msg.sender, amount, availableAfter);
+    }
+
     /// @notice Reserves deposited inventory for an NFT-holder Merkle campaign.
     function createCampaign(address token, bytes32 merkleRoot, uint256 allocation, uint64 claimDeadline)
         external
@@ -162,6 +181,8 @@ contract DoomRewards is ReentrancyGuard {
     {
         Campaign storage campaign = campaigns[campaignId];
         if (campaign.token == address(0)) revert UnknownCampaign(campaignId);
+        // Claim validity is intentionally bounded by the onchain campaign deadline.
+        // forge-lint: disable-next-line(block-timestamp)
         if (block.timestamp > campaign.claimDeadline) {
             revert CampaignExpired(campaignId, campaign.claimDeadline);
         }
@@ -175,7 +196,7 @@ contract DoomRewards is ReentrancyGuard {
             revert ClaimExceedsRemaining(campaignId, remaining, amount);
         }
 
-        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(account, amount))));
+        bytes32 leaf = rewardLeaf(campaignId, account, amount);
         if (!MerkleProof.verifyCalldata(proof, campaign.merkleRoot, leaf)) {
             revert InvalidProof(campaignId, account, amount);
         }
@@ -192,6 +213,8 @@ contract DoomRewards is ReentrancyGuard {
     function recycleUnclaimed(uint256 campaignId) external nonReentrant {
         Campaign storage campaign = campaigns[campaignId];
         if (campaign.token == address(0)) revert UnknownCampaign(campaignId);
+        // Recycling is intentionally permissionless only after the deadline.
+        // forge-lint: disable-next-line(block-timestamp)
         if (block.timestamp <= campaign.claimDeadline) {
             revert CampaignStillActive(campaignId, campaign.claimDeadline);
         }
@@ -204,6 +227,11 @@ contract DoomRewards is ReentrancyGuard {
         availableRewards[campaign.token] = availableAfter;
 
         emit UnclaimedRewardsRecycled(campaignId, campaign.token, remaining, availableAfter);
+    }
+
+    /// @notice Canonical domain-separated leaf used by the offchain snapshot generator.
+    function rewardLeaf(uint256 campaignId, address account, uint256 amount) public view returns (bytes32) {
+        return keccak256(bytes.concat(keccak256(abi.encode(block.chainid, address(this), campaignId, account, amount))));
     }
 
     function _pullReward(address token, uint256 amount) internal returns (uint256 availableAfter) {

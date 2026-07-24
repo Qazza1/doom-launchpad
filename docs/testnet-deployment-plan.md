@@ -1,35 +1,17 @@
-# Testnet Deployment and Configuration Plan
+# Archived testnet deployment plan
 
-**No deployment was performed. Do not use real funds.** All values remain blocked placeholders until independently verified.
+This file is retained only to explain the repository history. The generic
+testnet deployment templates were removed during Stage 3.1 because they no
+longer matched the verified Robinhood mainnet dependencies, permanent locker,
+or frozen canary economics.
 
-## Staged sequence
+Current work follows:
 
-1. Verify the testnet chain ID, wrapped native token, V3 Factory, NonfungiblePositionManager, SwapRouter, Quoter, deployment provenance, fee tiers, and tick spacing.
-2. Run `DeployLockerTestnetTemplate.s.sol` only on the verified testnet to deploy `PositionLocker` against the verified position manager.
-3. Implement, review, compile, test, and deploy the concrete non-upgradeable `V3LiquidityManager` configured to that exact locker. This stage is currently blocked and no adapter is included.
-4. Confirm on-chain that `liquidityManager.positionLocker()` equals the Stage 1 locker and that the locker reports the verified position manager.
-5. Fill all role and product values in a separately reviewed deployment manifest.
-6. Run `DeployTestnetTemplate.s.sol` to deploy `DoomRewards` and `DoomLaunchFactory` using the already-deployed locker and reviewed manager.
-7. Verify source, constructor arguments, immutable values, code hashes, and `configurationHash` on the explorer.
-8. Execute a zero-real-value rehearsal with test assets only, then run indexer/UI read-only validation before enabling any write UI.
+- `docs/doom-launchpad-spec.md`
+- `docs/roadmap.md`
+- `script/DeployRobinhoodCanaryRehearsal.s.sol` (non-broadcast)
+- `script/VerifyRobinhoodCanary.s.sol` (read-only)
 
-## Required environment variables
-
-```text
-TESTNET_ONLY_ACK=true
-TESTNET_CHAIN_ID=<verified>
-TESTNET_NONFUNGIBLE_POSITION_MANAGER=<verified>
-TESTNET_POSITION_LOCKER=<stage-1-address>
-TESTNET_REVIEWED_V3_LIQUIDITY_MANAGER=<stage-2-address>
-TESTNET_TREASURY_MULTISIG=<approved-testnet-multisig>
-TESTNET_CAMPAIGN_MANAGER_MULTISIG=<approved-testnet-multisig>
-TESTNET_UNCLAIMED_COMMUNITY_RECIPIENT=<approved-address>
-TESTNET_MINIMUM_CLAIM_WINDOW_SECONDS=<approved>
-TESTNET_LAUNCH_FEE_WEI=<approved-testnet-only>
-TESTNET_MINIMUM_LP_LOCK_SECONDS=<approved>
-TESTNET_MAXIMUM_LP_LOCK_SECONDS=<approved>
-TESTNET_SUPPORTED_FEE_TIER=<verified>
-TESTNET_TICK_SPACING=<verified>
-```
-
-The example supports one fee tier only to keep the template fail-closed. A reviewed deployment script may accept parallel arrays after the exact supported set is approved.
+There is no authorized broadcast script. Testnet or mainnet deployment requires
+a separately reviewed manifest, exact network dependencies, and the Stage 4
+assurance gates.

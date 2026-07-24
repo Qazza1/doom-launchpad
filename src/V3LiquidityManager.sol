@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {ICanonicalV3PositionManager} from "./interfaces/ICanonicalV3PositionManager.sol";
 import {ILiquidityManager} from "./interfaces/ILiquidityManager.sol";
@@ -20,10 +21,13 @@ interface ILaunchFactoryBinding {
 contract V3LiquidityManager is ILiquidityManager, IERC721Receiver, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    uint24 public constant POOL_FEE = 3_000;
-    int24 public constant TICK_SPACING = 60;
-    int24 public constant FULL_RANGE_TICK_LOWER = -887220;
-    int24 public constant FULL_RANGE_TICK_UPPER = 887220;
+    uint24 public constant POOL_FEE = 10_000;
+    int24 public constant TICK_SPACING = 200;
+    int24 public constant FULL_RANGE_TICK_LOWER = -887200;
+    int24 public constant FULL_RANGE_TICK_UPPER = 887200;
+    uint160 public constant FULL_RANGE_MIN_SQRT_RATIO = 4_310_618_292;
+    uint160 public constant FULL_RANGE_MAX_SQRT_RATIO =
+        1_456_195_216_270_955_103_206_513_029_158_776_779_468_408_838_535;
     uint256 public constant UTILIZATION_DENOMINATOR = 1_000_000;
     uint256 public constant MINIMUM_UTILIZATION = 999_999;
 
@@ -64,7 +68,8 @@ contract V3LiquidityManager is ILiquidityManager, IERC721Receiver, ReentrancyGua
         uint256 nativeDesired,
         uint256 nativeUsed,
         uint160 sqrtPriceX96,
-        uint64 unlockTime
+        address gmEscrow,
+        uint256 launchId
     );
 
     constructor(
@@ -109,7 +114,7 @@ contract V3LiquidityManager is ILiquidityManager, IERC721Receiver, ReentrancyGua
                 positionLocker_,
                 POOL_FEE,
                 TICK_SPACING,
-                bytes32("UNISWAP_V3_CORE_PERIPHERY_V1.0.0")
+                keccak256("DOOM_PERMANENT_V3_1PCT_V1")
             )
         );
     }
@@ -120,7 +125,7 @@ contract V3LiquidityManager is ILiquidityManager, IERC721Receiver, ReentrancyGua
         if (authorizedFactory != address(0)) revert FactoryAlreadyBound(authorizedFactory);
         if (factory_ == address(0) || factory_.code.length == 0) revert DependencyHasNoCode(factory_);
 
-        address configuredManager;
+        address configuredManager = address(0);
         try ILaunchFactoryBinding(factory_).liquidityManager() returns (address manager) {
             configuredManager = manager;
         } catch {
@@ -145,11 +150,12 @@ contract V3LiquidityManager is ILiquidityManager, IERC721Receiver, ReentrancyGua
         if (msg.value != params.nativeAmount) revert InvalidNativeValue(params.nativeAmount, msg.value);
         if (
             params.token == address(0) || params.token == address(wrappedNative) || params.tokenAmount == 0
-                || params.nativeAmount == 0 || params.creator == address(0) || params.lpBeneficiary == address(0)
-                || params.fee != POOL_FEE || params.tickLower != FULL_RANGE_TICK_LOWER
+                || params.nativeAmount == 0 || params.creator == address(0) || params.gmEscrow == address(0)
+                || params.launchId == 0 || params.fee != POOL_FEE || params.tickLower != FULL_RANGE_TICK_LOWER
                 || params.tickUpper != FULL_RANGE_TICK_UPPER || params.sqrtPriceX96 == 0
-                || params.unlockTime <= block.timestamp
+                || params.sqrtPriceX96 <= FULL_RANGE_MIN_SQRT_RATIO || params.sqrtPriceX96 >= FULL_RANGE_MAX_SQRT_RATIO
         ) revert InvalidLiquidityParams();
+        if (params.gmEscrow.code.length == 0) revert DependencyHasNoCode(params.gmEscrow);
 
         IERC20 launchToken = IERC20(params.token);
         launchToken.safeTransferFrom(msg.sender, address(this), params.tokenAmount);
@@ -168,8 +174,8 @@ contract V3LiquidityManager is ILiquidityManager, IERC721Receiver, ReentrancyGua
 
         uint256 amount0Desired = token0 == params.token ? params.tokenAmount : params.nativeAmount;
         uint256 amount1Desired = token1 == params.token ? params.tokenAmount : params.nativeAmount;
-        uint256 amount0Min = amount0Desired * MINIMUM_UTILIZATION / UTILIZATION_DENOMINATOR;
-        uint256 amount1Min = amount1Desired * MINIMUM_UTILIZATION / UTILIZATION_DENOMINATOR;
+        uint256 amount0Min = Math.mulDiv(amount0Desired, MINIMUM_UTILIZATION, UTILIZATION_DENOMINATOR);
+        uint256 amount1Min = Math.mulDiv(amount1Desired, MINIMUM_UTILIZATION, UTILIZATION_DENOMINATOR);
 
         uint128 liquidity;
         uint256 amount0;
@@ -198,7 +204,8 @@ contract V3LiquidityManager is ILiquidityManager, IERC721Receiver, ReentrancyGua
         IERC20(address(wrappedNative)).forceApprove(address(nonfungiblePositionManager), 0);
 
         nonfungiblePositionManager.safeTransferFrom(address(this), positionLocker, positionId);
-        IPositionLocker(positionLocker).registerLock(positionId, pool, params.lpBeneficiary, params.unlockTime);
+        IPositionLocker(positionLocker)
+            .registerPermanentLock(positionId, pool, params.token, params.creator, params.gmEscrow, params.launchId);
 
         uint256 tokenRemainder = params.tokenAmount - tokenUsed;
         if (tokenRemainder != 0) launchToken.safeTransfer(msg.sender, tokenRemainder);
@@ -227,7 +234,8 @@ contract V3LiquidityManager is ILiquidityManager, IERC721Receiver, ReentrancyGua
             params.nativeAmount,
             nativeUsed,
             params.sqrtPriceX96,
-            params.unlockTime
+            params.gmEscrow,
+            params.launchId
         );
     }
 
@@ -256,6 +264,11 @@ contract V3LiquidityManager is ILiquidityManager, IERC721Receiver, ReentrancyGua
         }
         try IPositionLocker(positionLocker).positionManager() returns (address configuredNpm) {
             if (configuredNpm != address(nonfungiblePositionManager)) return false;
+        } catch {
+            return false;
+        }
+        try IPositionLocker(positionLocker).authorizedRegistrar() returns (address registrar) {
+            if (registrar != address(this)) return false;
         } catch {
             return false;
         }

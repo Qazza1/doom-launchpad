@@ -28,6 +28,7 @@ contract GmEscrow is ReentrancyGuard {
     error CheckInWindowMissed(uint256 deadline, uint256 currentTime);
     error DefaultTooEarly(uint256 deadline, uint256 currentTime);
     error RewardDepositMismatch(uint256 expected, uint256 sourceDelta, uint256 rewardsDelta);
+    error InvalidCheckInOrdinal(uint32 ordinal, uint32 required);
 
     uint256 public immutable launchId;
     IERC20 public immutable token;
@@ -130,13 +131,29 @@ contract GmEscrow is ReentrancyGuard {
 
     /// @notice Scheduled time at which the next GM becomes recordable.
     function nextCheckInAt() public view returns (uint64) {
-        uint256 nextOrdinal = uint256(completedCheckIns) + 1;
-        return uint64(uint256(startTime) + nextOrdinal * uint256(cadenceSeconds));
+        if (status != Status.Active) return 0;
+        (uint64 due,) = scheduleFor(completedCheckIns + 1);
+        return due;
     }
 
     /// @notice Final timestamp accepted for the next GM.
     function nextDeadline() public view returns (uint64) {
-        return uint64(uint256(nextCheckInAt()) + uint256(gracePeriodSeconds));
+        if (status != Status.Active) return 0;
+        (, uint64 deadline) = scheduleFor(completedCheckIns + 1);
+        return deadline;
+    }
+
+    /// @notice Returns the immutable due time and deadline for a configured check-in ordinal.
+    function scheduleFor(uint32 ordinal) public view returns (uint64 due, uint64 deadline) {
+        if (ordinal == 0 || ordinal > requiredCheckIns) {
+            revert InvalidCheckInOrdinal(ordinal, requiredCheckIns);
+        }
+        due = uint64(uint256(startTime) + uint256(ordinal) * uint256(cadenceSeconds));
+        deadline = uint64(uint256(due) + uint256(gracePeriodSeconds));
+    }
+
+    function remainingCheckIns() external view returns (uint32) {
+        return status == Status.Active ? requiredCheckIns - completedCheckIns : 0;
     }
 
     /// @notice Records one scheduled GM and releases escrow on final completion.
@@ -146,14 +163,17 @@ contract GmEscrow is ReentrancyGuard {
 
         uint256 due = nextCheckInAt();
         uint256 deadline = due + gracePeriodSeconds;
+        // Chain time defines the public commitment window by design.
+        // forge-lint: disable-next-line(block-timestamp)
         if (block.timestamp < due) revert CheckInTooEarly(due, block.timestamp);
+        // forge-lint: disable-next-line(block-timestamp)
         if (block.timestamp > deadline) revert CheckInWindowMissed(deadline, block.timestamp);
 
         uint32 checkIns = completedCheckIns + 1;
         completedCheckIns = checkIns;
 
-        uint64 followingDue;
-        uint64 followingDeadline;
+        uint64 followingDue = 0;
+        uint64 followingDeadline = 0;
         if (checkIns == requiredCheckIns) {
             status = Status.Completed;
         } else {
@@ -177,6 +197,8 @@ contract GmEscrow is ReentrancyGuard {
         _requireFunded();
 
         uint256 deadline = nextDeadline();
+        // Default becomes valid only after the onchain deadline.
+        // forge-lint: disable-next-line(block-timestamp)
         if (block.timestamp <= deadline) revert DefaultTooEarly(deadline, block.timestamp);
 
         status = Status.Defaulted;

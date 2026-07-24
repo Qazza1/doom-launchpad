@@ -10,3 +10,4 @@ forge --version
 forge fmt --check
 forge build --sizes
 forge test -vvv
+bash tools/check-sizes.sh

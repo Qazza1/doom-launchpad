@@ -16,4 +16,7 @@ interface IDoomRewards {
 
     /// @notice Pulls unused V3 token dust into the community reward vault.
     function depositLiquidityRemainder(address token, uint256 amount, uint256 launchId) external;
+
+    /// @notice Pulls collected permanent-position fees into the community reward vault.
+    function depositLpFeeRewards(address token, uint256 amount, uint256 launchId, uint256 positionId) external;
 }

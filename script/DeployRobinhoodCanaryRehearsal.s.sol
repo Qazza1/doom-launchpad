@@ -41,11 +41,14 @@ contract DeployRobinhoodCanaryRehearsal is Script {
         }
         if (block.chainid != CHAIN_ID) revert WrongChain(CHAIN_ID, block.chainid);
 
-        locker = new PositionLocker(NONFUNGIBLE_POSITION_MANAGER);
+        rewards = new DoomRewards(CAMPAIGN_MANAGER, NFT_COLLECTION, TREASURY, WETH, 7 days);
+        locker =
+            new PositionLocker(NONFUNGIBLE_POSITION_MANAGER, WETH, address(rewards), TREASURY, DEPLOYER_AND_OPERATOR);
         liquidityManager = new V3LiquidityManager(
             CHAIN_ID, DEPLOYER_AND_OPERATOR, V3_FACTORY, NONFUNGIBLE_POSITION_MANAGER, WETH, address(locker)
         );
-        rewards = new DoomRewards(CAMPAIGN_MANAGER, NFT_COLLECTION, TREASURY, WETH, 7 days);
+        vm.prank(DEPLOYER_AND_OPERATOR);
+        locker.bindRegistrar(address(liquidityManager));
 
         DoomLaunchFactory.FactoryConfig memory config = DoomLaunchFactory.FactoryConfig({
             operator: DEPLOYER_AND_OPERATOR,
@@ -75,11 +78,22 @@ contract DeployRobinhoodCanaryRehearsal is Script {
         _assert(rewards.excludedHolder() == TREASURY, "EXCLUDED_HOLDER_MISMATCH");
         _assert(rewards.feeRewardToken() == WETH, "REWARD_TOKEN_MISMATCH");
         _assert(locker.positionManager() == NONFUNGIBLE_POSITION_MANAGER, "NPM_MISMATCH");
+        _assert(address(locker.wrappedNative()) == WETH, "LOCKER_WETH_MISMATCH");
+        _assert(locker.doomRewards() == address(rewards), "LOCKER_REWARDS_MISMATCH");
+        _assert(locker.treasury() == TREASURY, "LOCKER_TREASURY_MISMATCH");
+        _assert(locker.authorizedRegistrar() == address(liquidityManager), "REGISTRAR_MISMATCH");
         _assert(liquidityManager.factoryBinder() == DEPLOYER_AND_OPERATOR, "BINDER_MISMATCH");
         _assert(liquidityManager.authorizedFactory() == address(factory), "FACTORY_BINDING_MISMATCH");
         _assert(factory.maxLaunches() == 3, "MAX_LAUNCHES_MISMATCH");
         _assert(factory.maxNativeLiquidityPerLaunch() == 0.01 ether, "PER_LAUNCH_CAP_MISMATCH");
         _assert(factory.maxNativeLiquidityGlobal() == 0.03 ether, "GLOBAL_CAP_MISMATCH");
+        _assert(factory.CREATION_FEE_BPS() == 300, "CREATION_FEE_MISMATCH");
+        _assert(factory.POOL_FEE() == 10_000, "POOL_FEE_MISMATCH");
+        _assert(factory.REQUIRED_GM_CHECK_INS() == 3, "GM_COUNT_MISMATCH");
+        _assert(factory.GM_GRACE_PERIOD_SECONDS() == 12 hours, "GM_GRACE_MISMATCH");
+        _assert(locker.CREATOR_WETH_FEE_BPS() == 6_000, "CREATOR_LP_FEE_MISMATCH");
+        _assert(locker.TREASURY_WETH_FEE_BPS() == 2_000, "TREASURY_LP_FEE_MISMATCH");
+        _assert(locker.REWARDS_WETH_FEE_BPS() == 2_000, "REWARDS_LP_FEE_MISMATCH");
     }
 
     function _assert(bool condition, bytes32 invariantName) internal pure {

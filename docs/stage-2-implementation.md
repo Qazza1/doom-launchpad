@@ -1,5 +1,8 @@
 # Stage 2: economics and safety controls
 
+> Historical record for the preserved `stage-3-baseline`. The 10% creation fee
+> and releasable LP design are not part of the Stage 3.1 audit candidate.
+
 Status: implemented and locally tested. Not approved for deployment.
 
 ## Implemented

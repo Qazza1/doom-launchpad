@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ILiquidityManager} from "../../src/interfaces/ILiquidityManager.sol";
 import {IPositionLocker} from "../../src/interfaces/IPositionLocker.sol";
+import {PositionLocker} from "../../src/PositionLocker.sol";
 import {MockPositionManager} from "./MockPositionManager.sol";
 
 contract MockPool {}
@@ -80,20 +81,25 @@ contract MockLiquidityManager is ILiquidityManager {
             require(refunded, "refund failed");
         }
 
-        positionId = npm.mint(address(this));
+        address wrappedNative = address(PositionLocker(positionLocker).wrappedNative());
+        (address token0, address token1) =
+            params.token < wrappedNative ? (params.token, wrappedNative) : (wrappedNative, params.token);
+        positionId = npm.mintConfigured(address(this), token0, token1, params.fee, params.tickLower, params.tickUpper);
         npm.safeTransferFrom(address(this), positionLocker, positionId);
         IPositionLocker(positionLocker)
-            .registerLock(
+            .registerPermanentLock(
                 positionId,
                 recordedPoolOverride == address(0) ? pool : recordedPoolOverride,
-                params.lpBeneficiary,
-                params.unlockTime
+                params.token,
+                params.creator,
+                params.gmEscrow,
+                params.launchId
             );
         lastPositionId = positionId;
         return (pool, positionId, tokenUsed, nativeUsed);
     }
 
     function isNetworkConfigurationValid() external view override returns (bool) {
-        return valid;
+        return valid && IPositionLocker(positionLocker).authorizedRegistrar() == address(this);
     }
 }

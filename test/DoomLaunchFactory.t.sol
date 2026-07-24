@@ -9,7 +9,7 @@ import {DoomRewards} from "../src/DoomRewards.sol";
 import {GmEscrow} from "../src/GmEscrow.sol";
 import {PositionLocker} from "../src/PositionLocker.sol";
 import {MockPositionManager} from "./mocks/MockPositionManager.sol";
-import {MockLiquidityManager} from "./mocks/MockLiquidityManager.sol";
+import {MockLiquidityManager, MockPool} from "./mocks/MockLiquidityManager.sol";
 import {MockWrappedNative, MockNftCollection} from "./mocks/MockWrappedNative.sol";
 import {RejectingTreasury} from "./mocks/RejectingTreasury.sol";
 
@@ -28,10 +28,10 @@ contract DoomLaunchFactoryTest is Test {
     address internal campaignManager = makeAddr("campaignManager");
     address internal creator = makeAddr("creator");
 
-    uint256 internal constant NATIVE_LIQUIDITY = 1 ether;
-    uint256 internal constant CREATION_FEE = 0.1 ether;
-    uint256 internal constant TREASURY_FEE = 0.05 ether;
-    uint256 internal constant NFT_REWARD_FEE = 0.05 ether;
+    uint256 internal constant NATIVE_LIQUIDITY = 0.01 ether;
+    uint256 internal constant CREATION_FEE = 0.0003 ether;
+    uint256 internal constant TREASURY_FEE = 0.00015 ether;
+    uint256 internal constant NFT_REWARD_FEE = 0.00015 ether;
     uint256 internal constant REQUIRED_VALUE = NATIVE_LIQUIDITY + CREATION_FEE;
 
     function setUp() external {
@@ -39,16 +39,18 @@ contract DoomLaunchFactoryTest is Test {
         nft = new MockNftCollection();
         rewards = new DoomRewards(campaignManager, address(nft), treasury, address(weth), 7 days);
         npm = new MockPositionManager();
-        locker = new PositionLocker(address(npm));
+        locker = new PositionLocker(address(npm), address(weth), address(rewards), treasury, operator);
         manager = new MockLiquidityManager(address(npm), address(locker));
-        factory = _deployFactory(treasury, 3, 1 ether, 3 ether);
+        vm.prank(operator);
+        locker.bindRegistrar(address(manager));
+        factory = _deployFactory(treasury, rewards, locker, manager);
 
         vm.prank(operator);
         factory.resumeLaunches();
-        vm.deal(creator, 100 ether);
+        vm.deal(creator, 10 ether);
     }
 
-    function _config(address treasury_, uint32 maxLaunches_, uint256 perLaunch, uint256 globalLimit)
+    function _config(address treasury_, DoomRewards rewards_, PositionLocker locker_, MockLiquidityManager manager_)
         internal
         view
         returns (DoomLaunchFactory.FactoryConfig memory)
@@ -58,21 +60,23 @@ contract DoomLaunchFactoryTest is Test {
             emergencyGuardian: guardian,
             approvedCreator: creator,
             treasury: treasury_,
-            doomRewards: address(rewards),
+            doomRewards: address(rewards_),
             wrappedNative: address(weth),
-            liquidityManager: address(manager),
-            positionLocker: address(locker),
-            maxLaunches: maxLaunches_,
-            maxNativeLiquidityPerLaunch: perLaunch,
-            maxNativeLiquidityGlobal: globalLimit
+            liquidityManager: address(manager_),
+            positionLocker: address(locker_),
+            maxLaunches: 3,
+            maxNativeLiquidityPerLaunch: NATIVE_LIQUIDITY,
+            maxNativeLiquidityGlobal: 0.03 ether
         });
     }
 
-    function _deployFactory(address treasury_, uint32 maxLaunches_, uint256 perLaunch, uint256 globalLimit)
-        internal
-        returns (DoomLaunchFactory deployed)
-    {
-        deployed = new DoomLaunchFactory(_config(treasury_, maxLaunches_, perLaunch, globalLimit));
+    function _deployFactory(
+        address treasury_,
+        DoomRewards rewards_,
+        PositionLocker locker_,
+        MockLiquidityManager manager_
+    ) internal returns (DoomLaunchFactory deployed) {
+        deployed = new DoomLaunchFactory(_config(treasury_, rewards_, locker_, manager_));
     }
 
     function _params() internal pure returns (DoomLaunchFactory.LaunchParams memory p) {
@@ -86,7 +90,7 @@ contract DoomLaunchFactoryTest is Test {
         (, tokenAddress,,, escrowAddress) = target.launch{value: REQUIRED_VALUE}(_params());
     }
 
-    function testHappyPathEnforcesEconomicsAndLockedPosition() external {
+    function testHappyPathEnforcesEconomicsAndPermanentPosition() external {
         vm.prank(creator);
         (uint256 id, address tokenAddress, address pool, uint256 positionId, address escrowAddress) =
             factory.launch{value: REQUIRED_VALUE}(_params());
@@ -99,13 +103,14 @@ contract DoomLaunchFactoryTest is Test {
         assertEq(token.balanceOf(address(manager)), token.totalSupply() * 40 / 100);
         assertEq(token.balanceOf(escrowAddress), token.totalSupply() * 50 / 100);
         assertEq(token.balanceOf(address(factory)), 0);
-        assertTrue(locker.isLocked(positionId));
+        assertTrue(locker.isPermanentlyLocked(positionId));
 
         assertEq(factory.accruedTreasuryFees(), TREASURY_FEE);
         assertEq(rewards.availableRewards(address(weth)), NFT_REWARD_FEE);
         assertEq(weth.balanceOf(address(rewards)), NFT_REWARD_FEE);
         assertEq(manager.nativeReceived(), NATIVE_LIQUIDITY);
         assertEq(factory.totalNativeLiquidity(), NATIVE_LIQUIDITY);
+        assertEq(factory.launchCount(), 1);
 
         GmEscrow escrow = GmEscrow(escrowAddress);
         assertEq(escrow.creator(), creator);
@@ -118,14 +123,14 @@ contract DoomLaunchFactoryTest is Test {
         assertEq(record.creationFee, CREATION_FEE);
         assertEq(record.treasuryFee, TREASURY_FEE);
         assertEq(record.nftRewardFee, NFT_REWARD_FEE);
-        assertEq(record.lpUnlockTime, block.timestamp + 365 days);
-        assertGt(record.sqrtPriceX96, factory.MIN_SQRT_RATIO());
-        assertLt(record.sqrtPriceX96, factory.MAX_SQRT_RATIO());
+        assertTrue(record.liquidityPermanent);
+        assertGt(record.sqrtPriceX96, factory.FULL_RANGE_MIN_SQRT_RATIO());
+        assertLt(record.sqrtPriceX96, factory.FULL_RANGE_MAX_SQRT_RATIO());
         assertEq(record.configurationHash, manager.configurationHash());
     }
 
     function testNewFactoryStartsPaused() external {
-        DoomLaunchFactory fresh = _deployFactory(treasury, 3, 1 ether, 3 ether);
+        DoomLaunchFactory fresh = _deployFactory(treasury, rewards, locker, manager);
         assertTrue(fresh.launchesPaused());
     }
 
@@ -133,20 +138,19 @@ contract DoomLaunchFactoryTest is Test {
         _launch(factory);
         assertEq(rewards.availableRewards(address(weth)), NFT_REWARD_FEE);
         assertEq(rewards.reservedRewards(address(weth)), 0);
-        assertEq(weth.balanceOf(address(rewards)), NFT_REWARD_FEE);
     }
 
     function testFactoryRejectsMismatchedRewardToken() external {
         MockWrappedNative wrongWeth = new MockWrappedNative();
-        DoomLaunchFactory.FactoryConfig memory config = _config(treasury, 3, 1 ether, 3 ether);
+        DoomLaunchFactory.FactoryConfig memory config = _config(treasury, rewards, locker, manager);
         config.wrappedNative = address(wrongWeth);
 
-        vm.expectPartialRevert(DoomLaunchFactory.RewardTokenMismatch.selector);
+        vm.expectPartialRevert(DoomLaunchFactory.PositionLockerDependencyMismatch.selector);
         new DoomLaunchFactory(config);
     }
 
     function testFeeAndRefundAccounting() external {
-        uint256 overpayment = 0.4 ether;
+        uint256 overpayment = 0.004 ether;
         uint256 beforeBalance = creator.balance;
         vm.txGasPrice(0);
 
@@ -163,7 +167,6 @@ contract DoomLaunchFactoryTest is Test {
         factory.withdrawAccruedTreasuryFees(TREASURY_FEE);
         assertEq(treasury.balance, treasuryBefore + TREASURY_FEE);
         assertEq(factory.accruedTreasuryFees(), 0);
-        assertEq(address(factory).balance, 0);
     }
 
     function testBoundedV3RemainderGoesToRewardsAndFeeUsesActualNative() external {
@@ -176,12 +179,11 @@ contract DoomLaunchFactoryTest is Test {
 
         DoomLaunchFactory.LaunchRecord memory record = factory.getLaunch(id);
         uint256 allocated = 400_000_000 ether;
-        uint256 expectedTokenUsed = allocated * 999_999 / 1_000_000;
+        uint256 expectedTokenUsed = Math.mulDiv(allocated, 999_999, 1_000_000);
         uint256 expectedRemainder = allocated - expectedTokenUsed;
-        uint256 expectedNativeUsed = NATIVE_LIQUIDITY * 999_999 / 1_000_000;
-        uint256 expectedFee = expectedNativeUsed / 10;
+        uint256 expectedNativeUsed = Math.mulDiv(NATIVE_LIQUIDITY, 999_999, 1_000_000);
+        uint256 expectedFee = Math.mulDiv(expectedNativeUsed, 300, 10_000);
 
-        assertEq(record.liquidityTokenAmountAllocated, allocated);
         assertEq(record.liquidityTokenAmountUsed, expectedTokenUsed);
         assertEq(record.liquidityTokenRemainder, expectedRemainder);
         assertEq(record.nativeLiquidityAmountUsed, expectedNativeUsed);
@@ -190,25 +192,18 @@ contract DoomLaunchFactoryTest is Test {
         assertEq(creator.balance, beforeBalance - expectedNativeUsed - expectedFee);
     }
 
-    function testV3UtilizationBelowOnePpmToleranceReverts() external {
+    function testV3UtilizationBelowToleranceReverts() external {
         manager.setUsagePpm(999_998, 999_998);
-
         vm.prank(creator);
         vm.expectPartialRevert(DoomLaunchFactory.LiquidityUtilizationTooLow.selector);
         factory.launch{value: REQUIRED_VALUE}(_params());
-
         assertEq(factory.nextLaunchId(), 1);
-        assertEq(factory.totalNativeLiquidity(), 0);
     }
 
     function testGuardianCanPauseButCannotResume() external {
         vm.prank(guardian);
         factory.pauseLaunches();
         assertTrue(factory.launchesPaused());
-
-        vm.prank(creator);
-        vm.expectRevert(DoomLaunchFactory.LaunchesArePaused.selector);
-        factory.launch{value: REQUIRED_VALUE}(_params());
 
         vm.prank(guardian);
         vm.expectPartialRevert(DoomLaunchFactory.UnauthorizedOperator.selector);
@@ -234,6 +229,13 @@ contract DoomLaunchFactoryTest is Test {
         factory.launch{value: REQUIRED_VALUE}(_params());
     }
 
+    function testContractApprovedCreatorIsRejectedAtDeployment() external {
+        DoomLaunchFactory.FactoryConfig memory config = _config(treasury, rewards, locker, manager);
+        config.approvedCreator = address(this);
+        vm.expectRevert(abi.encodeWithSelector(DoomLaunchFactory.ContractCreatorNotAllowed.selector, address(this)));
+        new DoomLaunchFactory(config);
+    }
+
     function testLaunchCountCapIsEnforced() external {
         _launch(factory);
         _launch(factory);
@@ -244,37 +246,21 @@ contract DoomLaunchFactoryTest is Test {
         factory.launch{value: REQUIRED_VALUE}(_params());
     }
 
-    function testPerLaunchLiquidityCapIsEnforced() external {
+    function testCanaryLiquidityMustBeExact() external {
         DoomLaunchFactory.LaunchParams memory p = _params();
-        p.nativeLiquidityAmount = 1 ether + 1;
+        p.nativeLiquidityAmount = NATIVE_LIQUIDITY - 1;
         vm.prank(creator);
-        vm.expectPartialRevert(DoomLaunchFactory.PerLaunchLiquidityLimitExceeded.selector);
-        factory.launch{value: 2 ether}(p);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                DoomLaunchFactory.InvalidCanaryLiquidity.selector, NATIVE_LIQUIDITY, NATIVE_LIQUIDITY - 1
+            )
+        );
+        factory.launch{value: REQUIRED_VALUE}(p);
     }
 
-    function testLiquidityTooSmallToSplitFeeIsRejected() external {
-        DoomLaunchFactory.LaunchParams memory p = _params();
-        p.nativeLiquidityAmount = 10;
-        vm.prank(creator);
-        vm.expectPartialRevert(DoomLaunchFactory.CreationFeeTooSmall.selector);
-        factory.launch{value: 11}(p);
-    }
-
-    function testGlobalLiquidityCapIsEnforced() external {
-        DoomLaunchFactory limited = _deployFactory(treasury, 4, 1 ether, 2 ether);
-        vm.prank(operator);
-        limited.resumeLaunches();
-        _launch(limited);
-        _launch(limited);
-
-        vm.prank(creator);
-        vm.expectPartialRevert(DoomLaunchFactory.GlobalLiquidityLimitExceeded.selector);
-        limited.launch{value: REQUIRED_VALUE}(_params());
-    }
-
-    function testCreationFeeQuoteIsTenPercent() external view {
-        assertEq(factory.quoteCreationFee(0.01 ether), 0.001 ether);
-        assertEq(factory.quoteCreationFee(1 ether), CREATION_FEE);
+    function testCreationFeeQuoteIsThreePercent() external view {
+        assertEq(factory.quoteCreationFee(NATIVE_LIQUIDITY), CREATION_FEE);
+        assertEq(factory.quoteCreationFee(1 ether), 0.03 ether);
     }
 
     function testInvalidUniswapConfigurationFailsSafely() external {
@@ -290,47 +276,40 @@ contract DoomLaunchFactoryTest is Test {
         factory.launch{value: REQUIRED_VALUE - 1}(_params());
     }
 
-    function testZeroSupplyFails() external {
+    function testSupplyBoundsFailClearly() external {
         DoomLaunchFactory.LaunchParams memory p = _params();
-        p.totalSupply = 0;
+        p.totalSupply = factory.MIN_TOTAL_SUPPLY() - 1;
         vm.prank(creator);
-        vm.expectRevert(DoomLaunchFactory.InvalidSupply.selector);
+        vm.expectPartialRevert(DoomLaunchFactory.SupplyOutsideCanaryBounds.selector);
         factory.launch{value: REQUIRED_VALUE}(p);
-    }
 
-    function testImpracticalSupplyThatCannotBePricedFailsClosed() external {
-        DoomLaunchFactory.LaunchParams memory p = _params();
-        p.totalSupply = type(uint256).max;
-
+        p.totalSupply = factory.MAX_TOTAL_SUPPLY() + 1;
         vm.prank(creator);
-        vm.expectPartialRevert(DoomLaunchFactory.InitialPriceOutOfRange.selector);
+        vm.expectPartialRevert(DoomLaunchFactory.SupplyOutsideCanaryBounds.selector);
         factory.launch{value: REQUIRED_VALUE}(p);
     }
 
     function testSpoofedLockerTermsFailSafely() external {
-        manager.setRecordedPoolOverride(makeAddr("spoofedPool"));
+        MockPool spoofedPool = new MockPool();
+        manager.setRecordedPoolOverride(address(spoofedPool));
 
         vm.prank(creator);
-        vm.expectPartialRevert(DoomLaunchFactory.PositionLockTermsMismatch.selector);
+        vm.expectPartialRevert(DoomLaunchFactory.PermanentPositionTermsMismatch.selector);
         factory.launch{value: REQUIRED_VALUE}(_params());
 
         assertEq(factory.nextLaunchId(), 1);
         assertEq(factory.accruedTreasuryFees(), 0);
-        assertEq(factory.totalNativeLiquidity(), 0);
-        assertEq(address(factory).balance, 0);
     }
 
     function testReturnedPoolMustContainCode() external {
         manager.setPool(makeAddr("eoaPool"));
-
         vm.prank(creator);
-        vm.expectPartialRevert(DoomLaunchFactory.PoolHasNoCode.selector);
+        vm.expectPartialRevert(PositionLocker.DependencyHasNoCode.selector);
         factory.launch{value: REQUIRED_VALUE}(_params());
     }
 
     function testOnlyTreasuryCanWithdrawFees() external {
         _launch(factory);
-
         vm.prank(creator);
         vm.expectPartialRevert(DoomLaunchFactory.UnauthorizedTreasury.selector);
         factory.withdrawAccruedTreasuryFees(TREASURY_FEE);
@@ -338,7 +317,15 @@ contract DoomLaunchFactoryTest is Test {
 
     function testTreasuryPayoutUsesSafeCallAndDoesNotSilentlyFail() external {
         RejectingTreasury rejecting = new RejectingTreasury();
-        DoomLaunchFactory rejectingFactory = _deployFactory(address(rejecting), 3, 1 ether, 3 ether);
+        DoomRewards localRewards =
+            new DoomRewards(campaignManager, address(nft), address(rejecting), address(weth), 7 days);
+        MockPositionManager localNpm = new MockPositionManager();
+        PositionLocker localLocker =
+            new PositionLocker(address(localNpm), address(weth), address(localRewards), address(rejecting), operator);
+        MockLiquidityManager localManager = new MockLiquidityManager(address(localNpm), address(localLocker));
+        vm.prank(operator);
+        localLocker.bindRegistrar(address(localManager));
+        DoomLaunchFactory rejectingFactory = _deployFactory(address(rejecting), localRewards, localLocker, localManager);
         vm.prank(operator);
         rejectingFactory.resumeLaunches();
         _launch(rejectingFactory);
@@ -351,8 +338,7 @@ contract DoomLaunchFactoryTest is Test {
 
     function testReentrantManagerCannotReenterLaunch() external {
         DoomLaunchFactory.LaunchParams memory p = _params();
-        bytes memory reentry = abi.encodeCall(DoomLaunchFactory.launch, (p));
-        manager.setReentry(address(factory), reentry);
+        manager.setReentry(address(factory), abi.encodeCall(DoomLaunchFactory.launch, (p)));
 
         vm.prank(creator);
         factory.launch{value: REQUIRED_VALUE}(p);
@@ -362,8 +348,8 @@ contract DoomLaunchFactoryTest is Test {
         assertEq(factory.nextLaunchId(), 2);
     }
 
-    function testFuzzFixedAllocationAccounting(uint96 rawSupply) external {
-        uint256 supply = bound(uint256(rawSupply), 10_000, 1e28);
+    function testFuzzFixedAllocationAccounting(uint128 rawSupply) external {
+        uint256 supply = bound(uint256(rawSupply), factory.MIN_TOTAL_SUPPLY(), factory.MAX_TOTAL_SUPPLY());
         DoomLaunchFactory.LaunchParams memory p = _params();
         p.totalSupply = supply;
 

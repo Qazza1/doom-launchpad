@@ -1,12 +1,13 @@
 {
-  "version": 3,
+  "version": 4,
+  "chainId": 4663,
   "contracts": {
     "DoomLaunchFactory": [
       "event LaunchCreated(uint256 indexed launchId,address indexed token,address indexed creator,address pool,uint256 positionId,address creatorEscrow,address positionLocker)",
       "event LaunchAllocations(uint256 indexed launchId,uint256 totalSupply,uint16 creatorLiquidBps,uint16 liquidityBps,uint16 gmEscrowBps,uint256 creatorLiquidAmount,uint256 liquidityTokenAmount,uint256 escrowTokenAmount,uint256 nativeLiquidityAmount)",
       "event LaunchCommitmentConfigured(uint256 indexed launchId,uint32 requiredCheckIns,uint32 cadenceSeconds,uint32 gracePeriodSeconds)",
       "event LaunchLiquidityUtilization(uint256 indexed launchId,uint256 tokenAllocated,uint256 tokenUsed,uint256 tokenRemainderToRewards,uint256 nativeRequested,uint256 nativeUsed,uint256 nativeRefunded)",
-      "event LaunchLiquidityConfigured(uint256 indexed launchId,uint64 lpUnlockTime,address lpBeneficiary,uint24 poolFee,int24 tickLower,int24 tickUpper,uint160 sqrtPriceX96,bytes32 configurationHash)",
+      "event LaunchLiquidityConfigured(uint256 indexed launchId,bool permanent,address feeRecipient,uint24 poolFee,int24 tickLower,int24 tickUpper,uint160 sqrtPriceX96,bytes32 configurationHash)",
       "event LaunchFeeProcessed(uint256 indexed launchId,address indexed payer,uint256 totalFee,uint256 treasuryFee,uint256 nftRewardFee,uint256 accruedTreasuryFeesAfter)",
       "event LaunchPauseChanged(bool paused,address indexed caller)",
       "event NativeRefunded(uint256 indexed launchId,address indexed recipient,uint256 amount)",
@@ -14,7 +15,7 @@
     ],
     "V3LiquidityManager": [
       "event FactoryBound(address indexed factory,address indexed binder)",
-      "event V3LiquidityCreated(address indexed factory,address indexed token,address indexed pool,uint256 positionId,uint128 liquidity,uint256 tokenDesired,uint256 tokenUsed,uint256 nativeDesired,uint256 nativeUsed,uint160 sqrtPriceX96,uint64 unlockTime)"
+      "event V3LiquidityCreated(address indexed factory,address indexed token,address indexed pool,uint256 positionId,uint128 liquidity,uint256 tokenDesired,uint256 tokenUsed,uint256 nativeDesired,uint256 nativeUsed,uint160 sqrtPriceX96,address gmEscrow,uint256 launchId)"
     ],
     "GmEscrow": [
       "event CommitmentCreated(uint256 indexed launchId,address indexed token,address indexed creator,uint256 committedAmount,uint64 startTime,uint32 requiredCheckIns,uint32 cadenceSeconds,uint32 gracePeriodSeconds)",
@@ -23,13 +24,15 @@
       "event CommitmentDefaulted(uint256 indexed launchId,address indexed token,address indexed creator,uint256 rewardAmount,address doomRewards,uint64 defaultedAt)"
     ],
     "PositionLocker": [
-      "event PositionLocked(uint256 indexed positionId,address indexed pool,address indexed beneficiary,address positionManager,uint64 registeredAt,uint64 unlockTime)",
-      "event PositionReleased(uint256 indexed positionId,address indexed pool,address indexed beneficiary,uint64 releasedAt)"
+      "event RegistrarBound(address indexed registrar,address indexed binder)",
+      "event PermanentPositionRegistered(uint256 indexed positionId,uint256 indexed launchId,address indexed pool,address launchToken,address creator,address gmEscrow,address positionManager,uint64 registeredAt)",
+      "event PositionFeesCollected(uint256 indexed positionId,uint256 indexed launchId,address indexed caller,bool creatorEligible,uint256 launchTokenFeesToRewards,uint256 wethCollected,uint256 wethToCreator,uint256 wethToTreasury,uint256 wethToRewards)"
     ],
     "DoomRewards": [
       "event FailedAllocationDeposited(uint256 indexed launchId,address indexed token,address indexed source,uint256 amount,uint256 availableAfter)",
       "event FeeRewardsDeposited(uint256 indexed launchId,address indexed token,address indexed source,uint256 amount,uint256 availableAfter)",
       "event LiquidityRemainderDeposited(uint256 indexed launchId,address indexed token,address indexed source,uint256 amount,uint256 availableAfter)",
+      "event LpFeeRewardsDeposited(uint256 indexed launchId,uint256 indexed positionId,address indexed token,address source,uint256 amount,uint256 availableAfter)",
       "event CampaignCreated(uint256 indexed campaignId,address indexed token,bytes32 indexed merkleRoot,uint256 allocation,uint64 claimDeadline)",
       "event RewardClaimed(uint256 indexed campaignId,address indexed token,address indexed account,uint256 amount)",
       "event UnclaimedRewardsRecycled(uint256 indexed campaignId,address indexed token,uint256 amount,uint256 availableAfter)"

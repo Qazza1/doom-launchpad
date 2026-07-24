@@ -1,5 +1,9 @@
 # Required Verified Robinhood Chain V3 Dependency Package
 
+> Archived request. The canonical Robinhood mainnet dependencies were supplied
+> and validated during the preserved Stage 3 work. Fresh verification is still
+> required before the Stage 3.1 audit tag and any deployment.
+
 Before any concrete V3 integration is written, provide all items below for the exact **testnet** deployment intended for Doom Launchpad:
 
 1. Wrapped native token / WETH address.

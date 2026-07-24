@@ -1,127 +1,76 @@
-# Contract Interfaces and Architecture
+# Contract interfaces and architecture
 
 ## Dependency graph
 
 ```text
 DoomLaunchFactory
-  ├─ deploys DoomToken
-  ├─ deploys GmEscrow (one per launch)
-  ├─ transfers fixed allocations
-  ├─ calls ILiquidityManager (concrete V3 implementation blocked)
-  └─ records launch + accrues fee
+  ├─ deploys ownerless DoomToken
+  ├─ deploys one GmEscrow per launch
+  ├─ transfers the fixed 10 / 40 / 50 allocations
+  ├─ pays native liquidity to V3LiquidityManager
+  ├─ deposits half of the 3% creation fee in DoomRewards
+  └─ records the launch and accrues the treasury half
 
-GmEscrow
-  └─ on default calls DoomRewards.depositFailedAllocation
-
-Concrete V3LiquidityManager (not implemented)
-  ├─ validates WETH, V3 Factory, NPM, Router, Quoter, fee tiers
-  ├─ initializes/derives pool
-  ├─ mints position NFT
-  └─ transfers NFT directly to PositionLocker and registers lock
+V3LiquidityManager
+  ├─ is irreversibly bound to one DoomLaunchFactory
+  ├─ validates canonical V3 Factory, NPM, WETH, 1% tier, and locker
+  ├─ initializes the pool and mints a full-range position
+  └─ transfers the position to PositionLocker and registers it atomically
 
 PositionLocker
-  └─ after unlock, permissionlessly transfers NFT to fixed beneficiary
+  ├─ is irreversibly bound to one V3LiquidityManager registrar
+  ├─ holds each registered position permanently
+  └─ permissionlessly collects and routes fees at immutable percentages
+
+GmEscrow
+  ├─ releases committed tokens to the creator after three valid GMs
+  └─ deposits them in DoomRewards after a permissionless default
 
 DoomRewards
-  ├─ receives failed allocations
-  ├─ campaign manager creates Merkle campaigns
-  ├─ relayers submit claims
-  └─ after deadline, anyone sweeps remainder to fixed community recipient
+  ├─ accounts for failed allocations, creation-fee rewards, LP fees, and dust
+  ├─ reserves inventory in domain-separated Merkle campaigns
+  └─ recycles unclaimed inventory after the deadline
 ```
 
-## Contracts
+## Trust and immutability
 
-### DoomToken
+The token, escrow outcome, LP custody, LP-fee percentages, supply split, V3
+terms, and role addresses have no setter or upgrade path. The factory operator
+can pause/resume only future launches. The guardian can only pause. The campaign
+manager can commit reward roots and allocations but cannot withdraw inventory.
+The treasury can withdraw only already-accrued native creation fees.
 
-- Constructor-only mint to the factory.
-- `INITIAL_SUPPLY` immutable.
-- Standard OpenZeppelin ERC-20 behavior.
-- No owner or privileged function.
+`PositionLocker` deliberately exposes no release, decrease-liquidity, approval,
+arbitrary-call, or rescue function. Only its bound manager can register a
+position. Accidental NFT transfers cannot be registered by an attacker and are
+permanently stranded.
 
-### DoomLaunchFactory
-
-- Immutable treasury, rewards vault, liquidity manager, locker, launch fee, and lock-duration bounds.
-- Immutable-at-deployment fee-tier/tick-spacing map.
-- Validates metadata lengths, supply, allocations, native amount, commitment configuration, lock time, fee tier, ticks, and price.
-- Uses exact token approval and checks that no launch token remains in the factory.
-- Requires manager network configuration to report valid, returned pool code to exist, and direct locker terms/ownership to match the launch request.
-- Accrues fees; only immutable treasury can withdraw.
-
-### GmEscrow
-
-- One instance per launch for isolation and simpler reconciliation.
-- Immutable token, creator, rewards vault, amount, start, cadence, grace, and check-in count.
-- Creator-only GM recording.
-- Permissionless default finalization.
-- No admin or rescue path.
-
-### PositionLocker
-
-- Immutable position-manager ERC-721 address.
-- Permissionless registration only after the locker already owns the NFT.
-- Per-position immutable-in-practice beneficiary and unlock time; record has no setter.
-- Permissionless release after unlock.
-- No owner, rescue, fee collection, or early release.
-
-### DoomRewards
-
-- Immutable campaign-manager and unclaimed-recipient addresses.
-- Pull-based failed-allocation deposits.
-- Per-token available and reserved accounting.
-- Multiple numbered campaigns.
-- Merkle claims with one claim per account per campaign.
-- Permissionless post-deadline sweep to fixed recipient.
-
-### ILiquidityManager
-
-This interface is the deliberate V3 boundary. It requires:
-
-- `createAndLockLiquidity(params)` returning pool and position ID.
-- `positionLocker()` for constructor consistency checks.
-- `isNetworkConfigurationValid()` to fail closed.
-- `configurationHash()` for audit/indexer attribution.
-- Factory post-condition validation reads `PositionLocker.lockState(positionId)` directly rather than trusting a manager-supplied Boolean.
-
-The mock implementation used in tests is not a V3 implementation and must never be deployed as a real launch dependency.
-
-## Launch function ABI
-
-```solidity
-function launch(LaunchParams calldata params)
-    external
-    payable
-    returns (
-        uint256 launchId,
-        address token,
-        address pool,
-        uint256 positionId,
-        address creatorEscrow
-    );
-```
-
-`LaunchParams`:
+## Launch ABI
 
 ```solidity
 struct LaunchParams {
     string name;
     string symbol;
     uint256 totalSupply;
-    uint16 creatorLiquidBps;
-    uint16 liquidityBps;
-    uint16 gmEscrowBps;
     uint256 nativeLiquidityAmount;
-    uint32 requiredCheckIns;
-    uint32 cadenceSeconds;
-    uint32 gracePeriodSeconds;
-    uint64 lpUnlockTime;
-    address lpBeneficiary;
-    uint24 poolFee;
-    int24 tickLower;
-    int24 tickUpper;
-    uint160 sqrtPriceX96;
 }
 ```
 
-## V3 implementation stop point
+All other launch terms are factory constants. The canary accepts supplies from
+1 million through 1 quadrillion whole 18-decimal tokens and requires exactly
+0.01 ETH of requested native liquidity.
 
-No `V3LiquidityManager.sol` is included. Only an interface and test mock exist. Implementation is blocked until the verified Robinhood Chain dependency package listed in `v3-address-request.md` is supplied.
+## Binding order
+
+1. Deploy `DoomRewards`.
+2. Deploy `PositionLocker` with the intended NPM, WETH, rewards, treasury, and
+   one-time binder.
+3. Deploy `V3LiquidityManager` with the intended factory binder.
+4. Bind the locker registrar to the manager.
+5. Deploy `DoomLaunchFactory`; its constructor cross-checks the locker, manager,
+   WETH, rewards, treasury, canary caps, and approved EOA.
+6. Bind the manager to the factory.
+7. Keep the factory paused until post-deployment verification is complete.
+
+The duplicated fee/tick constants in factory, manager, and locker are deliberate
+independent post-condition checks. A mismatch fails closed.

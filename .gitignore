@@ -4,3 +4,6 @@ cache/
 broadcast/
 .env
 *.log
+.tools/
+slither-report.json
+report.md

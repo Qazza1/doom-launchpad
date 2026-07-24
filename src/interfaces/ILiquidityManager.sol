@@ -9,12 +9,12 @@ interface ILiquidityManager {
         uint256 tokenAmount;
         uint256 nativeAmount;
         address creator;
-        address lpBeneficiary;
+        address gmEscrow;
+        uint256 launchId;
         uint24 fee;
         int24 tickLower;
         int24 tickUpper;
         uint160 sqrtPriceX96;
-        uint64 unlockTime;
     }
 
     function createAndLockLiquidity(CreateLiquidityParams calldata params)

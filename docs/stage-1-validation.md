@@ -1,5 +1,8 @@
 # Stage 1: local validation and frozen decisions
 
+> Historical record for the preserved `stage-3-baseline`. Economics and LP
+> policy were superseded by the Stage 3.1 specification and roadmap.
+
 Status: complete for local validation. Mainnet deployment is disabled.
 
 ## What was verified

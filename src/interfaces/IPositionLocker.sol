@@ -2,24 +2,40 @@
 pragma solidity ^0.8.24;
 
 /// @title IPositionLocker
-/// @notice Verification surface for locked V3-style position NFTs.
+/// @notice Verification and registration surface for permanent V3 positions.
 interface IPositionLocker {
     function positionManager() external view returns (address);
 
-    function registerLock(uint256 positionId, address pool, address beneficiary, uint64 unlockTime) external;
+    function authorizedRegistrar() external view returns (address);
 
-    function isLocked(uint256 positionId) external view returns (bool);
+    function wrappedNative() external view returns (address);
 
-    /// @notice Returns the immutable recorded lock terms and current lock state.
+    function doomRewards() external view returns (address);
+
+    function treasury() external view returns (address);
+
+    function registerPermanentLock(
+        uint256 positionId,
+        address pool,
+        address launchToken,
+        address creator,
+        address gmEscrow,
+        uint256 launchId
+    ) external;
+
+    function isPermanentlyLocked(uint256 positionId) external view returns (bool);
+
     function lockState(uint256 positionId)
         external
         view
         returns (
             address pool,
-            address beneficiary,
+            address launchToken,
+            address creator,
+            address gmEscrow,
+            uint256 launchId,
             uint64 registeredAt,
-            uint64 unlockTime,
-            bool released,
+            bool permanent,
             bool currentlyLocked
         );
 }

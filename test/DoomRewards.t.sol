@@ -25,16 +25,15 @@ contract DoomRewardsTest is Test {
         rewards.depositFailedAllocation(address(token), 1_000 ether, 7);
     }
 
-    function _leaf(address account, uint256 amount) internal pure returns (bytes32) {
-        return keccak256(bytes.concat(keccak256(abi.encode(account, amount))));
+    function _leaf(uint256 campaignId, address account, uint256 amount) internal view returns (bytes32) {
+        return rewards.rewardLeaf(campaignId, account, amount);
     }
 
     function _createCampaign(address account, uint256 amount) internal returns (uint256) {
+        uint256 campaignId = rewards.nextCampaignId();
+        bytes32 root = _leaf(campaignId, account, amount);
         vm.prank(manager);
-        return
-            rewards.createCampaign(
-                address(token), _leaf(account, amount), 1_000 ether, uint64(block.timestamp + 7 days)
-            );
+        return rewards.createCampaign(address(token), root, 1_000 ether, uint64(block.timestamp + 7 days));
     }
 
     function testMerkleClaimAndNoDoubleClaim() external {
@@ -65,14 +64,16 @@ contract DoomRewardsTest is Test {
     }
 
     function testOnlyCampaignManagerCanCreateCampaign() external {
+        bytes32 root = _leaf(rewards.nextCampaignId(), holder, REWARD);
         vm.expectPartialRevert(DoomRewards.UnauthorizedCampaignManager.selector);
-        rewards.createCampaign(address(token), _leaf(holder, REWARD), 1_000 ether, uint64(block.timestamp + 7 days));
+        rewards.createCampaign(address(token), root, 1_000 ether, uint64(block.timestamp + 7 days));
     }
 
     function testCampaignCannotReserveMoreThanAvailable() external {
+        bytes32 root = _leaf(rewards.nextCampaignId(), holder, REWARD);
         vm.prank(manager);
         vm.expectPartialRevert(DoomRewards.InsufficientAvailableRewards.selector);
-        rewards.createCampaign(address(token), _leaf(holder, REWARD), 1_001 ether, uint64(block.timestamp + 7 days));
+        rewards.createCampaign(address(token), root, 1_001 ether, uint64(block.timestamp + 7 days));
     }
 
     function testClaimAfterDeadlineFails() external {
