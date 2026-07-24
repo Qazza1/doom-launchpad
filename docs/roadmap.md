@@ -114,16 +114,19 @@ fail-closed before contract deployment. No launch transaction is enabled.
 
 ## Stage 4 — independent review and deployment preparation
 
-Status: not started.
+Status: fail-closed deployment preparation in progress. No broadcast is
+authorized.
 
-- Independent smart-contract audit/review against one tagged commit.
-- Remediation and focused re-review of every contract change.
-- Production RPC and fallback RPC.
-- Hardware-wallet or encrypted-keystore signing rehearsal.
-- Exact gas estimate and deployer funding plan.
-- Production deployment and post-deployment verification scripts.
-- Blockscout source-verification rehearsal.
-- Final signed manifest and explicit owner approval immediately before broadcast.
+- [ ] Independent smart-contract audit/review against one tagged commit.
+- [ ] Remediation and focused re-review of every contract change.
+- [ ] Production RPC and fallback RPC.
+- [ ] Hardware-wallet or encrypted-keystore signing rehearsal.
+- [ ] Exact gas estimate and deployer funding plan.
+- [x] Fail-closed deployment manifest and constructor/nonce worksheet.
+- [x] Correct dependency-safe deployment and irreversible-binding order.
+- [ ] Production deployment and post-deployment verification scripts.
+- [ ] Blockscout source-verification rehearsal.
+- [ ] Final signed manifest and explicit owner approval immediately before broadcast.
 
 ## Stage 5 — capped mainnet canary
 

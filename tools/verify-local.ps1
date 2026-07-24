@@ -43,6 +43,10 @@ $npmCommand = Get-Command npm.cmd -ErrorAction SilentlyContinue
 if ($null -eq $npmCommand) {
     throw "npm.cmd was not found. Install Node.js 22 or newer."
 }
+$nodeCommand = Get-Command node -ErrorAction SilentlyContinue
+if ($null -eq $nodeCommand) {
+    throw "node was not found. Install Node.js 22 or newer."
+}
 
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 if ($manifest.network.chainId -ne 4663) {
@@ -61,6 +65,12 @@ if ($manifest.creationFee.feeBps -ne 300 -or
 }
 
 Write-Host "Manifest valid and deployment remains disabled."
+& $nodeCommand.Source --test (Join-Path $projectRoot "tools\deployment\test\manifest.test.mjs")
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& $nodeCommand.Source (Join-Path $projectRoot "tools\deployment\verify-manifest.mjs") `
+    (Join-Path $projectRoot "config\stage4-deployment-manifest.json")
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 & $forgePath --version
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 

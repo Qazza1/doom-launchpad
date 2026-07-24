@@ -10,14 +10,17 @@
     "enabled": false,
     "broadcast": false,
     "mainnetDeploymentApproved": false,
-    "reason": "Stage 3.1 audit-candidate rebuild is in progress. Mainnet broadcasting remains fail-closed until local and fork verification, static analysis, independent review, signed deployment inputs, operational preparation, and an explicit final approval."
+    "reason": "Stage 4 deployment preparation is in progress. Mainnet broadcasting remains fail-closed until independent review, remediation and focused re-review, signed deployment inputs, operational rehearsal, and explicit final approval immediately before broadcast."
   },
   "implementationStatus": {
     "stage1": "complete",
     "stage2": "implemented_and_locally_tested",
     "stage3": "preserved_at_git_tag_stage-3-baseline",
-    "stage3_1": "economics_and_security_rebuild_in_progress",
-    "stage4": "not_started",
+    "stage3_1": "complete_and_tagged_stage-3.1-audit-candidate",
+    "stage3_2": "complete_and_tagged_stage-3.2-rewards-ops",
+    "stage3_3": "complete_and_tagged_stage-3.3-keeper-monitoring",
+    "stage3_4": "complete_and_tagged_stage-3.4-indexer-public-ui",
+    "stage4": "deployment_preparation_in_progress",
     "productionReady": false
   },
   "roles": {

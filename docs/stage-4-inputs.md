@@ -1,6 +1,7 @@
 # Stage 4 inputs and owner checklist
 
-Stage 4 is not started. Nothing in this file authorizes a deployment.
+Stage 4 fail-closed preparation is in progress. Nothing in this file authorizes
+a deployment.
 
 ## What is needed from the project owner
 
@@ -44,13 +45,20 @@ created.
 
 The expected order is:
 
-1. `PositionLocker`
-2. `V3LiquidityManager`
-3. `DoomRewards`
-4. `DoomLaunchFactory`
-5. irreversible `V3LiquidityManager.bindFactory(factory)`
+1. `DoomRewards`
+2. `PositionLocker`
+3. `V3LiquidityManager`
+4. irreversible `PositionLocker.bindRegistrar(liquidityManager)`
+5. `DoomLaunchFactory`
+6. irreversible `V3LiquidityManager.bindFactory(factory)`
 
-The factory must remain paused after deployment. Source verification and every
-post-deployment assertion must pass before the operator considers resuming it.
-The first canary launch is a separate approval after deployment, not part of the
-deployment transaction sequence.
+`DoomRewards` must exist before `PositionLocker`: the locker constructor checks
+the rewards-vault bytecode and its configured WETH reward asset. The manager
+must exist before it can be irreversibly registered with the locker, and the
+locker registration must be complete before the factory constructor will
+accept the dependency graph.
+
+The factory must remain paused after deployment. Source verification, both
+irreversible bindings, and every post-deployment assertion must pass before the
+operator considers resuming it. The first canary launch is a separate approval
+after deployment, not part of the deployment transaction sequence.

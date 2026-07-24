@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "status": "draft_fail_closed",
+  "network": {
+    "name": "Robinhood Chain Mainnet",
+    "chainId": 4663,
+    "rpcEnvironmentVariable": "ROBINHOOD_RPC_URL",
+    "fallbackRpcEnvironmentVariable": "ROBINHOOD_FALLBACK_RPC_URL",
+    "explorer": "https://explorer.mainnet.chain.robinhood.com"
+  },
+  "source": {
+    "auditCandidateTag": "stage-3.1-audit-candidate",
+    "auditCandidateCommit": "3d1d28b274347b3e39c35ad33ea6a569644caed7",
+    "stage34ReleaseTag": "stage-3.4-indexer-public-ui",
+    "compiler": "0.8.36",
+    "foundry": "1.7.1",
+    "evmVersion": "cancun",
+    "viaIr": true
+  },
+  "safety": {
+    "enabled": false,
+    "broadcast": false,
+    "mainnetDeploymentApproved": false,
+    "finalOwnerApprovalRecorded": false,
+    "factoryMustRemainPaused": true
+  },
+  "independentReview": {
+    "reviewer": null,
+    "reportUri": null,
+    "reportSha256": null,
+    "reviewedCommit": null,
+    "allFindingsRemediated": false,
+    "focusedReReviewComplete": false
+  },
+  "roles": {
+    "deployer": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "operator": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "treasury": "0x9038C3AB7caE02a8aae730E705fdF7a15945eb7E",
+    "campaignManager": "0x4F81E3939232815e3C98B124A17BaC75304C82D8",
+    "emergencyGuardian": "0x3EeF0a7Ee9420a1035a4541582B384bc4405A439",
+    "approvedCreator": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F"
+  },
+  "dependencies": {
+    "nftCollection": "0xB1b37dca046d0e70D9F5de673202D69c7DEF9be6",
+    "excludedNftHolder": "0x9038C3AB7caE02a8aae730E705fdF7a15945eb7E",
+    "wrappedNative": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+    "uniswapV3Factory": "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
+    "nonfungiblePositionManager": "0x73991a25C818Bf1f1128dEAaB1492D45638DE0D3"
+  },
+  "deploymentOrder": [
+    "DoomRewards",
+    "PositionLocker",
+    "V3LiquidityManager",
+    "PositionLocker.bindRegistrar",
+    "DoomLaunchFactory",
+    "V3LiquidityManager.bindFactory"
+  ],
+  "noncePlan": {
+    "observedAtBlock": null,
+    "startingNonce": null,
+    "doomRewards": null,
+    "positionLocker": null,
+    "v3LiquidityManager": null,
+    "bindRegistrar": null,
+    "doomLaunchFactory": null,
+    "bindFactory": null
+  },
+  "transactions": {
+    "doomRewards": { "address": null, "txHash": null, "blockNumber": null, "gasUsed": null },
+    "positionLocker": { "address": null, "txHash": null, "blockNumber": null, "gasUsed": null },
+    "v3LiquidityManager": { "address": null, "txHash": null, "blockNumber": null, "gasUsed": null },
+    "bindRegistrar": { "txHash": null, "blockNumber": null, "gasUsed": null },
+    "doomLaunchFactory": { "address": null, "txHash": null, "blockNumber": null, "gasUsed": null },
+    "bindFactory": { "txHash": null, "blockNumber": null, "gasUsed": null }
+  },
+  "gasPlan": {
+    "simulatedAtBlock": null,
+    "simulatedGasPriceWei": null,
+    "totalEstimatedGas": null,
+    "fundingBufferBps": 2500,
+    "requiredDeployerBalanceWei": null
+  },
+  "verification": {
+    "constructorArgumentsVerified": false,
+    "runtimeBytecodeVerified": false,
+    "sourceVerifiedOnBlockscout": false,
+    "rolesVerified": false,
+    "dependenciesVerified": false,
+    "bindingsVerified": false,
+    "factoryPausedVerified": false,
+    "configurationHashesVerified": false,
+    "indexerConfigured": false,
+    "keeperConfigured": false
+  }
+}

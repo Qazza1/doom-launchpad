@@ -91,3 +91,9 @@ Stage 3.4 integrates the event schema into a separate read-only indexer branch
 and the static DoomStreak website. No launch transaction is enabled. See
 [`docs/indexer-public-ui.md`](docs/indexer-public-ui.md) for the reorg model,
 public API, direct-contract reads, and fail-closed deployment order.
+
+Stage 4 preparation adds a machine-checked fail-closed deployment manifest,
+dependency-safe constructor and nonce worksheet, and a one-transaction-at-a-time
+runbook. It does not add an authorized broadcast path. Start with
+[`docs/stage-4-preparation-validation.md`](docs/stage-4-preparation-validation.md)
+and [`docs/stage-4-deployment-runbook.md`](docs/stage-4-deployment-runbook.md).

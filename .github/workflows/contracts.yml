@@ -8,6 +8,19 @@ permissions:
   contents: read
 
 jobs:
+  deployment-preparation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Confirm Stage 4 manifest remains fail-closed
+        run: |
+          node --test tools/deployment/test/*.test.mjs
+          node tools/deployment/verify-manifest.mjs config/stage4-deployment-manifest.json
+
   keeper-monitoring:
     runs-on: ubuntu-latest
     timeout-minutes: 10
