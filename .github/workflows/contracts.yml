@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: v1.7.1
@@ -20,8 +20,8 @@ jobs:
         run: |
           forge install --no-git OpenZeppelin/openzeppelin-contracts@v5.6.1
           forge install --no-git foundry-rs/forge-std@v1.16.1
-          forge install --no-git Uniswap/v3-core@v1.0.0
-          forge install --no-git Uniswap/v3-periphery@v1.0.0
+          forge install --no-git uniswap-v3-core=Uniswap/v3-core@v1.0.0
+          forge install --no-git uniswap-v3-periphery=Uniswap/v3-periphery@v1.0.0
       - run: forge fmt --check
       - name: Build and report contract sizes
         run: |
@@ -36,7 +36,7 @@ jobs:
           fi
       - run: forge test -vv
       - run: bash tools/check-sizes.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: foundry-build-log
@@ -47,22 +47,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: v1.7.1
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
       - name: Install pinned Solidity dependencies
         run: |
           forge install --no-git OpenZeppelin/openzeppelin-contracts@v5.6.1
           forge install --no-git foundry-rs/forge-std@v1.16.1
-          forge install --no-git Uniswap/v3-core@v1.0.0
-          forge install --no-git Uniswap/v3-periphery@v1.0.0
+          forge install --no-git uniswap-v3-core=Uniswap/v3-core@v1.0.0
+          forge install --no-git uniswap-v3-periphery=Uniswap/v3-periphery@v1.0.0
       - name: Slither 0.11.5
         run: |
           python -m pip install slither-analyzer==0.11.5
@@ -78,7 +78,7 @@ jobs:
           fi
       - name: Aderyn 0.6.8
         run: npx --yes @cyfrin/aderyn@0.6.8 .
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: static-analysis-reports

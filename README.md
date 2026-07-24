@@ -36,8 +36,8 @@ Foundry 1.7.1 and Solidity 0.8.36 are pinned. Dependencies are:
 ```bash
 forge install --no-git OpenZeppelin/openzeppelin-contracts@v5.6.1
 forge install --no-git foundry-rs/forge-std@v1.16.1
-forge install --no-git Uniswap/v3-core@v1.0.0
-forge install --no-git Uniswap/v3-periphery@v1.0.0
+forge install --no-git uniswap-v3-core=Uniswap/v3-core@v1.0.0
+forge install --no-git uniswap-v3-periphery=Uniswap/v3-periphery@v1.0.0
 forge fmt --check
 forge build --sizes
 forge test -vv
