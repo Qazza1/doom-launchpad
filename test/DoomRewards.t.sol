@@ -29,6 +29,10 @@ contract DoomRewardsTest is Test {
         return rewards.rewardLeaf(campaignId, account, amount);
     }
 
+    function _hashPair(bytes32 left, bytes32 right) internal pure returns (bytes32) {
+        return left < right ? keccak256(abi.encodePacked(left, right)) : keccak256(abi.encodePacked(right, left));
+    }
+
     function _createCampaign(address account, uint256 amount) internal returns (uint256) {
         uint256 campaignId = rewards.nextCampaignId();
         bytes32 root = _leaf(campaignId, account, amount);
@@ -45,6 +49,32 @@ contract DoomRewardsTest is Test {
 
         vm.expectPartialRevert(DoomRewards.AlreadyClaimed.selector);
         rewards.claim(campaignId, holder, REWARD, proof);
+    }
+
+    function testOpenZeppelinStandardMerkleTreeTwoLeafRoundTrip() external {
+        address secondHolder = makeAddr("secondNftHolder");
+        uint256 holderAmount = 666 ether;
+        uint256 secondAmount = 333 ether;
+        uint256 campaignId = rewards.nextCampaignId();
+        bytes32 holderLeaf = _leaf(campaignId, holder, holderAmount);
+        bytes32 secondLeaf = _leaf(campaignId, secondHolder, secondAmount);
+        bytes32 root = _hashPair(holderLeaf, secondLeaf);
+
+        vm.prank(manager);
+        rewards.createCampaign(address(token), root, holderAmount + secondAmount, uint64(block.timestamp + 7 days));
+
+        bytes32[] memory holderProof = new bytes32[](1);
+        holderProof[0] = secondLeaf;
+        rewards.claim(campaignId, holder, holderAmount, holderProof);
+
+        bytes32[] memory secondProof = new bytes32[](1);
+        secondProof[0] = holderLeaf;
+        rewards.claim(campaignId, secondHolder, secondAmount, secondProof);
+
+        assertEq(token.balanceOf(holder), holderAmount);
+        assertEq(token.balanceOf(secondHolder), secondAmount);
+        assertEq(rewards.reservedRewards(address(token)), 0);
+        assertEq(rewards.availableRewards(address(token)), 1 ether);
     }
 
     function testExcludedTreasuryCannotClaimEvenIfIncludedInRoot() external {

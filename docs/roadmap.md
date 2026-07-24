@@ -66,14 +66,16 @@ remain open. No deployment.
 
 ## Stage 3.2 — rewards operations
 
-Status: planned after the contract interface freezes.
+Status: implementation complete; local validation is green. GitHub CI and the
+tagged handoff remain.
 
-- Deterministic NFT snapshot and Merkle-root generator.
-- Round-trip proof tests against the exact onchain domain-separated leaf.
-- Public campaign manifest containing chain ID, block number, NFT address,
+- [x] Deterministic NFT snapshot and Merkle-root generator.
+- [x] Round-trip proof tests against the exact onchain domain-separated leaf.
+- [x] Public campaign manifest containing chain ID, block number, NFT address,
   excluded holder, reward asset, vault, campaign ID, root, and allocations.
-- Reproducible independent root-verification command.
-- Zero-NFT-supply and treasury-exclusion operational tests.
+- [x] Reproducible independent root-verification command.
+- [x] Zero-NFT-supply and treasury-exclusion operational tests.
+- [ ] Green GitHub CI and Stage 3.2 tagged handoff.
 
 ## Stage 3.3 — keeper and monitoring
 

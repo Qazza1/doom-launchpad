@@ -7,3 +7,5 @@ broadcast/
 .tools/
 slither-report.json
 report.md
+node_modules/
+tools/rewards/output/

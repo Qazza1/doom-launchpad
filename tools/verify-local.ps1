@@ -39,6 +39,11 @@ if ($null -ne $forgeCommand) {
     throw "Foundry was not found. Install Foundry or restore the workspace-local v1.7.1 binary."
 }
 
+$npmCommand = Get-Command npm.cmd -ErrorAction SilentlyContinue
+if ($null -eq $npmCommand) {
+    throw "npm.cmd was not found. Install Node.js 22 or newer."
+}
+
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 if ($manifest.network.chainId -ne 4663) {
     throw "Unexpected chain ID in mainnet canary manifest."
@@ -65,6 +70,9 @@ try {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     & $forgePath test -vv
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    & $npmCommand.Source test --prefix (Join-Path $projectRoot "tools\rewards")
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     Assert-ContractSize $forgePath "DoomLaunchFactory" 23500

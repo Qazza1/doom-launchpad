@@ -1,0 +1,11 @@
+{
+  "schema": "doom.nft-snapshot-config.v1",
+  "chainId": "4663",
+  "nftCollection": "0xb1b37dca046d0e70d9f5de673202d69c7def9be6",
+  "excludedHolder": "0x9038c3ab7cae02a8aae730e705fdF7a15945eb7e",
+  "fromBlock": "REPLACE_WITH_COLLECTION_DEPLOYMENT_BLOCK",
+  "snapshotBlock": "REPLACE_WITH_FINALIZED_SNAPSHOT_BLOCK",
+  "logChunkSize": "2000",
+  "verifyBalances": true,
+  "rpcUrlEnvironmentVariable": "ROBINHOOD_RPC_URL"
+}

@@ -1,0 +1,25 @@
+{
+  "schema": "doom.nft-ownership-snapshot.v1",
+  "chainId": "4663",
+  "snapshotBlock": "123456",
+  "observedHeadBlock": "123520",
+  "confirmationCount": "64",
+  "snapshotBlockHash": "0x1111111111111111111111111111111111111111111111111111111111111111",
+  "nftCollection": "0xb1b37dca046d0e70d9f5de673202d69c7def9be6",
+  "excludedHolder": "0x9038c3ab7cae02a8aae730e705fdF7a15945eb7e",
+  "reportedTotalSupply": "4",
+  "holdings": [
+    {
+      "account": "0x1111111111111111111111111111111111111111",
+      "tokenIds": ["1", "4"]
+    },
+    {
+      "account": "0x9038c3ab7cae02a8aae730e705fdF7a15945eb7e",
+      "tokenIds": ["3"]
+    },
+    {
+      "account": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "tokenIds": ["2"]
+    }
+  ]
+}

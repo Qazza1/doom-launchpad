@@ -26,8 +26,9 @@ The authoritative product rules and delivery gates are in
 ## Version-control boundary
 
 The pre-redesign Stage 3 implementation is preserved at commit `3f777fc` and
-annotated tag `stage-3-baseline`. Current work belongs to the
-`stage3.1-audit-candidate` branch until all assurance gates pass.
+annotated tag `stage-3-baseline`. The contract audit candidate is preserved at
+tag `stage-3.1-audit-candidate`. Rewards operations are developed on the
+`stage3.2-rewards-ops` branch.
 
 ## Local verification
 
@@ -46,6 +47,21 @@ forge test -vv
 On Windows, `tools/verify-local.ps1` runs the fail-closed manifest check and
 the local suite. Add `-RunRobinhoodForkTests` for the two opt-in read-only fork
 tests.
+
+## Rewards operations
+
+Stage 3.2 adds a deterministic ERC-721 snapshot collector, per-NFT allocation
+generator, OpenZeppelin-compatible proof builder, and independent verifier under
+`tools/rewards`. It never signs or broadcasts:
+
+```bash
+npm ci --prefix tools/rewards
+npm test --prefix tools/rewards
+```
+
+See [`docs/rewards-operations.md`](docs/rewards-operations.md) and the
+[`docs/campaign-manager-runbook.md`](docs/campaign-manager-runbook.md). While
+the NFT supply is zero, the tools deliberately produce no campaign root.
 
 ## Deployment boundary
 

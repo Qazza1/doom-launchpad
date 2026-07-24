@@ -1,0 +1,9 @@
+{
+  "schema": "doom.reward-campaign-config.v1",
+  "chainId": "4663",
+  "doomRewards": "0x2222222222222222222222222222222222222222",
+  "campaignId": "1",
+  "rewardToken": "0x3333333333333333333333333333333333333333",
+  "totalReward": "1000",
+  "claimDeadline": "1800000000"
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@doomstreak/rewards-operations",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "generate": "node generate.mjs",
+    "snapshot": "node snapshot.mjs",
+    "test": "node --test",
+    "verify": "node verify.mjs"
+  },
+  "dependencies": {
+    "@openzeppelin/merkle-tree": "1.0.8"
+  },
+  "overrides": {
+    "uuid": "11.1.1"
+  }
+}
