@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "network": {
+    "name": "Robinhood Chain Mainnet",
+    "chainId": 4663,
+    "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+    "explorerUrl": "https://explorer.mainnet.chain.robinhood.com"
+  },
+  "deploymentSafety": {
+    "enabled": false,
+    "broadcast": false,
+    "mainnetDeploymentApproved": false,
+    "reason": "Stage 3 implementation, fork tests, and non-broadcast rehearsal are complete. Mainnet broadcasting remains fail-closed until independent review, signed deployment inputs, operational preparation, and an explicit final approval."
+  },
+  "implementationStatus": {
+    "stage1": "complete",
+    "stage2": "implemented_and_locally_tested",
+    "stage3": "implemented_fork_tested_and_rehearsed",
+    "stage4": "not_started",
+    "productionReady": false
+  },
+  "roles": {
+    "deployer": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "operator": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "treasury": "0x9038C3AB7caE02a8aae730E705fdF7a15945eb7E",
+    "campaignManager": "0x4F81E3939232815e3C98B124A17BaC75304C82D8",
+    "emergencyGuardian": "0x3EeF0a7Ee9420a1035a4541582B384bc4405A439"
+  },
+  "nftRewards": {
+    "collection": "0xB1b37dca046d0e70D9F5de673202D69c7DEF9be6",
+    "distribution": "per_nft_held",
+    "excludedHolder": "0x9038C3AB7caE02a8aae730E705fdF7a15945eb7E",
+    "feeShareBps": 5000,
+    "rewardAsset": "WETH",
+    "unclaimedTreatment": "recycle_inside_doom_rewards",
+    "observedTotalSupplyAtStage1": "0",
+    "zeroSupplyExpected": true,
+    "zeroSupplyConfirmation": "confirmed_not_minted_yet"
+  },
+  "tokenEconomics": {
+    "creatorLiquidBps": 1000,
+    "liquidityBps": 4000,
+    "gmEscrowBps": 5000,
+    "failedGmTreatment": "entire_escrow_to_doom_rewards"
+  },
+  "gmCommitment": {
+    "requiredCheckIns": 3,
+    "cadenceSeconds": 86400,
+    "gracePeriodSeconds": 43200
+  },
+  "emergencyPolicy": {
+    "factoryStartsPaused": true,
+    "guardianCanPauseNewLaunches": true,
+    "guardianCanResumeNewLaunches": false,
+    "operatorCanPauseNewLaunches": true,
+    "operatorCanResumeNewLaunches": true,
+    "existingEscrowsClaimsAndLpLocksUnaffected": true
+  },
+  "creationFee": {
+    "feeBps": 1000,
+    "calculation": "10_percent_on_top_of_creator_native_liquidity",
+    "treasuryShareBps": 5000,
+    "nftRewardsShareBps": 5000,
+    "nftRewardsAsset": "WETH"
+  },
+  "liquidity": {
+    "adapter": "UniswapV3",
+    "adapterStatus": "implemented_and_robinhood_mainnet_fork_tested",
+    "poolFee": 3000,
+    "tickSpacing": 60,
+    "tickRange": "full_range_-887220_to_887220",
+    "minimumTokenAndNativeUtilizationPpm": 999999,
+    "initialPriceAuthority": "factory_computed_from_fixed_token_and_native_amounts",
+    "lpLockSeconds": 31536000,
+    "lpBeneficiary": "creator",
+    "weth": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+    "factory": "0x1f7d7550b1b028f7571e69a784071f0205fd2efa",
+    "nonfungiblePositionManager": "0x73991a25c818bf1f1128deaab1492d45638de0d3",
+    "swapRouter02": "0xcaf681a66d020601342297493863e78c959e5cb2",
+    "quoterV2": "0x33e885ed0ec9bf04ecfb19341582aadcb4c8a9e7",
+    "permit2": "0x000000000022D473030F116dDEE9F6B43aC78BA3"
+  },
+  "stage3Evidence": {
+    "validatedDateUtc": "2026-07-23",
+    "foundryVersion": "1.7.1",
+    "solidityVersion": "0.8.36",
+    "evmVersion": "cancun",
+    "localTestsPassed": 62,
+    "forkTestsPassed": 2,
+    "forkTestsFailed": 0,
+    "factoryRuntimeBytes": 19544,
+    "factoryRuntimeMarginBytes": 5032,
+    "liquidityManagerRuntimeBytes": 6128,
+    "uniswapCorePackage": "@uniswap/v3-core@1.0.0",
+    "uniswapPeripheryPackage": "@uniswap/v3-periphery@1.0.0",
+    "officialRobinhoodContractsSource": "https://docs.robinhood.com/chain/contracts/",
+    "officialUniswapDeploymentsSource": "https://developers.uniswap.org/docs/protocols/v3/deployments/v3-robinhood-chain-deployments",
+    "deploymentRehearsal": "passed_non_broadcast_robinhood_mainnet_fork"
+  },
+  "pilotLimits": {
+    "approvedCreatorOnly": true,
+    "approvedCreator": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "maxLaunches": 3,
+    "maxNativeLiquidityPerLaunchWei": "10000000000000000",
+    "maxNativeLiquidityGlobalWei": "30000000000000000"
+  },
+  "rewardCampaigns": {
+    "distributionProof": "merkle_root_from_nft_ownership_snapshot",
+    "minimumClaimWindowSeconds": 604800,
+    "excludedHolderEnforcedOnchain": true,
+    "zeroEligibleSupplyTreatment": "retain_as_available_rewards",
+    "campaignManagerTrust": "can_commit_snapshot_root_and_allocations; independently verify before publishing"
+  }
+}

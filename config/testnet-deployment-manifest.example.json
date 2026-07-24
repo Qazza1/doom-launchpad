@@ -1,0 +1,66 @@
+{
+  "status": "NOT_APPROVED",
+  "environment": "robinhood-chain-testnet-only",
+  "chain": {
+    "chainId": "<VERIFY>",
+    "evmVersion": "<VERIFY_SUPPORTED_HARDFORK>",
+    "rpcUrlReference": "<SECRET_MANAGER_OR_ENV_REFERENCE>",
+    "explorerBaseUrl": "<VERIFY>",
+    "confirmationDepth": "<APPROVE>"
+  },
+  "v3Deployment": {
+    "name": "<VERIFY>",
+    "sourceRepository": "<VERIFY>",
+    "sourceCommit": "<VERIFY>",
+    "wrappedNative": "<VERIFY>",
+    "factory": "<VERIFY>",
+    "nonfungiblePositionManager": "<VERIFY>",
+    "swapRouter": "<VERIFY>",
+    "quoter": "<VERIFY>",
+    "poolInitCodeHash": "<VERIFY_IF_APPLICABLE>",
+    "supportedFeeTiers": []
+  },
+  "doomLaunchpad": {
+    "positionLocker": "<STAGE_1_DEPLOYMENT>",
+    "reviewedLiquidityManager": "<STAGE_2_DEPLOYMENT>",
+    "doomRewards": "<STAGE_3_DEPLOYMENT>",
+    "doomLaunchFactory": "<STAGE_3_DEPLOYMENT>",
+    "configurationHash": "<READ_ON_CHAIN_AND_VERIFY>"
+  },
+  "roles": {
+    "operator": "<APPROVE>",
+    "emergencyGuardian": "<APPROVE>",
+    "approvedCreator": "<APPROVE>",
+    "treasury": "<APPROVE>",
+    "campaignManager": "<APPROVE>",
+    "nftCollection": "<VERIFY>",
+    "excludedNftHolder": "<APPROVE>"
+  },
+  "parameters": {
+    "creatorLiquidBps": 1000,
+    "liquidityBps": 4000,
+    "gmEscrowBps": 5000,
+    "creationFeeBps": 1000,
+    "nftRewardFeeShareBps": 5000,
+    "requiredGmCheckIns": 3,
+    "gmCadenceSeconds": 86400,
+    "gmGracePeriodSeconds": 43200,
+    "lpLockSeconds": 31536000,
+    "poolFee": 3000,
+    "tickSpacing": 60,
+    "minimumClaimWindowSeconds": 604800,
+    "maxLaunches": 3,
+    "maxNativeLiquidityPerLaunchWei": "10000000000000000",
+    "maxNativeLiquidityGlobalWei": "30000000000000000"
+  },
+  "build": {
+    "foundryVersion": "<PIN>",
+    "solcVersion": "0.8.36",
+    "openzeppelinContracts": "v5.6.1",
+    "forgeStd": "v1.16.1",
+    "evmVersion": "cancun",
+    "gitCommit": "<PIN>",
+    "sourceTreeSha256": "<GENERATE_AFTER_REVIEW>"
+  },
+  "approvals": []
+}

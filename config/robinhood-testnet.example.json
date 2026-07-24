@@ -1,0 +1,41 @@
+{
+  "status": "BLOCKED_UNTIL_VERIFIED",
+  "chainId": "<VERIFY_TESTNET_CHAIN_ID>",
+  "rpcUrlEnv": "ROBINHOOD_TESTNET_RPC_URL",
+  "explorerBaseUrl": "<VERIFY_TESTNET_EXPLORER>",
+  "dependencies": {
+    "wrappedNative": "<VERIFY_BEFORE_USE>",
+    "v3Factory": "<VERIFY_BEFORE_USE>",
+    "nonfungiblePositionManager": "<VERIFY_BEFORE_USE>",
+    "positionLocker": "<DEPLOY_STAGE_1_AND_VERIFY>",
+    "reviewedV3LiquidityManager": "<DEPLOY_ONLY_AFTER_V3_REVIEW>",
+    "swapRouter": "<VERIFY_BEFORE_USE>",
+    "quoter": "<VERIFY_BEFORE_USE>",
+    "deploymentName": "<VERIFY_EXACT_V3_COMPATIBLE_DEPLOYMENT>",
+    "sourceCommit": "<VERIFY_SOURCE_COMMIT>",
+    "poolInitCodeHash": "<VERIFY_IF_APPLICABLE>"
+  },
+  "supportedFeeTiers": [],
+  "roles": {
+    "treasuryMultisig": "<TESTNET_MULTISIG_REQUIRED>",
+    "campaignManagerMultisig": "<TESTNET_MULTISIG_REQUIRED>",
+    "unclaimedCommunityRecipient": "<APPROVE_AND_VERIFY>",
+    "lpBeneficiaryPolicy": "<UNRESOLVED>"
+  },
+  "productParameters": {
+    "launchFeeWei": "<UNRESOLVED>",
+    "minimumClaimWindowSeconds": "<UNRESOLVED>",
+    "minimumLpLockSeconds": "<UNRESOLVED>",
+    "maximumLpLockSeconds": "<UNRESOLVED>",
+    "defaultAllocationsBps": {
+      "creatorLiquid": "<UNRESOLVED>",
+      "liquidity": "<UNRESOLVED>",
+      "gmEscrow": "<UNRESOLVED>"
+    },
+    "defaultCommitment": {
+      "requiredCheckIns": "<UNRESOLVED>",
+      "cadenceSeconds": "<UNRESOLVED>",
+      "gracePeriodSeconds": "<UNRESOLVED>"
+    }
+  }
+}
