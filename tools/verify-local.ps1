@@ -75,6 +75,9 @@ try {
     & $npmCommand.Source test --prefix (Join-Path $projectRoot "tools\rewards")
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+    & $npmCommand.Source test --prefix (Join-Path $projectRoot "tools\keeper")
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
     Assert-ContractSize $forgePath "DoomLaunchFactory" 23500
     Assert-ContractSize $forgePath "V3LiquidityManager" 12000
     Assert-ContractSize $forgePath "PositionLocker" 12000

@@ -63,6 +63,21 @@ See [`docs/rewards-operations.md`](docs/rewards-operations.md) and the
 [`docs/campaign-manager-runbook.md`](docs/campaign-manager-runbook.md). While
 the NFT supply is zero, the tools deliberately produce no campaign root.
 
+## Keeper monitoring
+
+Stage 3.3 adds a read-only Robinhood monitor with duplicate-safe Telegram
+alerts. It holds no private key and has no transaction-broadcast path:
+
+```bash
+npm ci --prefix tools/keeper
+npm test --prefix tools/keeper
+```
+
+First-time users should follow
+[`docs/telegram-keeper-setup.md`](docs/telegram-keeper-setup.md). Runtime rules,
+failure behavior, and deployment boundaries are documented in
+[`docs/keeper-operations.md`](docs/keeper-operations.md).
+
 ## Deployment boundary
 
 `script/DeployRobinhoodCanaryRehearsal.s.sol` deliberately contains no

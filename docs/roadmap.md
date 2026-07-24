@@ -78,14 +78,18 @@ Status: complete. Local, fork, and GitHub Linux validation are green.
 
 ## Stage 3.3 — keeper and monitoring
 
-Status: planned.
+Status: implementation complete; local Telegram delivery confirmation and
+post-deployment address configuration remain.
 
-- Creator reminders before each GM window and deadline.
-- Permissionless default finalization after missed deadlines.
-- Permissionless LP-fee collection monitoring.
-- Factory pause, dependency wiring, pool, locker, and reward-balance alerts.
-- No keeper action may be required for asset safety; delayed execution affects
+- [x] Creator reminders before each GM window and deadline.
+- [x] Permissionless default-finalization review after missed deadlines.
+- [x] Permissionless LP-fee collection monitoring.
+- [x] Factory pause, dependency wiring, pool, locker, and reward-vault alerts.
+- [x] Primary/fallback RPC handling and duplicate/cooldown-safe Telegram alerts.
+- [x] No keeper action is required for asset safety; delayed execution affects
   freshness only.
+- [ ] Owner confirms receipt of the local Telegram setup alert.
+- [ ] Fill and verify deployed addresses after Stage 4 deployment.
 
 ## Stage 3.4 — indexer, API, and public UI
 

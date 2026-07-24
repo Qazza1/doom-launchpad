@@ -1,0 +1,17 @@
+{
+  "name": "@doomstreak/keeper-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "monitor": "node monitor.mjs",
+    "telegram:setup": "node telegram-setup.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "viem": "2.55.8"
+  }
+}

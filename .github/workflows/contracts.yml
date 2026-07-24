@@ -8,6 +8,25 @@ permissions:
   contents: read
 
 jobs:
+  keeper-monitoring:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tools/keeper
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: tools/keeper/package-lock.json
+      - run: npm ci
+      - run: npm audit --audit-level=low
+      - run: npm test
+      - name: Confirm disabled example is fail-closed
+        run: node monitor.mjs --config ../../config/keeper.example.json --dry-run
+
   rewards-operations:
     runs-on: ubuntu-latest
     timeout-minutes: 10
