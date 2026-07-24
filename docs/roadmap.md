@@ -93,8 +93,9 @@ address configuration remains a Stage 4 operation.
 
 ## Stage 3.4 — indexer, API, and public UI
 
-Status: implementation complete locally; backend branch, website deployment,
-and CI handoff remain open. No launch transaction is enabled.
+Status: read-only production rollout complete. The existing analytics backend
+now exposes the launchpad API, the public website consumes it, and both remain
+fail-closed before contract deployment. No launch transaction is enabled.
 
 - [x] Reorg-aware event ingestion, rewind, and derived-state rebuild.
 - [x] Idempotent raw event storage by chain, transaction hash, and log index.
@@ -106,9 +107,9 @@ and CI handoff remain open. No launch transaction is enabled.
 - [x] Direct-contract interaction documentation so the website is not the only door.
 - [x] Launch writing remains disabled until separate Stage 4/5 approval.
 - [x] Push the indexer branch and add a deterministic Node CI workflow.
-- [ ] Obtain and record the green indexer CI run.
-- [ ] Deploy the read-only indexer with no factory configuration.
-- [ ] Deploy the public website after production API validation.
+- [x] Obtain and record the green indexer CI run.
+- [x] Deploy the read-only indexer with no factory configuration.
+- [x] Deploy the public website after production API validation.
 - [ ] Fill verified addresses and deployment block only after Stage 4.
 
 ## Stage 4 — independent review and deployment preparation
@@ -134,3 +135,54 @@ Status: blocked by Stage 4.
 - Separately approve factory resume.
 - Execute at most three 0.01 ETH launches from the approved creator.
 - Review each launch before permitting the next one.
+
+## Stage 6 — launcher-first product release
+
+Status: product direction frozen; implementation and live transactions are
+blocked until the Stage 5 canary passes and the owner gives separate production
+approval.
+
+- Make the memecoin launchpad the default DoomStreak homepage.
+- Replace the mixed commitment-collection page with one focused coin-launch
+  journey; keep the existing NFT game prominent in the primary navigation.
+- Use a short guided flow:
+  1. Upload token image.
+  2. Enter name, ticker, description, and optional social links.
+  3. Review fixed supply allocation, native liquidity, creation fee, permanent
+     LP lock, three GM deadlines, and default routing.
+  4. Connect/switch the wallet, simulate, review gas, and explicitly confirm.
+- Upload and pin metadata through the application. Do not require creators to
+  understand or paste an IPFS base URI.
+- Do not ask creators for a treasury address, arbitrary streak duration, daily
+  fee, token allocation, or other values frozen by launchpad economics.
+- Clearly label immutable inputs and show the exact token, WETH, and fee routing
+  before signature.
+- After launch, open a shareable token page immediately and list the token in
+  New/Live launches after the required confirmations.
+- Put commitment state, next GM deadline, permanent LP proof, creator history,
+  risk context, freshness, and confidence on every launch page.
+- Provide honest pending, reverted, indexing, and partial-data states. Never
+  imply that a submitted transaction is a completed launch.
+- Keep the interface terminal-like and credible; reserve the playful DoomStreak
+  voice for status labels, empty states, and celebrations.
+- Move the legacy NFT commitment-collection launcher into a separate product
+  route or retire it from the memecoin creation path.
+
+## Stage 7 — analytics v2 and NFT-gated advanced tools
+
+Status: planned after the launcher-first release.
+
+- Reorganize analytics around decisions: New, Trending, Graduating, High Risk,
+  Creator Reputation, Watchlist Alerts, and Launchpad Benchmarks.
+- Preserve one consistent token-detail page with risk, liquidity, volume,
+  holders, creator history, launchpad, permanent LP status, score freshness,
+  confidence, and a shareable URL.
+- Add useful watchlist alerts such as creator launched again, liquidity fell,
+  commitment defaulted, or risk score changed.
+- Keep essential launch and risk information public.
+- Introduce NFT-holder access only for clearly labelled advanced analytics,
+  exports, deeper wallet graphs, or faster alerts after ownership and reward
+  operations are proven.
+- Measure data freshness, API completeness, creation-flow completion, failed
+  simulations, launches, GM survival, and repeat creator usage before expanding
+  the feature set.
