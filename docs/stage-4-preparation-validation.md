@@ -30,6 +30,9 @@ wallet was loaded. No transaction was signed or broadcast.
   - approved configuration non-broadcast deployment rehearsal;
   - canonical V3 launch and permanent-lock compatibility.
 - Runtime bytecode remains within all frozen size budgets.
+- GitHub Actions deployment preparation, Foundry, Slither/Aderyn, rewards, and
+  keeper jobs passed:
+  `https://github.com/Qazza1/doom-launchpad/actions/runs/30121596609`.
 
 ## Still blocking deployment
 
