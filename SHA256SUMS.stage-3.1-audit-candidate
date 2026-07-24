@@ -1,8 +1,8 @@
-6b10e72723c4ed30b00b57b9f45ac2484ed643113783b01691d1ea81b6e21c14  ./.gitattributes
+af37fb0ada13637c83d68b59696a3b872704758a4cca299357b70fd3224e8e60  ./.gitattributes
 a2a4b53cdffadbb05e47224757d403d348db56f405579e987379c8adb003a88d  ./.github/workflows/contracts.yml
-c56a135ad55f0dea72112a3c009029ae487d86574d6a136319a264cacd2e043a  ./.gitignore
+bce2988caaedb6eca01409cffad3d70e041e4b1a65ca565f798347771d6fa21c  ./.gitignore
 5891f77066fab8effb3a45b2373a743cab3f8ae87b3125767d706cbcbaac0e23  ./config/robinhood-mainnet-canary.decisions.json
-79f4cd2f574b4aeaabad03483ae94c4fc9b0fe37807d19b4aa1c59d74823ba4f  ./config/testnet.env.example
+3bb0a7558259dd61a2203bbbe5342c31939fa4114fe3bcfc7fe319fc9b782c70  ./config/testnet.env.example
 b07c3758ef6aebd21a35ac15e5189800222103437c277e4d72dab23627c1baa3  ./docs/architecture.md
 d8a0b8a6462117b7784ed7f737a0a98a50a4085351859a2c10395f33ae022868  ./docs/audit-checklist.md
 8e2acbdd63cef191dfb637f8178cef8aa2c11520644833a73fb99d58f4fca85b  ./docs/campaign-manager-runbook.md
@@ -21,11 +21,11 @@ b50616883d08808cac98824ddf89ee4d4818f713551c935b504203ec0b0f73c3  ./docs/stage-3
 fafdddd37751bc2e395c5b3316937efc6e6cab01b2aead58e1fca1845209b8e8  ./docs/testnet-deployment-plan.md
 63cb9847869cb888f0ba10b2ef19fcba028ac98f53c455d619ee4f783d5738d6  ./docs/threat-model.md
 1e59a29610438ccee99a4b7d4749f2a6b81eb7ecb1b7137048e52bd070e7db0c  ./docs/v3-address-request.md
-be29af9d9ce31b043e67ad9731a85a5c25adb18a8823025779f0c0649efee2f8  ./foundry.toml
+dab1be5eb4a64dc4e8834671c95699c147013d44bb54df25dc18e356f699708e  ./foundry.toml
 79dbce295b680f59ddbd7c29ae4fe3f44c8ad8c702a473aea061e46bceadac50  ./integration/indexer/doom-launchpad-events.json
-c715fa5fc24bfa473e5b3888de03162ef8c26851c35ac5fae26fafbfb624857f  ./integration/static/doom-launchpad-config.example.js
+e712b2746874127c805e95747bc004ce3749e6bb99d0c7ff2d732de7c7dedad3  ./integration/static/doom-launchpad-config.example.js
 8801626aee7421a2e1bd412bc75450ede1e0e21d7f670ee4a32bc3ef1048196e  ./README.md
-217eb083ac383311492a64e915ebffa36152238b0d660a3c4f7f47f9300c2b91  ./remappings.txt
+4c5e25bf52a50a985b3b834049dfe589c0e2c4484792dc7072236dc6d091e35c  ./remappings.txt
 bb3f374687c1bba90127cdd40aac85f14a8fb32d8eceab97897b8e907a4427f0  ./script/DeployRobinhoodCanaryRehearsal.s.sol
 1c8a6778806642786a81dc1ae8e5ca78b6af9b728f705d83c943b9c15e63c594  ./script/VerifyRobinhoodCanary.s.sol
 c0b525b455f371e17c11a75c40449471acc3e91866809e317332ca474b4b5e19  ./SHA256SUMS.stage-3-baseline
@@ -58,4 +58,4 @@ af48fc388dffaf4f4848b6daa95a88912daf73e4ce42298d0cf7e43c8151ab62  ./test/Positio
 8a0e7ec0fe8156e158738e321b92b8a027fe8b3a2845d43770bd4a3cb0b879d9  ./test/V3LiquidityManager.t.sol
 f44035f191a5ace3a51d937d80ecd00ae8cf5f30927a861c7ac6ddc8295dce3e  ./tools/check.sh
 19e850ff6c184075733775b043cc1e5a1cfa67ff1f5ed2a5d9d7e5622538b993  ./tools/check-sizes.sh
-d4dab96e81e74b3effbc896e40788472b64fe9f82f035e1246b562ee00cf4493  ./tools/verify-local.ps1
+2775505cb285c90aa4143f4e18f59830875092645442f8d0a1563d0c20491ce6  ./tools/verify-local.ps1
