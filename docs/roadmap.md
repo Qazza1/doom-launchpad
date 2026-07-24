@@ -66,8 +66,7 @@ remain open. No deployment.
 
 ## Stage 3.2 — rewards operations
 
-Status: implementation complete; local validation is green. GitHub CI and the
-tagged handoff remain.
+Status: complete. Local, fork, and GitHub Linux validation are green.
 
 - [x] Deterministic NFT snapshot and Merkle-root generator.
 - [x] Round-trip proof tests against the exact onchain domain-separated leaf.
@@ -75,7 +74,7 @@ tagged handoff remain.
   excluded holder, reward asset, vault, campaign ID, root, and allocations.
 - [x] Reproducible independent root-verification command.
 - [x] Zero-NFT-supply and treasury-exclusion operational tests.
-- [ ] Green GitHub CI and Stage 3.2 tagged handoff.
+- [x] Green GitHub CI and Stage 3.2 tagged handoff.
 
 ## Stage 3.3 — keeper and monitoring
 

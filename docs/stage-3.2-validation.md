@@ -11,6 +11,8 @@ Validation date: 2026-07-24. No transaction was signed or broadcast.
 - OpenZeppelin Standard Merkle Tree fixed root:
   `0xd64f965899b8c4be141f803c1d1cddfaa112051290d0f63f460af5f33ebefa67`.
 - `npm audit --audit-level=low`: zero known vulnerabilities.
+- GitHub Actions rewards operations, Foundry, Slither, and Aderyn jobs passed:
+  `https://github.com/Qazza1/doom-launchpad/actions/runs/30081737788`.
 - Runtime sizes remain within the audit-candidate budgets:
   - `DoomLaunchFactory`: 20,574 bytes;
   - `V3LiquidityManager`: 6,520 bytes;
@@ -31,7 +33,8 @@ exposes the `totalSupply()` surface required by the snapshot collector. It is
 not a campaign snapshot; a future campaign must use its own finalized block,
 block hash, reconstructed ownership, and confirmation count.
 
-## Remaining gate
+## Open assurance gates
 
-GitHub Linux CI must pass on the exact Stage 3.2 commit before the branch is
-tagged for handoff. Mainnet deployment remains disabled.
+Independent contract review, signer preparation, source verification, exact gas
+funding, production RPC/fallback inputs, and explicit deployment approval remain
+required under Stage 4. Mainnet deployment remains disabled.
