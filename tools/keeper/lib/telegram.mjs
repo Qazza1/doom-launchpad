@@ -2,6 +2,9 @@ const BOT_TOKEN = /^\d+:[A-Za-z0-9_-]{20,}$/;
 const CHAT_ID = /^-?\d+$/;
 
 export function validateBotToken(value) {
+  if (value === "replace_with_botfather_token") {
+    throw new Error("TELEGRAM_BOT_TOKEN is still the placeholder; replace it with the token from @BotFather");
+  }
   if (!BOT_TOKEN.test(value)) throw new Error("TELEGRAM_BOT_TOKEN has an unexpected format");
   return value;
 }

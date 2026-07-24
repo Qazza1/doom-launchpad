@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { EMPTY_ALERT_STATE, readAlertState, reconcileAlerts, writeAlertState } from "../lib/alerts.mjs";
 import { collectKeeperState } from "../lib/collect.mjs";
 import { evaluateKeeperState } from "../lib/rules.mjs";
-import { formatTelegramAlert, sendTelegramAlert, telegramRequest } from "../lib/telegram.mjs";
+import { formatTelegramAlert, sendTelegramAlert, telegramRequest, validateBotToken } from "../lib/telegram.mjs";
 
 const thresholds = {
   rpcStaleSeconds: 180,
@@ -212,6 +212,13 @@ test("Telegram formatting escapes untrusted on-chain text", () => {
   assert.match(message, /&lt;title&gt;/);
   assert.match(message, /A &amp; B/);
   assert.doesNotMatch(message, /<script>/);
+});
+
+test("Telegram placeholder receives an actionable setup error", () => {
+  assert.throws(
+    () => validateBotToken("replace_with_botfather_token"),
+    /still the placeholder; replace it with the token from @BotFather/,
+  );
 });
 
 test("Telegram requests use POST and validate API success", async () => {

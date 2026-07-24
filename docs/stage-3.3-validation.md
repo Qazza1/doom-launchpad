@@ -7,11 +7,13 @@ signed or broadcast.
 
 - 69 contract tests passed; 2 opt-in fork tests were skipped in the normal gate.
 - 8 rewards-operations tests passed.
-- 12 keeper-monitoring tests passed.
+- 13 keeper-monitoring tests passed.
 - Clean `npm ci` with viem exactly `2.55.8`.
 - `npm audit --audit-level=low`: zero known keeper vulnerabilities.
 - The disabled production example exits before making an RPC or Telegram call.
 - Existing contract runtime sizes remain unchanged and within their budgets.
+- Live Telegram Bot API setup delivery succeeded for
+  `@DoomStreakKeeperBot`; the token was not printed or committed.
 
 ## Keeper coverage
 
@@ -27,7 +29,7 @@ signed or broadcast.
 
 ## Remaining Stage 3.3 confirmations
 
-- Owner receives the harmless Telegram setup alert.
+- Owner confirms the harmless Telegram setup alert is visible in the app.
 - GitHub Linux CI passes on the Stage 3.3 branch.
 - Exact deployed addresses and deployment block are unavailable until Stage 4.
 
