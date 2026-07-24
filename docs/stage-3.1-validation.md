@@ -23,6 +23,9 @@ were used.
 - Each fuzz test ran 512 cases.
 - Each stateful invariant ran 128 sequences of 64 calls.
 - Slither 0.11.5 high-severity gate passed after documented triage.
+- Aderyn 0.6.8 passed in the pinned Linux CI job.
+- GitHub Actions Foundry and static-analysis jobs passed:
+  `https://github.com/Qazza1/doom-launchpad/actions/runs/30079738205`.
 - Non-broadcast deployment rehearsal passed against Robinhood Chain mainnet.
 - Real canonical NPM accepted zero-fee `collect` from the permanent locker and
   retained locker ownership afterward.
@@ -37,10 +40,5 @@ Runtime sizes:
 
 ## Open assurance gates
 
-- Aderyn 0.6.8 cannot install on Windows by package design; its pinned Linux CI
-  job must pass.
-- CI cannot run until this repository is pushed to a GitHub remote.
-- The checksum bundle and audit-candidate tag are intentionally deferred until
-  CI is green.
 - Independent audit/review, signing rehearsal, production RPC inputs, source
   verification, gas funding, and explicit deployment approval remain required.

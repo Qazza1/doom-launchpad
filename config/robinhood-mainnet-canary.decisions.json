@@ -124,7 +124,9 @@
     "slitherVersion": "0.11.5",
     "slitherHighSeverityGate": "passed_after_triage",
     "aderynVersion": "0.6.8",
-    "aderynStatus": "pending_linux_ci_windows_unsupported",
+    "aderynStatus": "passed_linux_ci",
+    "githubActionsRun": "https://github.com/Qazza1/doom-launchpad/actions/runs/30079738205",
+    "auditCandidateTag": "stage-3.1-audit-candidate",
     "deploymentRehearsal": "passed_non_broadcast_robinhood_mainnet_fork",
     "productionReady": false
   },

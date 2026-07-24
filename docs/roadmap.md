@@ -14,7 +14,8 @@ broadcast unless it explicitly says so.
 ## Stage 3.1 — audit-candidate rebuild
 
 Status: contract rebuild and local/fork verification complete. Linux CI,
-Aderyn, external review, and deployment preparation remain open. No deployment.
+Aderyn, and Slither are green. External review and deployment preparation
+remain open. No deployment.
 
 ### Contract security
 
@@ -59,9 +60,9 @@ Aderyn, external review, and deployment preparation remain open. No deployment.
 - [x] Add campaign-manager and incident-response runbooks.
 - [x] Update event ABIs, integration examples, and manifest.
 - [x] Run a fresh non-broadcast Robinhood mainnet rehearsal.
-- [ ] Push to GitHub and obtain a green Linux CI/Aderyn run.
-- [ ] Produce the final checksum bundle, audit-candidate commit, and tag only
-  after every gate passes.
+- [x] Push to GitHub and obtain a green Linux CI/Aderyn run.
+- [x] Produce the final checksum bundle, audit-candidate commit, and tag after
+  every implementation gate passes.
 
 ## Stage 3.2 — rewards operations
 

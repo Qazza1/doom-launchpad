@@ -28,6 +28,6 @@ liquidity was written after the V3 call. Stage 3.1 now reserves the full canary
 liquidity envelope before any external interaction. It also explicitly
 initializes locals previously reported by `uninitialized-local`.
 
-Aderyn's npm wrapper did not complete on the local Windows host. Its pinned Linux
-CI job remains a required assurance gate; this document must be updated with the
-CI report before creating the audit-candidate tag.
+Aderyn's npm wrapper does not support the local Windows host. The pinned Aderyn
+0.6.8 Linux job and Slither 0.11.5 gate both passed in GitHub Actions run
+`30079738205` before creation of the audit-candidate tag.
