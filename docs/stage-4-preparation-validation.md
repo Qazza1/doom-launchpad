@@ -30,6 +30,8 @@ wallet was loaded. No transaction was signed or broadcast.
   - premature verification claim.
 - Dual-RPC preflight tests passed for independent HTTPS providers and detection
   of chain, head, pending-nonce, and dependency-bytecode disagreement.
+- The secret-safe fork-rehearsal helper completed against current Robinhood
+  mainnet state without loading a signer or broadcasting.
 - 69 contract tests passed; 2 fork tests were skipped in the normal gate.
 - 8 deterministic rewards tests passed.
 - 13 keeper-monitoring tests passed.
@@ -38,8 +40,8 @@ wallet was loaded. No transaction was signed or broadcast.
   - canonical V3 launch and permanent-lock compatibility.
 - Runtime bytecode remains within all frozen size budgets.
 - GitHub Actions deployment preparation, Foundry, Slither/Aderyn, rewards, and
-  keeper jobs passed:
-  `https://github.com/Qazza1/doom-launchpad/actions/runs/30121596609`.
+  keeper jobs passed for the wallet/rehearsal setup commit:
+  `https://github.com/Qazza1/doom-launchpad/actions/runs/30154877910`.
 
 ## Still blocking deployment
 
