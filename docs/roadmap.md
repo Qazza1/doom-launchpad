@@ -133,7 +133,10 @@ authorized.
   must be refreshed from the final reviewed commit through both RPC providers.
 - [x] Fail-closed deployment manifest and constructor/nonce worksheet.
 - [x] Correct dependency-safe deployment and irreversible-binding order.
-- [ ] Production deployment and post-deployment verification scripts.
+- [x] Production deployment and post-deployment verification scripts. The
+  deployment path is an unsigned six-transaction plan submitted through Rabby one
+  transaction at a time, never an auto-broadcasting script:
+  `docs/stage-4-transaction-plan.md`.
 - [x] Blockscout source-verification rehearsal. Evidence:
   `docs/stage-4-blockscout-verification.md`. Verification of deployed source
   itself remains a Gate F step.

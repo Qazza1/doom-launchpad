@@ -42,6 +42,7 @@ contract VerifyRobinhoodCanary is Script {
         _require(address(factory.liquidityManager()) == address(manager), "FACTORY_MANAGER");
         _require(factory.positionLocker() == address(locker), "FACTORY_LOCKER");
         _require(factory.doomRewards() == address(rewards), "FACTORY_REWARDS");
+        _require(factory.launchesPaused(), "FACTORY_MUST_REMAIN_PAUSED");
         _require(factory.maxLaunches() == 3, "MAX_LAUNCHES");
         _require(factory.maxNativeLiquidityPerLaunch() == 0.01 ether, "PER_LAUNCH");
         _require(factory.maxNativeLiquidityGlobal() == 0.03 ether, "GLOBAL_LIQUIDITY");
@@ -69,6 +70,7 @@ contract VerifyRobinhoodCanary is Script {
         _require(rewards.nftCollection() == NFT, "NFT");
         _require(rewards.excludedHolder() == TREASURY, "EXCLUDED_HOLDER");
         _require(rewards.feeRewardToken() == WETH, "REWARD_TOKEN");
+        _require(rewards.minimumClaimWindow() == 7 days, "MINIMUM_CLAIM_WINDOW");
     }
 
     function _require(bool condition, bytes32 check) internal pure {
