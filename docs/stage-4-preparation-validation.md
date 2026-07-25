@@ -54,6 +54,10 @@ signer was loaded. No transaction was signed or broadcast.
 - Remediation and focused re-review of every resulting contract change.
 - Six-transaction Rabby preview rehearsal against localhost only.
 - Fresh nonce, gas, gas-price, balance, and funding worksheet.
-- Blockscout verification rehearsal.
 - Completed, hashed manifest and explicit final approval immediately before any
   broadcast.
+
+The Blockscout source-verification rehearsal is no longer blocking; see
+`docs/stage-4-blockscout-verification.md`. Verifying the deployed source itself
+remains a Gate F step, and
+`verification.sourceVerifiedOnBlockscout` stays `false` until then.
