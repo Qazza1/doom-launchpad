@@ -51,3 +51,6 @@ URLs to disk, and removes them from its environment before exiting.
 
 Save the JSON result without the URLs if needed. A successful result authorizes
 only the next non-broadcast rehearsal, not deployment.
+
+Owner-reported status on 2026-07-25: passed. Continue with
+`docs/stage-4-wallet-and-rehearsal.md`.

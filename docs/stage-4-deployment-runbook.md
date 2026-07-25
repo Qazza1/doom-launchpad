@@ -16,6 +16,8 @@ No step in this document currently authorizes a broadcast.
 1. Use a hardware wallet for the deployer unless a separately reviewed,
    encrypted-keystore procedure is approved.
 2. Store primary and fallback RPC URLs only in local environment variables.
+   The owner completed the dual-provider preflight on 2026-07-25; repeat it
+   immediately before final manifest approval.
 3. Confirm control of operator, campaign-manager, treasury, and guardian
    addresses with read-only wallet checks or zero-value signing rehearsals.
 4. Read the deployer pending nonce and balance without signing.

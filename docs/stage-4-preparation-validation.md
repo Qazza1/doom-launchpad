@@ -16,6 +16,9 @@ wallet was loaded. No transaction was signed or broadcast.
 - Added the manifest gate to GitHub Actions and the local verification script.
 - Owner selected the hardware-wallet signing path; device-address verification
   and the signing rehearsal remain incomplete.
+- Owner reported that the secret-safe dual-provider RPC preflight passed on
+  2026-07-25. Provider secrets and the transient JSON result were deliberately
+  not committed.
 
 ## Validation results
 
@@ -42,8 +45,7 @@ wallet was loaded. No transaction was signed or broadcast.
 
 - Independent review of the exact contract tag.
 - Remediation and focused re-review of every resulting contract change.
-- Owner choice of hardware wallet or encrypted keystore.
-- Dedicated primary and fallback RPC configuration stored locally.
+- Hardware-wallet device-address verification and control-message rehearsal.
 - Fresh nonce, gas, gas-price, balance, and funding worksheet.
 - Blockscout verification rehearsal.
 - Completed, hashed manifest and explicit final approval immediately before any

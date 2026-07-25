@@ -119,8 +119,9 @@ authorized.
 
 - [ ] Independent smart-contract audit/review against one tagged commit.
 - [ ] Remediation and focused re-review of every contract change.
-- [ ] Production RPC and fallback RPC.
-- [ ] Hardware-wallet or encrypted-keystore signing rehearsal.
+- [x] Production RPC and fallback RPC secret-safe preflight.
+- [ ] Hardware-wallet address/control proof and later six-transaction signing
+  rehearsal.
 - [ ] Exact gas estimate and deployer funding plan.
 - [x] Fail-closed deployment manifest and constructor/nonce worksheet.
 - [x] Correct dependency-safe deployment and irreversible-binding order.
