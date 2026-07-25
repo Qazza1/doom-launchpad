@@ -143,16 +143,9 @@ async function computeAddress(cast, nonce) {
   return match[0];
 }
 
-export async function main(argv = process.argv.slice(2)) {
-  const nonceFlag = argv.indexOf("--nonce");
-  if (nonceFlag === -1) {
-    throw new Error(
-      "--nonce is required; read the deployer's pending nonce from both providers immediately before planning",
-    );
-  }
-  const startingNonce = Number(argv[nonceFlag + 1]);
+export async function buildPlan(startingNonce) {
   if (!Number.isInteger(startingNonce) || startingNonce < 0) {
-    throw new Error("--nonce must be a non-negative integer");
+    throw new Error("the starting nonce must be a non-negative integer");
   }
 
   const manifest = await readJson(resolve(projectRoot, "config/stage4-deployment-manifest.json"));
@@ -257,6 +250,18 @@ export async function main(argv = process.argv.slice(2)) {
 
   const planErrors = [...validatePlan(plan), ...validateDependencyWiring(plan)];
   if (planErrors.length) throw new Error(planErrors.join("; "));
+  return plan;
+}
+
+export async function main(argv = process.argv.slice(2)) {
+  const nonceFlag = argv.indexOf("--nonce");
+  if (nonceFlag === -1) {
+    throw new Error(
+      "--nonce is required; read the deployer's pending nonce from both providers immediately before planning",
+    );
+  }
+  const plan = await buildPlan(Number(argv[nonceFlag + 1]));
+  const { transactions, startingNonce } = plan;
 
   await mkdir(outputRoot, { recursive: true });
   const planPath = resolve(outputRoot, "transaction-plan.json");

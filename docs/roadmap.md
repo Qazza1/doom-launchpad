@@ -127,7 +127,10 @@ authorized.
 - [x] Exact six-transaction localhost execution preview; Rabby remains
   disconnected. Evidence for commit `f2dee52`:
   `docs/stage-4-localhost-preview-validation.md`.
-- [ ] Six-transaction Rabby transaction preview against localhost only.
+- [x] Chain-isolated Rabby preview harness, built and tested:
+  `docs/stage-4-rabby-transaction-preview.md`.
+- [ ] Six-transaction Rabby transaction preview against localhost only. The
+  harness exists; the owner has not run it, so the gate stays open.
 - [ ] Exact gas estimate and deployer funding plan. The preview snapshot is
   evidence only; nonce, fees, predicted addresses, balance, and required funding
   must be refreshed from the final reviewed commit through both RPC providers.
