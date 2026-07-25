@@ -14,3 +14,4 @@ node_modules/
 tools/rewards/output/
 tools/keeper/state/
 tools/deployment/output/
+tools/review/output/

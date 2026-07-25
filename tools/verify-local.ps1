@@ -73,6 +73,11 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     (Join-Path $projectRoot "config\stage4-deployment-manifest.json")
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+$reviewTests = Get-ChildItem -LiteralPath (Join-Path $projectRoot "tools\review\test") `
+    -Filter "*.test.mjs" | ForEach-Object { $_.FullName }
+& $nodeCommand.Source --test $reviewTests
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 & $forgePath --version
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 

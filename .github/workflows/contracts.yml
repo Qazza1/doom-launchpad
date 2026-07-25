@@ -21,6 +21,24 @@ jobs:
           node --test tools/deployment/test/*.test.mjs
           node tools/deployment/verify-manifest.mjs config/stage4-deployment-manifest.json
 
+  review-artifact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # The review artifact is defined by Git history, so the tagged audit candidate must be
+      # present. A shallow checkout cannot compare it with HEAD.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Confirm the reviewed contract sources are unchanged
+        run: |
+          node --test tools/review/test/*.test.mjs
+          node tools/review/package.mjs --ref stage-3.1-audit-candidate --out audit-candidate.sums
+          node tools/review/package.mjs --ref stage-3.1-audit-candidate --verify audit-candidate.sums
+
   keeper-monitoring:
     runs-on: ubuntu-latest
     timeout-minutes: 10

@@ -117,6 +117,9 @@ fail-closed before contract deployment. No launch transaction is enabled.
 Status: fail-closed deployment preparation in progress. No broadcast is
 authorized.
 
+- [x] Independent reviewer package, frozen artifact checksums, and a CI job that
+  fails if reviewed contract sources drift:
+  `docs/independent-review-package.md`.
 - [ ] Independent smart-contract audit/review against one tagged commit.
 - [ ] Remediation and focused re-review of every contract change.
 - [x] Production RPC and fallback RPC secret-safe preflight.
