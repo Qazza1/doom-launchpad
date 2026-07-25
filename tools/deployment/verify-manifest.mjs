@@ -121,6 +121,25 @@ export function validatePredeploymentManifest(manifest) {
     previews?.rabbyTransactionPreviewComplete === false,
     "Rabby transaction preview must remain incomplete",
   );
+  require(
+    typeof previews?.blockscoutVerificationRehearsalComplete === "boolean",
+    "previews.blockscoutVerificationRehearsalComplete must be a boolean",
+  );
+  if (previews?.blockscoutVerificationRehearsalComplete === true) {
+    require(
+      typeof previews?.blockscoutVerificationRehearsalEvidence === "string" &&
+        previews.blockscoutVerificationRehearsalEvidence.length > 0,
+      "a completed verification rehearsal must reference its committed evidence document",
+    );
+    require(
+      previews?.blockscoutVerificationCompilerVersion === "v0.8.36+commit.8a079791",
+      "the rehearsed compiler must be the exact pinned build",
+    );
+    require(
+      manifest?.verification?.sourceVerifiedOnBlockscout === false,
+      "a verification rehearsal must never claim verified deployed source",
+    );
+  }
 
   return errors;
 }

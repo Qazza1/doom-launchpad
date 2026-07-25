@@ -62,6 +62,27 @@ test("localhost preview state is recorded with evidence and claims nothing else"
   );
 });
 
+test("the verification rehearsal is recorded without claiming verified deployed source", () => {
+  assert.equal(canonical.previews.blockscoutVerificationRehearsalComplete, true);
+  assert.equal(canonical.verification.sourceVerifiedOnBlockscout, false);
+
+  const unevidenced = copy();
+  unevidenced.previews.blockscoutVerificationRehearsalEvidence = "";
+  assert.ok(
+    validatePredeploymentManifest(unevidenced).some(error =>
+      error.includes("verification rehearsal must reference its committed evidence")
+    ),
+  );
+
+  const wrongCompiler = copy();
+  wrongCompiler.previews.blockscoutVerificationCompilerVersion = "v0.8.30+commit.aaaaaaaa";
+  assert.ok(
+    validatePredeploymentManifest(wrongCompiler).some(error =>
+      error.includes("exact pinned build")
+    ),
+  );
+});
+
 test("a live-wallet transaction preview cannot be claimed from the localhost preview", () => {
   const claimed = copy();
   claimed.previews.rabbyTransactionPreviewComplete = true;

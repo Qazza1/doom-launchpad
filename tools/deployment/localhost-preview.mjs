@@ -76,7 +76,7 @@ function run(command, args, options = {}) {
   });
 }
 
-function findFoundryBinaries() {
+export function findFoundryBinaries() {
   const executable = process.platform === "win32" ? ".exe" : "";
   const workspaceRoot = resolve(directory, "../../../.tools/foundry-v1.7.1");
   const userRoot = resolve(process.env.USERPROFILE || process.env.HOME || "", ".foundry/bin");
@@ -90,6 +90,8 @@ function findFoundryBinaries() {
   }
   throw new Error("Pinned Foundry binaries were not found");
 }
+
+export { run as runCommand };
 
 async function waitForAnvil(child) {
   for (let attempt = 0; attempt < 40; attempt += 1) {

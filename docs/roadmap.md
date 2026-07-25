@@ -131,7 +131,9 @@ authorized.
 - [x] Fail-closed deployment manifest and constructor/nonce worksheet.
 - [x] Correct dependency-safe deployment and irreversible-binding order.
 - [ ] Production deployment and post-deployment verification scripts.
-- [ ] Blockscout source-verification rehearsal.
+- [x] Blockscout source-verification rehearsal. Evidence:
+  `docs/stage-4-blockscout-verification.md`. Verification of deployed source
+  itself remains a Gate F step.
 - [ ] Final signed manifest and explicit owner approval immediately before broadcast.
 
 ## Stage 5 — capped mainnet canary
