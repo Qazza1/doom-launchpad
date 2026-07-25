@@ -117,6 +117,31 @@ None of this changes production. There the pending nonce is read from both
 providers immediately before planning, and a nonce that disagrees with the plan
 stops the sequence rather than realigning it.
 
+## What the third run found
+
+The realignment worked — the log showed `Realigned the preview to the wallet's
+nonce 6 (was 0)` — and the step still failed, this time with no receipt.
+
+Raising the account nonce does not rescue the transaction that caused the drift.
+It was signed at nonce 6 while the chain was at 0, so Anvil parked it in the
+queued pool behind a gap. Setting the account nonce to 6 afterwards does not
+promote a queued transaction, so it sat there while the server polled for a
+receipt that could never arrive.
+
+Realignment now drops that transaction with `anvil_dropTransaction` and asks for
+step 1 to be signed once more against the recalculated plan. The page clears the
+stored hash at the same time, because the retry path would otherwise re-check a
+transaction that no longer exists. One extra signature at the start of a session
+is the whole cost.
+
+The missing-receipt message now also reports the signed nonce against the account
+nonce and names the nonce gap, instead of saying only that no receipt was
+returned.
+
+Expect the realignment prompt once per session whenever Rabby's cached nonce for
+chain `46630` is ahead of a fresh fork. Clearing pending transactions in Rabby
+for that network avoids it.
+
 ## Run
 
 ```powershell

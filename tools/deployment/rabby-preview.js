@@ -115,21 +115,19 @@ async function submit(transaction, button, detail) {
       body: JSON.stringify({ order: transaction.order, txHash, transaction: request }),
     });
     const result = await response.json();
-    if (!response.ok || !result.ok) throw new Error(result.error || "step verification failed");
 
     // A realignment renumbers every later nonce and changes every predicted address, so the page
-    // must show the new plan rather than the one it just invalidated.
-    if (result.realignedFrom !== null && result.realignedFrom !== undefined) {
+    // must reload the new plan rather than keep showing the one it just invalidated. The signed
+    // transaction was dropped, so the stored hash must go too or the retry would re-check a
+    // transaction that no longer exists.
+    if (result.realigned) {
+      submitted.delete(transaction.order);
       plan = await fetch("/plan", { cache: "no-store" }).then(response => response.json());
       renderSteps();
-      setStatus(
-        `Step 1 verified. Rabby chose nonce ${result.startingNonce} instead of ` +
-          `${result.realignedFrom}, so the preview realigned to it and the predicted addresses ` +
-          "were recalculated. This is a wallet nonce cache, not a plan error.",
-        "success",
-      );
+      setStatus(result.error, "error");
       return;
     }
+    if (!response.ok || !result.ok) throw new Error(result.error || "step verification failed");
 
     plan.completed.push(transaction.order);
     detail.textContent = `${detail.textContent} · gas ${result.gasUsed}`;

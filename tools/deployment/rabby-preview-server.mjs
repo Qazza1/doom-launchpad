@@ -293,16 +293,18 @@ export async function startServer() {
           // Before any step is confirmed, a wallet-chosen nonce is an artifact of Rabby's cache, not
           // a finding. Realign the fork and the plan to what the wallet actually signed, and say so
           // loudly. After the first confirmed step the same drift is a hard failure.
-          let realignedFrom = null;
           if (
             index === 0 &&
             completed.length === 0 &&
             isNonceOnlyDrift(plan.transactions[0], mined) &&
             mined.nonce > plan.startingNonce
           ) {
-            realignedFrom = plan.startingNonce;
+            const realignedFrom = plan.startingNonce;
             await rpc(PREVIEW_RPC_URL, "anvil_setNonce", [DEPLOYER, `0x${mined.nonce.toString(16)}`]);
-            await rpc(PREVIEW_RPC_URL, "evm_mine", []);
+            // The signed transaction is parked in the queued pool behind a nonce gap. Raising the
+            // account nonce does not promote it, so it is dropped and re-signed against the
+            // realigned plan rather than left to wait for a receipt that can never arrive.
+            await rpc(PREVIEW_RPC_URL, "anvil_dropTransaction", [payload?.txHash]).catch(() => null);
             plan = {
               ...(await buildPlan(mined.nonce)),
               upstreamPendingNonce: plan.upstreamPendingNonce,
@@ -310,6 +312,18 @@ export async function startServer() {
             console.log(
               `Realigned the preview to the wallet's nonce ${mined.nonce} (was ${realignedFrom}).`,
             );
+            console.log("Sign step 1 again; the predicted addresses were recalculated.");
+            sendJson(response, 409, {
+              ok: false,
+              realigned: true,
+              realignedFrom,
+              startingNonce: plan.startingNonce,
+              error:
+                `Rabby signed at nonce ${mined.nonce} instead of ${realignedFrom}, which is its own ` +
+                "cached nonce. The preview realigned to it and recalculated every predicted " +
+                "address. Sign step 1 once more against the new plan.",
+            });
+            return;
           }
 
           const submissionErrors = validateStepSubmission(plan, index, mined);
@@ -321,6 +335,19 @@ export async function startServer() {
             return;
           }
           const receipt = await waitForReceipt(payload?.txHash);
+          if (!receipt) {
+            const chainNonce = Number(
+              await rpc(PREVIEW_RPC_URL, "eth_getTransactionCount", [DEPLOYER, "latest"]),
+            );
+            sendJson(response, 400, {
+              ok: false,
+              error:
+                `no receipt after 10 seconds. The transaction is signed at nonce ${mined.nonce} ` +
+                `while the account is at ${chainNonce}, so it is parked behind a nonce gap and ` +
+                "cannot be mined. Restart the preview to get a fresh fork.",
+            });
+            return;
+          }
           const receiptErrors = validateReceipt(plan.transactions[index], receipt);
           if (receiptErrors.length) {
             sendJson(response, 400, { ok: false, error: receiptErrors.join("; ") });
@@ -337,7 +364,6 @@ export async function startServer() {
             order: index,
             gasUsed: BigInt(receipt.gasUsed).toString(),
             remaining: plan.transactions.length - completed.length,
-            realignedFrom,
             startingNonce: plan.startingNonce,
           });
           return;

@@ -209,6 +209,10 @@ test("the preview client never contacts a remote endpoint or hard-codes producti
   // is already spent, so resending would produce a second transaction that can never confirm.
   assert.ok(client.includes("submitted.get(transaction.order)"));
   assert.ok(client.includes("submitted.set(transaction.order, txHash)"));
+  // A realignment drops the signed transaction, so the stored hash must go with it or the retry
+  // would re-check a transaction that no longer exists.
+  assert.ok(client.includes("submitted.delete(transaction.order)"));
+  assert.ok(client.includes("result.realigned"));
   assert.ok(page.includes("/rabby-preview.js"));
   assert.equal(/<script(?![^>]*src="\/rabby-preview\.js")/.test(page), false);
 });
