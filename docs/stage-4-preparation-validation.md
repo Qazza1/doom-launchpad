@@ -15,8 +15,10 @@ signer was loaded. No transaction was signed or broadcast.
 - Added a one-transaction-at-a-time deployment runbook with stop conditions.
 - Added the manifest gate to GitHub Actions and the local verification script.
 - Owner selected the existing dedicated Rabby account at the unchanged deployer
-  address for the capped canary. Signature-based address verification and the
-  transaction-preview rehearsal remain incomplete.
+  address for the capped canary.
+- Owner confirmed that the localhost verifier recovered the exact deployer from
+  Rabby's control-message signature on 2026-07-25. No signature or wallet secret
+  was retained. The transaction-preview rehearsal remains incomplete.
 - Owner reported that the secret-safe dual-provider RPC preflight passed on
   2026-07-25. Provider secrets and the transient JSON result were deliberately
   not committed.
@@ -48,7 +50,6 @@ signer was loaded. No transaction was signed or broadcast.
 
 - Independent review of the exact contract tag.
 - Remediation and focused re-review of every resulting contract change.
-- Rabby address verification by locally recovered control-message signature.
 - Six-transaction Rabby preview rehearsal against localhost only.
 - Fresh nonce, gas, gas-price, balance, and funding worksheet.
 - Blockscout verification rehearsal.

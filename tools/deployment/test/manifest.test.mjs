@@ -40,7 +40,7 @@ test("populated transaction or verification claims are rejected", () => {
   assert.ok(errors.some(error => error.includes("verification flags")));
 });
 
-test("signing workflow cannot silently change or claim completion", () => {
+test("signing workflow cannot silently change, roll back verification, or claim rehearsal", () => {
   const wrongWallet = copy();
   wrongWallet.signing.method = "hardware_wallet";
   assert.ok(
@@ -57,11 +57,19 @@ test("signing workflow cannot silently change or claim completion", () => {
     ),
   );
 
-  const prematureVerification = copy();
-  prematureVerification.signing.addressVerifiedBySignature = true;
+  const missingVerification = copy();
+  missingVerification.signing.addressVerifiedBySignature = false;
   assert.ok(
-    validatePredeploymentManifest(prematureVerification).some(error =>
-      error.includes("address verification must remain false")
+    validatePredeploymentManifest(missingVerification).some(error =>
+      error.includes("address verification must be recorded")
+    ),
+  );
+
+  const prematureRehearsal = copy();
+  prematureRehearsal.signing.rehearsalComplete = true;
+  assert.ok(
+    validatePredeploymentManifest(prematureRehearsal).some(error =>
+      error.includes("transaction rehearsal must remain incomplete")
     ),
   );
 });

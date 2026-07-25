@@ -36,7 +36,9 @@
     "method": "rabby_browser_wallet",
     "wallet": "Rabby",
     "dedicatedCanaryAccount": true,
-    "addressVerifiedBySignature": false,
+    "addressVerifiedBySignature": true,
+    "addressVerificationEvidence": "owner_confirmed_local_signature_recovery",
+    "addressVerificationRecordedAt": "2026-07-25",
     "rehearsalComplete": false
   },
   "roles": {

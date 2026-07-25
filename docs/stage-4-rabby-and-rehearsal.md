@@ -56,6 +56,9 @@ Reject anything that displays gas, value, token approval, contract creation, or
 a transaction. The verification page contains no transaction-sending method.
 Close the Node process with `Ctrl+C` after success.
 
+Owner-confirmed status on 2026-07-25: passed for the exact approved deployer.
+The signature was intentionally not retained.
+
 ## 3. Run the configuration rehearsal
 
 Rabby is not used for this step. The script deploys the four contracts and

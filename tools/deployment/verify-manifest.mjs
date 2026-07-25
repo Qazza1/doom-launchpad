@@ -78,8 +78,17 @@ export function validatePredeploymentManifest(manifest) {
     "Rabby signer must remain a dedicated canary account",
   );
   require(
-    manifest?.signing?.addressVerifiedBySignature === false,
-    "Rabby address verification must remain false before rehearsal",
+    manifest?.signing?.addressVerifiedBySignature === true,
+    "Rabby address verification must be recorded",
+  );
+  require(
+    manifest?.signing?.addressVerificationEvidence ===
+      "owner_confirmed_local_signature_recovery",
+    "Rabby address-verification evidence is missing",
+  );
+  require(
+    /^\d{4}-\d{2}-\d{2}$/.test(manifest?.signing?.addressVerificationRecordedAt || ""),
+    "Rabby address-verification date is missing",
   );
   require(
     manifest?.signing?.rehearsalComplete === false,
