@@ -16,7 +16,8 @@ C:\Users\golis\Desktop\doomstreak-site\doom-launchpad
 GitHub:
 https://github.com/Qazza1/doom-launchpad
 
-Start from the remote branch `stage4-deployment-prep` at commit:
+Start from the latest remote `stage4-deployment-prep` branch. The exact
+implementation checkpoint immediately before this docs-only handover is:
 f2dee520ac1d5c16059f47bf80e8791bbe6bc66d
 
 First:
@@ -81,12 +82,12 @@ without making a mainnet assumption.
   `C:\Users\golis\Desktop\doomstreak-site\doom-launchpad`
 - GitHub: <https://github.com/Qazza1/doom-launchpad>
 - Active branch: `stage4-deployment-prep`
-- Exact handover commit:
+- Exact implementation checkpoint before this docs-only handover:
   `f2dee520ac1d5c16059f47bf80e8791bbe6bc66d`
 - Commit subject: `feat: add exact localhost deployment preview`
-- At handover, the local branch and `origin/stage4-deployment-prep` match and
-  the working tree is clean.
-- Do not silently continue from a different commit.
+- Start from the latest `origin/stage4-deployment-prep`, confirm that `f2dee52`
+  is its ancestor, and ensure the working tree is clean.
+- Do not silently continue from a branch that does not contain this checkpoint.
 
 Useful checkpoints:
 
@@ -709,4 +710,3 @@ The next checkpoint is successful when:
 - no transaction was signed or broadcast;
 - Blockscout verification rehearsal and independent review are clearly the next
   gates.
-
