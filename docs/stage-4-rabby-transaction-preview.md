@@ -5,9 +5,41 @@ This rehearsal answers one question the impersonated localhost preview cannot:
 correctly?** The earlier preview proved the sequence executes; it used Anvil
 impersonation and never touched the wallet.
 
-Status: the harness is built and tested. It has not been run yet, so
-`previews.rabbyTransactionPreviewComplete` remains `false` in the deployment
-manifest and the roadmap gate stays open.
+Status: **passed on 2026-07-25.** All six steps were signed in Rabby by the owner
+and verified. `previews.rabbyTransactionPreviewComplete` and
+`signing.rehearsalComplete` are now `true`. This authorizes nothing further:
+funding, independent review, and final approval remain separate open gates.
+
+## Result
+
+Preview chain `46630`, starting nonce `1000`, upstream pending nonce `0`.
+
+| Step | Nonce | Gas used | Localhost preview gas |
+|---|---:|---:|---:|
+| Deploy DoomRewards | 1000 | 1,002,237 | 1,002,237 |
+| Deploy PositionLocker | 1001 | 1,664,106 | 1,664,106 |
+| Deploy V3LiquidityManager | 1002 | 1,518,199 | 1,518,199 |
+| `bindRegistrar` | 1003 | 49,335 | 49,335 |
+| Deploy DoomLaunchFactory | 1004 | 4,602,092 | 4,602,092 |
+| `bindFactory` | 1005 | 49,312 | 49,312 |
+
+Every figure matches the impersonated localhost preview exactly, reached by a
+different path: real wallet signatures instead of Anvil impersonation, chain
+`46630` instead of `4663`, and nonces starting at 1000 instead of 0. Gas depends
+on the code and the arguments, not on the signer or the chain, so the agreement
+is a genuine cross-check of the payloads rather than a restatement.
+
+Postconditions: factory paused `true`, registrar bound to the manager `true`,
+manager bound to the factory `true`. `isNetworkConfigurationValid` was `false`,
+as expected on the isolated chain.
+
+The predicted addresses from this run are preview-only; they derive from the
+offset nonce. Production addresses come from the real pending nonce.
+
+Not recorded, because the run did not report it: whether Rabby decoded the single
+address argument for the two binding steps in its prompt, or showed them as
+opaque calldata. Worth checking during the production sequence, where the page
+hash can be compared against the wallet's display before confirming.
 
 ## The replay hazard, and how it is removed
 

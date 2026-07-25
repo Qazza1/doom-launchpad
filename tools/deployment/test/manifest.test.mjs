@@ -42,8 +42,6 @@ test("populated transaction or verification claims are rejected", () => {
 
 test("localhost preview state is recorded with evidence and claims nothing else", () => {
   assert.equal(canonical.previews.localhostSequencePreviewComplete, true);
-  assert.equal(canonical.previews.rabbyTransactionPreviewComplete, false);
-  assert.equal(canonical.signing.rehearsalComplete, false);
   assert.ok(Object.values(canonical.gasPlan).every(value => value === null || value === 2500));
 
   const unevidenced = copy();
@@ -83,12 +81,54 @@ test("the verification rehearsal is recorded without claiming verified deployed 
   );
 });
 
-test("a live-wallet transaction preview cannot be claimed from the localhost preview", () => {
-  const claimed = copy();
-  claimed.previews.rabbyTransactionPreviewComplete = true;
+test("the completed Rabby preview is recorded with evidence and claims nothing more", () => {
+  assert.equal(canonical.previews.rabbyTransactionPreviewComplete, true);
+  assert.equal(canonical.signing.rehearsalComplete, true);
+  assert.notEqual(canonical.previews.rabbyTransactionPreviewChainId, 4663);
+  assert.equal(canonical.safety.mainnetDeploymentApproved, false);
+
+  const unevidenced = copy();
+  unevidenced.previews.rabbyTransactionPreviewEvidence = "";
+  unevidenced.previews.rabbyTransactionPreviewRecordedAt = "soon";
+  const errors = validatePredeploymentManifest(unevidenced);
+  assert.ok(errors.some(error => error.includes("Rabby preview must record its date")));
+  assert.ok(errors.some(error => error.includes("committed evidence document")));
+});
+
+test("the rehearsal cannot claim the production chain or seed the production nonce plan", () => {
+  const onProduction = copy();
+  onProduction.previews.rabbyTransactionPreviewChainId = 4663;
   assert.ok(
-    validatePredeploymentManifest(claimed).some(error =>
-      error.includes("Rabby transaction preview must remain incomplete")
+    validatePredeploymentManifest(onProduction).some(error =>
+      error.includes("must not claim to have run on the production chain")
+    ),
+  );
+
+  // The rehearsal runs at an offset nonce on an isolated chain, so it can never be the source of a
+  // production nonce.
+  const seeded = copy();
+  seeded.noncePlan.startingNonce = 1000;
+  assert.ok(
+    validatePredeploymentManifest(seeded).some(error =>
+      error.includes("must not populate the production nonce plan")
+    ),
+  );
+});
+
+test("the signing rehearsal and the Rabby preview cannot disagree", () => {
+  const halfClaimed = copy();
+  halfClaimed.signing.rehearsalComplete = false;
+  assert.ok(
+    validatePredeploymentManifest(halfClaimed).some(error =>
+      error.includes("signing rehearsal and the Rabby preview must agree")
+    ),
+  );
+
+  const otherHalf = copy();
+  otherHalf.previews.rabbyTransactionPreviewComplete = false;
+  assert.ok(
+    validatePredeploymentManifest(otherHalf).some(error =>
+      error.includes("signing rehearsal and the Rabby preview must agree")
     ),
   );
 });
@@ -118,11 +158,4 @@ test("signing workflow cannot silently change, roll back verification, or claim 
     ),
   );
 
-  const prematureRehearsal = copy();
-  prematureRehearsal.signing.rehearsalComplete = true;
-  assert.ok(
-    validatePredeploymentManifest(prematureRehearsal).some(error =>
-      error.includes("transaction rehearsal must remain incomplete")
-    ),
-  );
 });

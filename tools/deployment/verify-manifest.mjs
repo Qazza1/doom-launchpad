@@ -92,9 +92,16 @@ export function validatePredeploymentManifest(manifest) {
     /^\d{4}-\d{2}-\d{2}$/.test(manifest?.signing?.addressVerificationRecordedAt || ""),
     "Rabby address-verification date is missing",
   );
+  // The rehearsal may be recorded as complete once it has actually been run, but only with evidence
+  // and only in step with the preview flag. It still authorizes nothing on its own.
   require(
-    manifest?.signing?.rehearsalComplete === false,
-    "Rabby transaction rehearsal must remain incomplete",
+    typeof manifest?.signing?.rehearsalComplete === "boolean",
+    "signing.rehearsalComplete must be a boolean",
+  );
+  require(
+    manifest?.signing?.rehearsalComplete ===
+      (manifest?.previews?.rabbyTransactionPreviewComplete === true),
+    "the signing rehearsal and the Rabby preview must agree",
   );
 
   const previews = manifest?.previews;
@@ -118,9 +125,30 @@ export function validatePredeploymentManifest(manifest) {
     );
   }
   require(
-    previews?.rabbyTransactionPreviewComplete === false,
-    "Rabby transaction preview must remain incomplete",
+    typeof previews?.rabbyTransactionPreviewComplete === "boolean",
+    "previews.rabbyTransactionPreviewComplete must be a boolean",
   );
+  if (previews?.rabbyTransactionPreviewComplete === true) {
+    require(
+      DATE.test(previews?.rabbyTransactionPreviewRecordedAt || ""),
+      "a completed Rabby preview must record its date",
+    );
+    require(
+      typeof previews?.rabbyTransactionPreviewEvidence === "string" &&
+        previews.rabbyTransactionPreviewEvidence.length > 0,
+      "a completed Rabby preview must reference its committed evidence document",
+    );
+    // The rehearsal runs on an isolated chain at an offset nonce. It can never be the source of a
+    // production nonce, address, or approval.
+    require(
+      previews?.rabbyTransactionPreviewChainId !== 4663,
+      "the Rabby preview must not claim to have run on the production chain",
+    );
+    require(
+      Object.values(manifest?.noncePlan || {}).every(value => value === null),
+      "a completed Rabby preview must not populate the production nonce plan",
+    );
+  }
   require(
     typeof previews?.blockscoutVerificationRehearsalComplete === "boolean",
     "previews.blockscoutVerificationRehearsalComplete must be a boolean",

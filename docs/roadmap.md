@@ -129,8 +129,9 @@ authorized.
   `docs/stage-4-localhost-preview-validation.md`.
 - [x] Chain-isolated Rabby preview harness, built and tested:
   `docs/stage-4-rabby-transaction-preview.md`.
-- [ ] Six-transaction Rabby transaction preview against localhost only. The
-  harness exists; the owner has not run it, so the gate stays open.
+- [x] Six-transaction Rabby transaction preview against localhost only. Passed
+  2026-07-25 on isolated chain 46630; all six gas figures match the impersonated
+  localhost preview exactly.
 - [ ] Exact gas estimate and deployer funding plan. The preview snapshot is
   evidence only; nonce, fees, predicted addresses, balance, and required funding
   must be refreshed from the final reviewed commit through both RPC providers.

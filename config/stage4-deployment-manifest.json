@@ -39,14 +39,17 @@
     "addressVerifiedBySignature": true,
     "addressVerificationEvidence": "owner_confirmed_local_signature_recovery",
     "addressVerificationRecordedAt": "2026-07-25",
-    "rehearsalComplete": false
+    "rehearsalComplete": true
   },
   "previews": {
     "localhostSequencePreviewComplete": true,
     "localhostSequencePreviewCommit": "f2dee520ac1d5c16059f47bf80e8791bbe6bc66d",
     "localhostSequencePreviewRecordedAt": "2026-07-25",
     "localhostSequencePreviewEvidence": "docs/stage-4-localhost-preview-validation.md",
-    "rabbyTransactionPreviewComplete": false,
+    "rabbyTransactionPreviewComplete": true,
+    "rabbyTransactionPreviewRecordedAt": "2026-07-25",
+    "rabbyTransactionPreviewEvidence": "docs/stage-4-rabby-transaction-preview.md",
+    "rabbyTransactionPreviewChainId": 46630,
     "blockscoutVerificationRehearsalComplete": true,
     "blockscoutVerificationRehearsalEvidence": "docs/stage-4-blockscout-verification.md",
     "blockscoutVerificationCompilerVersion": "v0.8.36+commit.8a079791"
