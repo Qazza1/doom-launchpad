@@ -39,3 +39,29 @@ test("populated transaction or verification claims are rejected", () => {
   assert.ok(errors.some(error => error.includes("transactions.doomRewards")));
   assert.ok(errors.some(error => error.includes("verification flags")));
 });
+
+test("signing workflow cannot silently change or claim completion", () => {
+  const wrongWallet = copy();
+  wrongWallet.signing.method = "hardware_wallet";
+  assert.ok(
+    validatePredeploymentManifest(wrongWallet).some(error =>
+      error.includes("signing method must be rabby_browser_wallet")
+    ),
+  );
+
+  const sharedWallet = copy();
+  sharedWallet.signing.dedicatedCanaryAccount = false;
+  assert.ok(
+    validatePredeploymentManifest(sharedWallet).some(error =>
+      error.includes("dedicated canary account")
+    ),
+  );
+
+  const prematureVerification = copy();
+  prematureVerification.signing.addressVerifiedBySignature = true;
+  assert.ok(
+    validatePredeploymentManifest(prematureVerification).some(error =>
+      error.includes("address verification must remain false")
+    ),
+  );
+});

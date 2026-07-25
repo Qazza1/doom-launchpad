@@ -61,5 +61,5 @@ try {
 
 Write-Host ""
 Write-Host "Non-broadcast Robinhood mainnet fork rehearsal passed."
-Write-Host "No hardware wallet or private key was loaded."
+Write-Host "No signer or private key was loaded."
 Write-Host "No transaction was signed, stored, or broadcast."

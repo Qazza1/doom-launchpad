@@ -68,15 +68,22 @@ export function validatePredeploymentManifest(manifest) {
     ),
     "independent review fields must be empty and false",
   );
-  require(manifest?.signing?.method === "hardware_wallet", "signing method must be hardware_wallet");
-  require(manifest?.signing?.deviceModel === null, "hardware-wallet model is not recorded yet");
   require(
-    manifest?.signing?.addressVerifiedOnDevice === false,
-    "hardware-wallet address verification must remain false before rehearsal",
+    manifest?.signing?.method === "rabby_browser_wallet",
+    "signing method must be rabby_browser_wallet",
+  );
+  require(manifest?.signing?.wallet === "Rabby", "wallet must be Rabby");
+  require(
+    manifest?.signing?.dedicatedCanaryAccount === true,
+    "Rabby signer must remain a dedicated canary account",
+  );
+  require(
+    manifest?.signing?.addressVerifiedBySignature === false,
+    "Rabby address verification must remain false before rehearsal",
   );
   require(
     manifest?.signing?.rehearsalComplete === false,
-    "hardware-wallet rehearsal must remain incomplete",
+    "Rabby transaction rehearsal must remain incomplete",
   );
 
   return errors;

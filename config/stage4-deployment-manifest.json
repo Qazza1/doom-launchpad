@@ -33,9 +33,10 @@
     "focusedReReviewComplete": false
   },
   "signing": {
-    "method": "hardware_wallet",
-    "deviceModel": null,
-    "addressVerifiedOnDevice": false,
+    "method": "rabby_browser_wallet",
+    "wallet": "Rabby",
+    "dedicatedCanaryAccount": true,
+    "addressVerifiedBySignature": false,
     "rehearsalComplete": false
   },
   "roles": {

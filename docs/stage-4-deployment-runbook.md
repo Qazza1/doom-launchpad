@@ -13,8 +13,9 @@ No step in this document currently authorizes a broadcast.
 
 ## Gate B — operator preparation
 
-1. Use a hardware wallet for the deployer unless a separately reviewed,
-   encrypted-keystore procedure is approved.
+1. Use the dedicated Rabby canary account selected by the owner. Never import
+   the SafePal recovery phrase. Keep the Rabby account isolated from unrelated
+   assets and fund only the freshly calculated deployment-gas requirement.
 2. Store primary and fallback RPC URLs only in local environment variables.
    The owner completed the dual-provider preflight on 2026-07-25; repeat it
    immediately before final manifest approval.
@@ -31,7 +32,8 @@ No step in this document currently authorizes a broadcast.
 4. Run the non-broadcast deployment rehearsal from the exact reviewed commit.
 5. Record per-transaction gas, current gas price, a 25% funding buffer, fork
    block, RPC chain ID, expected nonce sequence, and predicted addresses.
-6. Rehearse the six hardware-wallet prompts without broadcasting.
+6. Rehearse the six Rabby transaction previews against a localhost fork without
+   retaining a raw signed mainnet transaction or broadcasting.
 
 Do not fund the deployer from an estimate written before this gate.
 

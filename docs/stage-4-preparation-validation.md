@@ -1,7 +1,7 @@
 # Stage 4 preparation validation
 
-Validation date: 2026-07-25. No private key, seed phrase, keystore, or hardware
-wallet was loaded. No transaction was signed or broadcast.
+Validation date: 2026-07-25. No private key, seed phrase, keystore, or wallet
+signer was loaded. No transaction was signed or broadcast.
 
 ## Implemented
 
@@ -14,8 +14,9 @@ wallet was loaded. No transaction was signed or broadcast.
   order, populated transaction fields, or premature verification claims.
 - Added a one-transaction-at-a-time deployment runbook with stop conditions.
 - Added the manifest gate to GitHub Actions and the local verification script.
-- Owner selected the hardware-wallet signing path; device-address verification
-  and the signing rehearsal remain incomplete.
+- Owner selected the existing dedicated Rabby account at the unchanged deployer
+  address for the capped canary. Signature-based address verification and the
+  transaction-preview rehearsal remain incomplete.
 - Owner reported that the secret-safe dual-provider RPC preflight passed on
   2026-07-25. Provider secrets and the transient JSON result were deliberately
   not committed.
@@ -47,7 +48,8 @@ wallet was loaded. No transaction was signed or broadcast.
 
 - Independent review of the exact contract tag.
 - Remediation and focused re-review of every resulting contract change.
-- Hardware-wallet device-address verification and control-message rehearsal.
+- Rabby address verification by locally recovered control-message signature.
+- Six-transaction Rabby preview rehearsal against localhost only.
 - Fresh nonce, gas, gas-price, balance, and funding worksheet.
 - Blockscout verification rehearsal.
 - Completed, hashed manifest and explicit final approval immediately before any

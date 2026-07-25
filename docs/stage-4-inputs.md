@@ -6,14 +6,14 @@ a deployment.
 ## What is needed from the project owner
 
 The public role and product addresses are already frozen. Do not send a private
-key, seed phrase, keystore file, hardware-wallet recovery phrase, or RPC secret.
+key, seed phrase, keystore file, wallet recovery phrase, or RPC secret.
 
 Before a real broadcast, the owner must provide or confirm:
 
 1. A final yes/no approval after reviewing the independent security report.
-2. Whether the deployer at
-   `0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F` will sign with a hardware
-   wallet or an encrypted local keystore.
+2. Confirmation that the dedicated Rabby account at
+   `0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F` remains isolated and accessible.
+   Never import the unavailable SafePal recovery phrase into Rabby.
 3. A dedicated Robinhood mainnet RPC endpoint. Its secret URL stays local in an
    environment variable and is never pasted into source control or chat.
 4. Sufficient ETH on the deployer for deployment gas only. The exact amount is

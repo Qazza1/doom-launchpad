@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DoomStreak — Rabby Control Check</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh; margin: 0; display: grid; place-items: center;
+      color: #f8f5ff; background:
+        radial-gradient(circle at 80% 20%, #55103f 0, transparent 34%),
+        radial-gradient(circle at 15% 80%, #062b48 0, transparent 36%), #090415;
+    }
+    main {
+      width: min(680px, calc(100% - 32px)); padding: 36px;
+      background: #16072a; border: 2px solid #15dff2; border-radius: 22px;
+      box-shadow: 10px 10px 0 #000;
+    }
+    .eyebrow { color: #15dff2; letter-spacing: .14em; font-weight: 800; font-size: 12px; }
+    h1 { margin: 12px 0; font-size: clamp(30px, 7vw, 52px); line-height: .98; }
+    h1 span { color: #ff2d96; }
+    p { color: #c9bce2; line-height: 1.6; }
+    code {
+      display: block; overflow-wrap: anywhere; padding: 14px; margin: 20px 0;
+      color: #9cff00; background: #0b0414; border: 1px solid #4e3869; border-radius: 12px;
+    }
+    .warning {
+      padding: 14px; background: #291e02; border-left: 4px solid #ffe600;
+      color: #fff4a8; border-radius: 8px;
+    }
+    button {
+      width: 100%; margin-top: 20px; padding: 16px; border: 2px solid #000;
+      border-radius: 12px; color: #090415; background: #9cff00;
+      box-shadow: 5px 5px 0 #000; font: inherit; font-weight: 900; cursor: pointer;
+    }
+    button:disabled { cursor: wait; opacity: .65; }
+    #status { min-height: 26px; margin-top: 20px; color: #c9bce2; }
+    #status[data-type="success"] { color: #9cff00; }
+    #status[data-type="error"] { color: #ff5b91; }
+    small { display: block; margin-top: 22px; color: #8d7ba9; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">STAGE 4 · LOCAL CONTROL CHECK</div>
+    <h1>VERIFY <span>RABBY</span></h1>
+    <p>This local page confirms control of the dedicated DoomStreak canary account.</p>
+    <code>0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F</code>
+    <div class="warning">
+      You will sign one text message. Reject any request that shows gas, value,
+      token approvals, contract creation, or a transaction.
+    </div>
+    <button id="verify" type="button">CONNECT RABBY &amp; VERIFY</button>
+    <div id="status" role="status" aria-live="polite">No wallet connected.</div>
+    <small>
+      Runs only on 127.0.0.1. No seed phrase, private key, signature, RPC secret,
+      or transaction is stored. This page has no transaction-sending method.
+    </small>
+  </main>
+  <script src="/rabby-verify.js"></script>
+</body>
+</html>
