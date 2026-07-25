@@ -8,6 +8,7 @@ import {
   PRODUCTION_CHAIN_ID,
   SENTINEL_BALANCE_WEI,
   assertIsolatedChain,
+  isNonceOnlyDrift,
   normalizeOnchainTransaction,
   validateReceipt,
   validateSentinelBalance,
@@ -115,7 +116,34 @@ test("the wallet's own transaction is what gets checked, not the page's payload"
     nonce: "0x9",
     value: "0x0",
   });
-  assert.deepEqual(validateStepSubmission(plan, 0, substituted), ["nonce does not match the plan"]);
+  assert.deepEqual(validateStepSubmission(plan, 0, substituted), [
+    "nonce does not match the plan (wallet used 9, plan expects 7)",
+  ]);
+});
+
+test("a wallet-chosen nonce is distinguished from a wallet that rewrote the payload", () => {
+  const mined = extra => normalizeOnchainTransaction({
+    from: DEPLOYER,
+    to: null,
+    input: plan.transactions[0].data,
+    nonce: "0x9",
+    value: "0x0",
+    ...extra,
+  });
+
+  // Only the nonce moved: Rabby caches a pending nonce per chain and address, so a second preview
+  // session against a fresh fork starts ahead of the chain. The fork realigns instead of failing.
+  assert.equal(isNonceOnlyDrift(plan.transactions[0], mined()), true);
+
+  // Anything else differing is a real finding and must never be realigned away.
+  assert.equal(isNonceOnlyDrift(plan.transactions[0], mined({ input: "0x60806040dead" })), false);
+  assert.equal(isNonceOnlyDrift(plan.transactions[0], mined({ to: locker })), false);
+  assert.equal(isNonceOnlyDrift(plan.transactions[0], mined({ from: locker })), false);
+  assert.equal(isNonceOnlyDrift(plan.transactions[0], mined({ value: "0x2386f26fc10000" })), false);
+
+  // The planned nonce is not drift.
+  assert.equal(isNonceOnlyDrift(plan.transactions[0], mined({ nonce: "0x7" })), false);
+  assert.equal(isNonceOnlyDrift(null, mined()), false);
 });
 
 test("a submitted payload must be byte-identical to the plan", () => {
@@ -128,7 +156,7 @@ test("a submitted payload must be byte-identical to the plan", () => {
   );
   assert.deepEqual(
     validateStepSubmission(plan, 0, { ...submission(0), nonce: 9 }),
-    ["nonce does not match the plan"],
+    ["nonce does not match the plan (wallet used 9, plan expects 7)"],
   );
   assert.deepEqual(
     validateStepSubmission(plan, 1, { ...submission(1), to: manager }),

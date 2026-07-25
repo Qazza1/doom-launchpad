@@ -79,9 +79,27 @@ export function validateStepSubmission(plan, index, submitted) {
     errors.push("recipient does not match the plan");
   }
   if (lower(submitted?.data) !== lower(planned.data)) errors.push("calldata does not match the plan");
-  if (Number(submitted?.nonce) !== planned.nonce) errors.push("nonce does not match the plan");
+  if (Number(submitted?.nonce) !== planned.nonce) {
+    errors.push(
+      `nonce does not match the plan (wallet used ${Number(submitted?.nonce)}, plan expects ${planned.nonce})`,
+    );
+  }
   if (submitted?.value && BigInt(submitted.value) !== 0n) errors.push("a preview step must carry no value");
   return errors;
+}
+
+/// True when the wallet signed the planned payload but chose its own nonce. Rabby caches a pending
+/// nonce per chain and address, so a second preview session against a fresh fork can start ahead of
+/// the chain even though the fork's nonce is correct.
+export function isNonceOnlyDrift(planned, mined) {
+  if (!planned || !mined) return false;
+  return (
+    lower(mined.from) === lower(planned.from) &&
+    lower(mined.to || null) === lower(planned.to || null) &&
+    lower(mined.data) === lower(planned.data) &&
+    (!mined.value || BigInt(mined.value) === 0n) &&
+    Number(mined.nonce) !== planned.nonce
+  );
 }
 
 export function validateReceipt(planned, receipt) {
@@ -174,7 +192,7 @@ export async function startServer() {
   const pendingNonce = Number(
     await rpc(upstream, "eth_getTransactionCount", [DEPLOYER, "pending"]),
   );
-  const plan = await buildPlan(pendingNonce);
+  let plan = { ...(await buildPlan(pendingNonce)), upstreamPendingNonce: pendingNonce };
   const html = await readFile(resolve(directory, "rabby-preview.html"));
   const clientScript = await readFile(resolve(directory, "rabby-preview.js"));
   const baseUrl = `http://${HOST}:${PORT}`;
@@ -272,6 +290,28 @@ export async function startServer() {
             });
             return;
           }
+          // Before any step is confirmed, a wallet-chosen nonce is an artifact of Rabby's cache, not
+          // a finding. Realign the fork and the plan to what the wallet actually signed, and say so
+          // loudly. After the first confirmed step the same drift is a hard failure.
+          let realignedFrom = null;
+          if (
+            index === 0 &&
+            completed.length === 0 &&
+            isNonceOnlyDrift(plan.transactions[0], mined) &&
+            mined.nonce > plan.startingNonce
+          ) {
+            realignedFrom = plan.startingNonce;
+            await rpc(PREVIEW_RPC_URL, "anvil_setNonce", [DEPLOYER, `0x${mined.nonce.toString(16)}`]);
+            await rpc(PREVIEW_RPC_URL, "evm_mine", []);
+            plan = {
+              ...(await buildPlan(mined.nonce)),
+              upstreamPendingNonce: plan.upstreamPendingNonce,
+            };
+            console.log(
+              `Realigned the preview to the wallet's nonce ${mined.nonce} (was ${realignedFrom}).`,
+            );
+          }
+
           const submissionErrors = validateStepSubmission(plan, index, mined);
           if (submissionErrors.length) {
             sendJson(response, 400, {
@@ -297,6 +337,8 @@ export async function startServer() {
             order: index,
             gasUsed: BigInt(receipt.gasUsed).toString(),
             remaining: plan.transactions.length - completed.length,
+            realignedFrom,
+            startingNonce: plan.startingNonce,
           });
           return;
         }
@@ -407,6 +449,11 @@ async function finalize(plan, completed) {
         + " stores the production chain ID. The chain-4663 postconditions are covered by the"
         + " impersonated localhost preview.",
       "Predicted addresses depend on the copied pending nonce and change if it moves.",
+      plan.startingNonce === plan.upstreamPendingNonce
+        ? "The wallet used the upstream pending nonce."
+        : `The preview realigned to the wallet's nonce ${plan.startingNonce}; the upstream pending`
+          + ` nonce was ${plan.upstreamPendingNonce}. Confirm the real pending nonce from both`
+          + " providers before production planning.",
     ],
     warning:
       "Rehearsal only. This proves Rabby renders and signs the planned payloads; it authorizes no mainnet action.",

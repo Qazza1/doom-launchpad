@@ -72,8 +72,9 @@ function renderSteps() {
     const detail = document.createElement("p");
     detail.textContent = describe(transaction);
     const button = document.createElement("button");
-    button.textContent = `Send step ${transaction.order + 1} in Rabby`;
-    button.disabled = transaction.order !== plan.completed.length;
+    const confirmed = plan.completed.includes(transaction.order);
+    button.textContent = confirmed ? "CONFIRMED" : `Send step ${transaction.order + 1} in Rabby`;
+    button.disabled = confirmed || transaction.order !== plan.completed.length;
     button.addEventListener("click", () => submit(transaction, button, detail));
     item.append(heading, detail, button);
     steps.append(item);
@@ -115,6 +116,20 @@ async function submit(transaction, button, detail) {
     });
     const result = await response.json();
     if (!response.ok || !result.ok) throw new Error(result.error || "step verification failed");
+
+    // A realignment renumbers every later nonce and changes every predicted address, so the page
+    // must show the new plan rather than the one it just invalidated.
+    if (result.realignedFrom !== null && result.realignedFrom !== undefined) {
+      plan = await fetch("/plan", { cache: "no-store" }).then(response => response.json());
+      renderSteps();
+      setStatus(
+        `Step 1 verified. Rabby chose nonce ${result.startingNonce} instead of ` +
+          `${result.realignedFrom}, so the preview realigned to it and the predicted addresses ` +
+          "were recalculated. This is a wallet nonce cache, not a plan error.",
+        "success",
+      );
+      return;
+    }
 
     plan.completed.push(transaction.order);
     detail.textContent = `${detail.textContent} · gas ${result.gasUsed}`;

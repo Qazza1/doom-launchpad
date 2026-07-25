@@ -84,6 +84,39 @@ re-checks the hash that was already signed.
 Observed gas for step 1 was `1,002,237`, matching the impersonated localhost
 preview's figure for `DoomRewards` exactly.
 
+## What the second run found
+
+With those fixed, the on-chain check fired: *the wallet signed something other
+than the plan: nonce does not match the plan*.
+
+That was the check doing its job, but the cause is an artifact of rehearsing, not
+a defect in the plan. Rabby caches a pending nonce per chain ID and address. The
+first session consumed nonce 0 on the preview chain; the second session started a
+brand-new fork whose on-chain nonce is 0 again, but Rabby still believed the
+account was one ahead and signed at its own nonce. The transaction then sat in
+the mempool behind a gap that could never be filled.
+
+Two changes came out of it:
+
+- The error now names both numbers. "Nonce does not match the plan" is useless in
+  front of an irreversible sequence; "wallet used 2, plan expects 0" is
+  actionable.
+- Before any step is confirmed, a nonce-only difference realigns the preview:
+  the fork's account nonce is set to the one the wallet used, the plan is rebuilt
+  from it, and every predicted address is recalculated. The page reloads the new
+  plan and says what happened. The report records the realignment and the
+  original upstream nonce.
+
+`isNonceOnlyDrift` is deliberately narrow. It realigns only when sender,
+recipient, calldata, and zero value all match and the nonce alone moved forward,
+and only before the first confirmed step. Any other difference, and any drift
+after step 1, remains a hard failure. A wallet that rewrites calldata is a
+finding; a wallet that remembers a stale nonce across two local forks is not.
+
+None of this changes production. There the pending nonce is read from both
+providers immediately before planning, and a nonce that disagrees with the plan
+stops the sequence rather than realigning it.
+
 ## Run
 
 ```powershell
