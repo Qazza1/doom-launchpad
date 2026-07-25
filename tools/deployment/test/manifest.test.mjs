@@ -40,6 +40,38 @@ test("populated transaction or verification claims are rejected", () => {
   assert.ok(errors.some(error => error.includes("verification flags")));
 });
 
+test("localhost preview state is recorded with evidence and claims nothing else", () => {
+  assert.equal(canonical.previews.localhostSequencePreviewComplete, true);
+  assert.equal(canonical.previews.rabbyTransactionPreviewComplete, false);
+  assert.equal(canonical.signing.rehearsalComplete, false);
+  assert.ok(Object.values(canonical.gasPlan).every(value => value === null || value === 2500));
+
+  const unevidenced = copy();
+  unevidenced.previews.localhostSequencePreviewCommit = null;
+  unevidenced.previews.localhostSequencePreviewEvidence = "";
+  const errors = validatePredeploymentManifest(unevidenced);
+  assert.ok(errors.some(error => error.includes("exact source commit")));
+  assert.ok(errors.some(error => error.includes("committed evidence document")));
+
+  const missingFlag = copy();
+  delete missingFlag.previews.localhostSequencePreviewComplete;
+  assert.ok(
+    validatePredeploymentManifest(missingFlag).some(error =>
+      error.includes("localhostSequencePreviewComplete must be a boolean")
+    ),
+  );
+});
+
+test("a live-wallet transaction preview cannot be claimed from the localhost preview", () => {
+  const claimed = copy();
+  claimed.previews.rabbyTransactionPreviewComplete = true;
+  assert.ok(
+    validatePredeploymentManifest(claimed).some(error =>
+      error.includes("Rabby transaction preview must remain incomplete")
+    ),
+  );
+});
+
 test("signing workflow cannot silently change, roll back verification, or claim rehearsal", () => {
   const wrongWallet = copy();
   wrongWallet.signing.method = "hardware_wallet";

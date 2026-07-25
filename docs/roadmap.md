@@ -121,9 +121,13 @@ authorized.
 - [ ] Remediation and focused re-review of every contract change.
 - [x] Production RPC and fallback RPC secret-safe preflight.
 - [x] Dedicated Rabby address/control proof.
-- [ ] Exact six-transaction localhost execution preview; Rabby remains
-  disconnected.
-- [ ] Exact gas estimate and deployer funding plan.
+- [x] Exact six-transaction localhost execution preview; Rabby remains
+  disconnected. Evidence for commit `f2dee52`:
+  `docs/stage-4-localhost-preview-validation.md`.
+- [ ] Six-transaction Rabby transaction preview against localhost only.
+- [ ] Exact gas estimate and deployer funding plan. The preview snapshot is
+  evidence only; nonce, fees, predicted addresses, balance, and required funding
+  must be refreshed from the final reviewed commit through both RPC providers.
 - [x] Fail-closed deployment manifest and constructor/nonce worksheet.
 - [x] Correct dependency-safe deployment and irreversible-binding order.
 - [ ] Production deployment and post-deployment verification scripts.

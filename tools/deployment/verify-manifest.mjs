@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
+const COMMIT = /^[0-9a-f]{40}$/;
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const EMPTY_TRANSACTION = value =>
   value && Object.values(value).every(item => item === null);
 
@@ -93,6 +95,31 @@ export function validatePredeploymentManifest(manifest) {
   require(
     manifest?.signing?.rehearsalComplete === false,
     "Rabby transaction rehearsal must remain incomplete",
+  );
+
+  const previews = manifest?.previews;
+  require(
+    typeof previews?.localhostSequencePreviewComplete === "boolean",
+    "previews.localhostSequencePreviewComplete must be a boolean",
+  );
+  if (previews?.localhostSequencePreviewComplete === true) {
+    require(
+      COMMIT.test(previews?.localhostSequencePreviewCommit || ""),
+      "a completed localhost preview must record the exact source commit",
+    );
+    require(
+      DATE.test(previews?.localhostSequencePreviewRecordedAt || ""),
+      "a completed localhost preview must record its date",
+    );
+    require(
+      typeof previews?.localhostSequencePreviewEvidence === "string" &&
+        previews.localhostSequencePreviewEvidence.length > 0,
+      "a completed localhost preview must reference its committed evidence document",
+    );
+  }
+  require(
+    previews?.rabbyTransactionPreviewComplete === false,
+    "Rabby transaction preview must remain incomplete",
   );
 
   return errors;
