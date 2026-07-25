@@ -3,10 +3,12 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   DEPLOYER,
+  MAX_PREVIEW_SPEND_WEI,
   PREVIEW_CHAIN_ID,
   PRODUCTION_CHAIN_ID,
   SENTINEL_BALANCE_WEI,
   assertIsolatedChain,
+  normalizeOnchainTransaction,
   validateReceipt,
   validateSentinelBalance,
   validateStepSubmission,
@@ -60,9 +62,60 @@ test("the rehearsal refuses to run on the production chain", () => {
 });
 
 test("the sentinel balance proves the connected network is the preview fork", () => {
-  assert.equal(validateSentinelBalance(`0x${SENTINEL_BALANCE_WEI.toString(16)}`), true);
+  const hex = value => `0x${value.toString(16)}`;
+  assert.equal(validateSentinelBalance(hex(SENTINEL_BALANCE_WEI)), true);
   assert.throws(() => validateSentinelBalance("0x0"), /not the preview fork/);
-  assert.throws(() => validateSentinelBalance("0x6f05b59d3b20000"), /not the preview fork/);
+  // The real deployer balance on mainnet, 0.0005 ETH.
+  assert.throws(() => validateSentinelBalance("0x1c6bf52634000"), /not the preview fork/);
+});
+
+test("gas spent by a confirmed step does not invalidate the sentinel guard", () => {
+  const hex = value => `0x${value.toString(16)}`;
+  // A step costs on the order of 1e15 wei. An exact-equality guard rejected every step after the
+  // first, and rejected a page reload as the wrong network.
+  const afterOneStep = SENTINEL_BALANCE_WEI - 1_899_909_494_736_000n;
+  const afterSixSteps = SENTINEL_BALANCE_WEI - 6n * 1_899_909_494_736_000n;
+  assert.equal(validateSentinelBalance(hex(afterOneStep)), true);
+  assert.equal(validateSentinelBalance(hex(afterSixSteps)), true);
+  assert.equal(validateSentinelBalance(hex(SENTINEL_BALANCE_WEI - MAX_PREVIEW_SPEND_WEI)), true);
+
+  assert.throws(
+    () => validateSentinelBalance(hex(SENTINEL_BALANCE_WEI - MAX_PREVIEW_SPEND_WEI - 1n)),
+    /not the preview fork/,
+  );
+  assert.throws(
+    () => validateSentinelBalance(hex(SENTINEL_BALANCE_WEI + 1n)),
+    /not the preview fork/,
+  );
+});
+
+test("the wallet's own transaction is what gets checked, not the page's payload", () => {
+  const mined = normalizeOnchainTransaction({
+    from: DEPLOYER,
+    to: null,
+    input: plan.transactions[0].data,
+    nonce: "0x7",
+    value: "0x0",
+  });
+  assert.deepEqual(mined, {
+    from: DEPLOYER,
+    to: null,
+    data: plan.transactions[0].data,
+    nonce: 7,
+    value: "0x0",
+  });
+  assert.deepEqual(validateStepSubmission(plan, 0, mined), []);
+  assert.equal(normalizeOnchainTransaction(null), null);
+
+  // The documented failure mode: the wallet silently substitutes its own nonce.
+  const substituted = normalizeOnchainTransaction({
+    from: DEPLOYER,
+    to: null,
+    input: plan.transactions[0].data,
+    nonce: "0x9",
+    value: "0x0",
+  });
+  assert.deepEqual(validateStepSubmission(plan, 0, substituted), ["nonce does not match the plan"]);
 });
 
 test("a submitted payload must be byte-identical to the plan", () => {
@@ -124,6 +177,10 @@ test("the preview client never contacts a remote endpoint or hard-codes producti
   assert.equal(client.includes(String(PRODUCTION_CHAIN_ID)), false);
   assert.equal(/eth_sendRawTransaction|wallet_addEthereumChain|personal_sign/.test(client), false);
   assert.ok(client.includes("assertPreviewChain"));
+  // A step that was signed but failed verification must be re-checked, never re-signed: the nonce
+  // is already spent, so resending would produce a second transaction that can never confirm.
+  assert.ok(client.includes("submitted.get(transaction.order)"));
+  assert.ok(client.includes("submitted.set(transaction.order, txHash)"));
   assert.ok(page.includes("/rabby-preview.js"));
   assert.equal(/<script(?![^>]*src="\/rabby-preview\.js")/.test(page), false);
 });

@@ -37,8 +37,16 @@ export function assertIsolatedChain(chainId) {
   return true;
 }
 
+/// Sending a step spends gas, so the balance stops being exactly the sentinel the moment the first
+/// transaction lands. The guard therefore accepts a window below the sentinel rather than equality:
+/// an exact check made every later step fail, and made a page reload look like the wrong network.
+/// The window is still unforgeable in practice, because the real deployer holds a fraction of an ETH
+/// and the sentinel is over 123.
+export const MAX_PREVIEW_SPEND_WEI = 10n ** 18n;
+
 export function validateSentinelBalance(balanceHex) {
-  if (BigInt(balanceHex || 0) !== SENTINEL_BALANCE_WEI) {
+  const balance = BigInt(balanceHex || 0);
+  if (balance > SENTINEL_BALANCE_WEI || balance < SENTINEL_BALANCE_WEI - MAX_PREVIEW_SPEND_WEI) {
     throw new Error(
       "the connected account does not hold the local sentinel balance; this is not the preview fork",
     );
@@ -46,7 +54,21 @@ export function validateSentinelBalance(balanceHex) {
   return true;
 }
 
-/// The browser may only submit a payload that is byte-identical to the planned one.
+/// Reads back what the wallet actually signed. Comparing the plan with the payload the page sent
+/// would only re-check our own object; the runbook cares whether Rabby substituted a nonce or
+/// rewrote a field, and only the mined transaction can answer that.
+export function normalizeOnchainTransaction(transaction) {
+  if (!transaction) return null;
+  return {
+    from: transaction.from,
+    to: transaction.to ?? null,
+    data: transaction.input ?? transaction.data,
+    nonce: Number(transaction.nonce),
+    value: transaction.value ?? "0x0",
+  };
+}
+
+/// The mined transaction must be byte-identical to the planned one.
 export function validateStepSubmission(plan, index, submitted) {
   const errors = [];
   const planned = plan?.transactions?.[index];
@@ -110,6 +132,17 @@ async function readJsonBody(request) {
     chunks.push(chunk);
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+}
+
+/// Rabby returns the hash as soon as it submits, so the receipt can lag the response by a few
+/// milliseconds. Asking once turned a healthy step into "no receipt was returned".
+async function waitForReceipt(txHash, attempts = 40) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const receipt = await rpc(PREVIEW_RPC_URL, "eth_getTransactionReceipt", [txHash]);
+    if (receipt) return receipt;
+    await new Promise(done => setTimeout(done, 250));
+  }
+  return null;
 }
 
 async function waitForAnvil(child) {
@@ -197,6 +230,7 @@ export async function startServer() {
             previewChainId: PREVIEW_CHAIN_ID,
             previewRpcUrl: PREVIEW_RPC_URL,
             sentinelBalanceWei: SENTINEL_BALANCE_WEI.toString(),
+            minimumPreviewBalanceWei: (SENTINEL_BALANCE_WEI - MAX_PREVIEW_SPEND_WEI).toString(),
             startingNonce: plan.startingNonce,
             completed: completed.map(item => item.order),
             transactions: plan.transactions.map(transaction => ({
@@ -227,17 +261,36 @@ export async function startServer() {
             return;
           }
           assertIsolatedChain(Number(await rpc(PREVIEW_RPC_URL, "eth_chainId")));
-          const submissionErrors = validateStepSubmission(plan, index, payload?.transaction);
-          if (submissionErrors.length) {
-            sendJson(response, 400, { ok: false, error: submissionErrors.join("; ") });
+
+          const mined = normalizeOnchainTransaction(
+            await rpc(PREVIEW_RPC_URL, "eth_getTransactionByHash", [payload?.txHash]),
+          );
+          if (!mined) {
+            sendJson(response, 400, {
+              ok: false,
+              error: "the preview chain does not know that transaction hash",
+            });
             return;
           }
-          const receipt = await rpc(PREVIEW_RPC_URL, "eth_getTransactionReceipt", [payload?.txHash]);
+          const submissionErrors = validateStepSubmission(plan, index, mined);
+          if (submissionErrors.length) {
+            sendJson(response, 400, {
+              ok: false,
+              error: `the wallet signed something other than the plan: ${submissionErrors.join("; ")}`,
+            });
+            return;
+          }
+          const receipt = await waitForReceipt(payload?.txHash);
           const receiptErrors = validateReceipt(plan.transactions[index], receipt);
           if (receiptErrors.length) {
             sendJson(response, 400, { ok: false, error: receiptErrors.join("; ") });
             return;
           }
+          // Restore the sentinel so the next step's guard sees the fork it expects.
+          await rpc(PREVIEW_RPC_URL, "anvil_setBalance", [
+            DEPLOYER,
+            `0x${SENTINEL_BALANCE_WEI.toString(16)}`,
+          ]);
           completed.push({ order: index, gasUsed: BigInt(receipt.gasUsed).toString() });
           sendJson(response, 200, {
             ok: true,

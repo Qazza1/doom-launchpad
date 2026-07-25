@@ -41,7 +41,12 @@ async function assertPreviewChain(provider) {
     method: "eth_getBalance",
     params: [plan.deployer, "latest"],
   });
-  if (BigInt(balance) !== BigInt(plan.sentinelBalanceWei)) {
+  // A window, not equality: each confirmed step spends gas, and an exact check would reject every
+  // step after the first and make a page reload look like the wrong network.
+  if (
+    BigInt(balance) > BigInt(plan.sentinelBalanceWei) ||
+    BigInt(balance) < BigInt(plan.minimumPreviewBalanceWei)
+  ) {
     throw new Error(
       "The connected network does not carry the local sentinel balance. This is not the preview fork.",
     );
@@ -75,6 +80,8 @@ function renderSteps() {
   }
 }
 
+const submitted = new Map();
+
 async function submit(transaction, button, detail) {
   button.disabled = true;
   try {
@@ -89,8 +96,16 @@ async function submit(transaction, button, detail) {
     };
     if (transaction.to) request.to = transaction.to;
 
-    setStatus(`Review step ${transaction.order + 1} in Rabby, then confirm…`);
-    const txHash = await provider.request({ method: "eth_sendTransaction", params: [request] });
+    // A step that was signed but failed verification must never be signed again: the nonce is
+    // already spent, so a retry re-checks the existing hash instead of sending a second transaction.
+    let txHash = submitted.get(transaction.order);
+    if (txHash) {
+      setStatus(`Re-checking the step ${transaction.order + 1} transaction already signed…`);
+    } else {
+      setStatus(`Review step ${transaction.order + 1} in Rabby, then confirm…`);
+      txHash = await provider.request({ method: "eth_sendTransaction", params: [request] });
+      submitted.set(transaction.order, txHash);
+    }
 
     setStatus("Waiting for the preview receipt…");
     const response = await fetch("/step", {
@@ -120,7 +135,10 @@ async function submit(transaction, button, detail) {
       setStatus(`Step ${transaction.order + 1} verified. ${result.remaining} remaining.`);
     }
   } catch (error) {
-    setStatus(error?.message || "step failed", "error");
+    const retry = submitted.has(transaction.order)
+      ? " The transaction was already signed; pressing the button again re-checks it instead of resending."
+      : "";
+    setStatus(`${error?.message || "step failed"}${retry}`, "error");
     button.disabled = false;
   }
 }

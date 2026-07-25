@@ -45,11 +45,44 @@ are already covered by the impersonated localhost preview.
 ## Two independent guards before any prompt
 
 1. The wallet must report chain `46630`.
-2. The deployer must hold the local-only sentinel balance
-   `123456789012345678901 wei`, which only Anvil's `anvil_setBalance` produces.
+2. The deployer's balance must sit inside a window at the local-only sentinel
+   balance `123456789012345678901 wei`, which only Anvil's `anvil_setBalance`
+   produces: at most the sentinel, and at most 1 ETH below it.
 
 Both are re-checked before every step, so switching networks mid-rehearsal stops
 the run rather than silently sending somewhere else.
+
+The second guard is a window rather than an equality because each confirmed step
+spends gas. The window is still unforgeable in practice: the real deployer holds
+a fraction of an ETH and the sentinel is over 123. The server also restores the
+sentinel after each verified step, so the balance never drifts far.
+
+## What the first run found
+
+The harness was run against a real Rabby session before the gate was attempted.
+It surfaced two defects in the harness itself, both now fixed and covered by
+tests.
+
+**An exact sentinel check cannot survive its own first step.** Step 1 confirmed,
+which spent gas, and the balance was no longer exactly the sentinel. Every later
+step, and any page reload, then failed with "this is not the preview fork" —
+the guard reporting a wrong network when the network was correct. A guard that
+fails closed is right; a guard that fails closed on the normal path is a bug,
+because it teaches the operator to distrust it.
+
+**Asking once for a receipt is a race.** Rabby returns the transaction hash as
+soon as it submits, and the receipt can lag by milliseconds. The first attempt
+happened to win the race and the second lost it, producing "no receipt was
+returned" for a transaction that was perfectly healthy. The server now polls for
+up to ten seconds.
+
+A third problem was visible in that failure and fixed at the same time: after a
+step failed verification, pressing the button again would have signed a *second*
+transaction at an already-spent nonce, which could never confirm. A retry now
+re-checks the hash that was already signed.
+
+Observed gas for step 1 was `1,002,237`, matching the impersonated localhost
+preview's figure for `DoomRewards` exactly.
 
 ## Run
 
@@ -75,8 +108,11 @@ the single address argument. Those two are the irreversible bindings.
 
 - Steps must be confirmed in order; the next button unlocks only after the
   previous receipt verifies.
-- The submitted payload must be byte-identical to the plan: sender, recipient,
-  calldata, nonce, and zero value.
+- The **mined** transaction, read back with `eth_getTransactionByHash`, must be
+  byte-identical to the plan: sender, recipient, calldata, nonce, and zero value.
+  Checking the payload the page sent would only re-check our own object. Reading
+  back what the wallet actually signed is what catches a substituted nonce or a
+  rewritten field, which is the failure the runbook cares about.
 - Each receipt must succeed, come from the deployer, and for a creation land at
   the predicted address.
 - Getter selectors used for the final postcondition checks are read from the
