@@ -14,6 +14,12 @@ export const PREVIEW_CHAIN_ID = 46630;
 export const DEPLOYER = "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F";
 export const SENTINEL_BALANCE_WEI = 123_456_789_012_345_678_901n;
 export const PREVIEW_RPC_URL = "http://127.0.0.1:18546";
+/// Wallets keep their own pending-nonce counter per chain and address, and it survives the fork
+/// being thrown away. Chasing that counter cannot converge: every signature advances it by one, so
+/// realigning to it and asking for another signature just moves the target. Instead the fork starts
+/// the deployer far above any plausible cached value, because a wallet takes the maximum of its
+/// cache and the chain's pending nonce. Preview only: production plans from the real pending nonce.
+export const PREVIEW_NONCE_FLOOR = 1000;
 
 const HOST = "127.0.0.1";
 const PORT = 4179;
@@ -43,6 +49,10 @@ export function assertIsolatedChain(chainId) {
 /// The window is still unforgeable in practice, because the real deployer holds a fraction of an ETH
 /// and the sentinel is over 123.
 export const MAX_PREVIEW_SPEND_WEI = 10n ** 18n;
+
+export function choosePreviewNonce(upstreamPendingNonce) {
+  return Math.max(Number(upstreamPendingNonce) + PREVIEW_NONCE_FLOOR, PREVIEW_NONCE_FLOOR);
+}
 
 export function validateSentinelBalance(balanceHex) {
   const balance = BigInt(balanceHex || 0);
@@ -192,7 +202,8 @@ export async function startServer() {
   const pendingNonce = Number(
     await rpc(upstream, "eth_getTransactionCount", [DEPLOYER, "pending"]),
   );
-  let plan = { ...(await buildPlan(pendingNonce)), upstreamPendingNonce: pendingNonce };
+  const previewNonce = choosePreviewNonce(pendingNonce);
+  let plan = { ...(await buildPlan(previewNonce)), upstreamPendingNonce: pendingNonce };
   const html = await readFile(resolve(directory, "rabby-preview.html"));
   const clientScript = await readFile(resolve(directory, "rabby-preview.js"));
   const baseUrl = `http://${HOST}:${PORT}`;
@@ -206,6 +217,9 @@ export async function startServer() {
   ], { windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
 
   const completed = [];
+  // Realigning more than once cannot converge: signing advances the wallet's counter, so each
+  // realignment moves the target by one. One attempt, then stop and say what to fix.
+  let realignments = 0;
   let server;
   try {
     await waitForAnvil(anvil);
@@ -218,6 +232,16 @@ export async function startServer() {
       `0x${SENTINEL_BALANCE_WEI.toString(16)}`,
     ]);
     validateSentinelBalance(await rpc(PREVIEW_RPC_URL, "eth_getBalance", [DEPLOYER, "latest"]));
+
+    // Raise the fork's nonce above any cached wallet counter before the wallet is ever asked to
+    // sign. A wallet takes the maximum of its cache and the chain, so it now agrees with the plan.
+    await rpc(PREVIEW_RPC_URL, "anvil_setNonce", [DEPLOYER, `0x${previewNonce.toString(16)}`]);
+    const appliedNonce = Number(
+      await rpc(PREVIEW_RPC_URL, "eth_getTransactionCount", [DEPLOYER, "pending"]),
+    );
+    if (appliedNonce !== previewNonce) {
+      throw new Error("the fork did not apply the preview nonce offset");
+    }
 
     server = createServer(async (request, response) => {
       response.setHeader(
@@ -296,9 +320,11 @@ export async function startServer() {
           if (
             index === 0 &&
             completed.length === 0 &&
+            realignments === 0 &&
             isNonceOnlyDrift(plan.transactions[0], mined) &&
             mined.nonce > plan.startingNonce
           ) {
+            realignments += 1;
             const realignedFrom = plan.startingNonce;
             await rpc(PREVIEW_RPC_URL, "anvil_setNonce", [DEPLOYER, `0x${mined.nonce.toString(16)}`]);
             // The signed transaction is parked in the queued pool behind a nonce gap. Raising the
@@ -328,9 +354,15 @@ export async function startServer() {
 
           const submissionErrors = validateStepSubmission(plan, index, mined);
           if (submissionErrors.length) {
+            const stuckAhead = realignments > 0 && isNonceOnlyDrift(plan.transactions[index], mined);
             sendJson(response, 400, {
               ok: false,
-              error: `the wallet signed something other than the plan: ${submissionErrors.join("; ")}`,
+              error: stuckAhead
+                ? `the wallet is still one ahead of the fork (signed ${mined.nonce}, plan expects ` +
+                  `${plan.transactions[index].nonce}). Its cached nonce advances with every ` +
+                  "signature, so realigning again cannot catch up. Clear pending transactions for " +
+                  "this network in the wallet, then restart the preview."
+                : `the wallet signed something other than the plan: ${submissionErrors.join("; ")}`,
             });
             return;
           }
@@ -390,7 +422,11 @@ export async function startServer() {
 
     console.log(`Rabby transaction preview ready: ${baseUrl}`);
     console.log(`Preview chain: ${PREVIEW_CHAIN_ID} at ${PREVIEW_RPC_URL}`);
-    console.log(`Upstream pending nonce copied: ${plan.startingNonce}`);
+    console.log(`Upstream pending nonce: ${pendingNonce}`);
+    console.log(
+      `Preview nonce: ${plan.startingNonce} (offset by ${PREVIEW_NONCE_FLOOR} to clear any cached`
+        + " wallet nonce). Predicted addresses below are preview-only for that reason.",
+    );
     console.log("Add the preview network in Rabby before connecting:");
     console.log(`  Name: Doom preview fork    RPC: ${PREVIEW_RPC_URL}    Chain ID: ${PREVIEW_CHAIN_ID}`);
     console.log("Rabby signs real transactions here. EIP-155 binds them to the preview chain,");
@@ -474,12 +510,12 @@ async function finalize(plan, completed) {
       "isNetworkConfigurationValid is expected to be false on the preview chain because the manager"
         + " stores the production chain ID. The chain-4663 postconditions are covered by the"
         + " impersonated localhost preview.",
-      "Predicted addresses depend on the copied pending nonce and change if it moves.",
-      plan.startingNonce === plan.upstreamPendingNonce
-        ? "The wallet used the upstream pending nonce."
-        : `The preview realigned to the wallet's nonce ${plan.startingNonce}; the upstream pending`
-          + ` nonce was ${plan.upstreamPendingNonce}. Confirm the real pending nonce from both`
-          + " providers before production planning.",
+      `The preview deliberately runs at nonce ${plan.startingNonce} while the upstream pending nonce`
+        + ` is ${plan.upstreamPendingNonce}, so the wallet's cached counter cannot get ahead of the`
+        + " fork. The addresses above are preview-only. Production predicts from the real pending"
+        + " nonce, confirmed through both providers immediately before planning.",
+      "This rehearsal covers wallet rendering, signing, and gas estimation. Address prediction at"
+        + " the real nonce is covered by the impersonated localhost preview.",
     ],
     warning:
       "Rehearsal only. This proves Rabby renders and signs the planned payloads; it authorizes no mainnet action.",

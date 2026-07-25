@@ -5,9 +5,11 @@ import {
   DEPLOYER,
   MAX_PREVIEW_SPEND_WEI,
   PREVIEW_CHAIN_ID,
+  PREVIEW_NONCE_FLOOR,
   PRODUCTION_CHAIN_ID,
   SENTINEL_BALANCE_WEI,
   assertIsolatedChain,
+  choosePreviewNonce,
   isNonceOnlyDrift,
   normalizeOnchainTransaction,
   validateReceipt,
@@ -60,6 +62,16 @@ test("the rehearsal refuses to run on the production chain", () => {
   assert.notEqual(PREVIEW_CHAIN_ID, PRODUCTION_CHAIN_ID);
   assert.equal(assertIsolatedChain(PREVIEW_CHAIN_ID), true);
   assert.throws(() => assertIsolatedChain(1), /preview chain must be 46630/);
+});
+
+test("the preview nonce starts above any cached wallet counter", () => {
+  // Chasing a wallet's cached nonce cannot converge: signing advances it, so each realignment moves
+  // the target. Starting above it means the wallet, which takes the maximum of its cache and the
+  // chain, agrees with the plan on the first signature.
+  assert.equal(choosePreviewNonce(0), PREVIEW_NONCE_FLOOR);
+  assert.equal(choosePreviewNonce(7), PREVIEW_NONCE_FLOOR + 7);
+  assert.ok(choosePreviewNonce(0) > 100, "the floor must clear a realistic session cache");
+  assert.ok(choosePreviewNonce(11) > 11);
 });
 
 test("the sentinel balance proves the connected network is the preview fork", () => {

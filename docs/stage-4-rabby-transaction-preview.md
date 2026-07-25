@@ -138,9 +138,39 @@ The missing-receipt message now also reports the signed nonce against the accoun
 nonce and names the nonce gap, instead of saying only that no receipt was
 returned.
 
-Expect the realignment prompt once per session whenever Rabby's cached nonce for
-chain `46630` is ahead of a fresh fork. Clearing pending transactions in Rabby
-for that network avoids it.
+## What the fourth run found, and the actual fix
+
+Realignment then looped: `realigned to nonce 10 (was 0)`, sign, `realigned to
+nonce 11 (was 10)`, sign, forever.
+
+The approach was wrong, not the implementation. Signing advances the wallet's
+cached counter by one, so realigning to it and requesting another signature moves
+the target every time. Chasing a counter that runs away from you cannot converge,
+and each lap cost a real signature.
+
+The fix is to get ahead of it instead. A wallet takes the maximum of its cached
+counter and the chain's pending nonce, so the fork now sets the deployer's nonce
+to `upstream pending + 1000` **before the wallet is ever asked to sign**. Any
+plausible cached value is below that, so the wallet agrees with the plan on the
+first attempt and no realignment happens at all.
+
+Realignment survives as a one-shot fallback. If it fires and the wallet is still
+ahead afterwards, the server stops and says to clear pending transactions for
+that network, rather than asking for another signature it cannot use.
+
+### What the offset costs
+
+The predicted addresses in this rehearsal are not the production addresses,
+because they derive from the offset nonce. That is stated in the report and in
+the server output.
+
+Nothing is lost. This rehearsal exists to test wallet rendering, signing, and gas
+estimation, none of which depend on the nonce value. Address prediction at the
+real pending nonce is covered by the impersonated localhost preview and by the
+transaction planner, which agree with each other.
+
+Production is unaffected: it plans from the real pending nonce, read through both
+providers immediately before planning, and a disagreement stops the sequence.
 
 ## Run
 
