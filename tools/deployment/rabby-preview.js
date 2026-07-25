@@ -124,7 +124,9 @@ async function submit(transaction, button, detail) {
       submitted.delete(transaction.order);
       plan = await fetch("/plan", { cache: "no-store" }).then(response => response.json());
       renderSteps();
-      setStatus(result.error, "error");
+      // Not an error: this is the designed path when the wallet's cached nonce is ahead. Showing it
+      // in the failure colour would teach the operator to discount the status line.
+      setStatus(result.error, "notice");
       return;
     }
     if (!response.ok || !result.ok) throw new Error(result.error || "step verification failed");
