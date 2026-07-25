@@ -29,6 +29,10 @@ The NFT collection may still have zero minted supply at deployment. Fee rewards
 remain isolated in DoomRewards until a valid NFT-holder snapshot campaign is
 created.
 
+Use an Alchemy Robinhood Mainnet endpoint as primary and an independently
+hosted QuickNode Robinhood Mainnet endpoint as fallback. Follow
+`docs/stage-4-rpc-setup.md`; the public Robinhood RPC remains a testing endpoint.
+
 ## Work Codex can prepare before owner action
 
 - The production deployment and verification scripts, kept fail-closed.

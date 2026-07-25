@@ -65,7 +65,9 @@ if ($manifest.creationFee.feeBps -ne 300 -or
 }
 
 Write-Host "Manifest valid and deployment remains disabled."
-& $nodeCommand.Source --test (Join-Path $projectRoot "tools\deployment\test\manifest.test.mjs")
+$deploymentTests = Get-ChildItem -LiteralPath (Join-Path $projectRoot "tools\deployment\test") `
+    -Filter "*.test.mjs" | ForEach-Object { $_.FullName }
+& $nodeCommand.Source --test $deploymentTests
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & $nodeCommand.Source (Join-Path $projectRoot "tools\deployment\verify-manifest.mjs") `
     (Join-Path $projectRoot "config\stage4-deployment-manifest.json")

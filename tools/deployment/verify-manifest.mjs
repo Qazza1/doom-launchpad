@@ -68,6 +68,16 @@ export function validatePredeploymentManifest(manifest) {
     ),
     "independent review fields must be empty and false",
   );
+  require(manifest?.signing?.method === "hardware_wallet", "signing method must be hardware_wallet");
+  require(manifest?.signing?.deviceModel === null, "hardware-wallet model is not recorded yet");
+  require(
+    manifest?.signing?.addressVerifiedOnDevice === false,
+    "hardware-wallet address verification must remain false before rehearsal",
+  );
+  require(
+    manifest?.signing?.rehearsalComplete === false,
+    "hardware-wallet rehearsal must remain incomplete",
+  );
 
   return errors;
 }

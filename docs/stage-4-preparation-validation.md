@@ -14,6 +14,8 @@ wallet was loaded. No transaction was signed or broadcast.
   order, populated transaction fields, or premature verification claims.
 - Added a one-transaction-at-a-time deployment runbook with stop conditions.
 - Added the manifest gate to GitHub Actions and the local verification script.
+- Owner selected the hardware-wallet signing path; device-address verification
+  and the signing rehearsal remain incomplete.
 
 ## Validation results
 
@@ -23,6 +25,8 @@ wallet was loaded. No transaction was signed or broadcast.
   - dependency-unsafe deployment order;
   - populated transaction address;
   - premature verification claim.
+- Dual-RPC preflight tests passed for independent HTTPS providers and detection
+  of chain, head, pending-nonce, and dependency-bytecode disagreement.
 - 69 contract tests passed; 2 fork tests were skipped in the normal gate.
 - 8 deterministic rewards tests passed.
 - 13 keeper-monitoring tests passed.
