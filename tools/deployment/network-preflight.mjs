@@ -44,7 +44,7 @@ async function rpc(url, method, params = []) {
   return body.result;
 }
 
-async function inspectProvider(label, url) {
+export async function inspectProvider(label, url) {
   const started = performance.now();
   const chainId = hexNumber(await rpc(url, "eth_chainId"));
   if (chainId !== CHAIN_ID) throw new Error(`${label} returned chain ID ${chainId}, expected ${CHAIN_ID}`);

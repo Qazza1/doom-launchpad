@@ -132,9 +132,12 @@ authorized.
 - [x] Six-transaction Rabby transaction preview against localhost only. Passed
   2026-07-25 on isolated chain 46630; all six gas figures match the impersonated
   localhost preview exactly.
-- [ ] Exact gas estimate and deployer funding plan. The preview snapshot is
-  evidence only; nonce, fees, predicted addresses, balance, and required funding
-  must be refreshed from the final reviewed commit through both RPC providers.
+- [x] Funding-refresh tool that re-reads nonce, fees, and balance from both
+  providers and writes a proposal without touching the canonical manifest:
+  `docs/stage-4-funding-refresh.md`.
+- [ ] Exact gas estimate and deployer funding plan for the final reviewed commit.
+  The tool exists; the numbers must be generated from that commit, minutes before
+  the owner approves funding.
 - [x] Fail-closed deployment manifest and constructor/nonce worksheet.
 - [x] Correct dependency-safe deployment and irreversible-binding order.
 - [x] Production deployment and post-deployment verification scripts. The
