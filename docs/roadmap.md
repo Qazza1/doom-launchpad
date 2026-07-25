@@ -121,7 +121,8 @@ authorized.
 - [ ] Remediation and focused re-review of every contract change.
 - [x] Production RPC and fallback RPC secret-safe preflight.
 - [x] Dedicated Rabby address/control proof.
-- [ ] Six-transaction Rabby localhost preview rehearsal.
+- [ ] Exact six-transaction localhost execution preview; Rabby remains
+  disconnected.
 - [ ] Exact gas estimate and deployer funding plan.
 - [x] Fail-closed deployment manifest and constructor/nonce worksheet.
 - [x] Correct dependency-safe deployment and irreversible-binding order.

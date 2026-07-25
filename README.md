@@ -81,11 +81,13 @@ failure behavior, and deployment boundaries are documented in
 ## Deployment boundary
 
 `script/DeployRobinhoodCanaryRehearsal.s.sol` deliberately contains no
-`vm.startBroadcast`. The manifest keeps deployment, broadcasting, and mainnet
+`vm.startBroadcast`. `script/PreviewRobinhoodDeployment.s.sol` can execute the
+six reviewed transactions only on a sentinel-protected localhost Anvil fork
+through `tools/deployment/localhost-preview.ps1`; it loads no signer and has no
+mainnet write path. The manifest keeps deployment, mainnet broadcasting, and
 approval disabled. An independent review, successful fork rehearsal, production
 RPC inputs, signer preparation, exact gas funding, verified source/bytecode, and
-the owner's explicit final approval are required before any broadcast script is
-introduced.
+the owner's explicit final approval remain mandatory.
 
 Stage 3.4 integrates the event schema into a separate read-only indexer branch
 and the static DoomStreak website. No launch transaction is enabled. See
@@ -97,3 +99,5 @@ dependency-safe constructor and nonce worksheet, and a one-transaction-at-a-time
 runbook. It does not add an authorized broadcast path. Start with
 [`docs/stage-4-preparation-validation.md`](docs/stage-4-preparation-validation.md)
 and [`docs/stage-4-deployment-runbook.md`](docs/stage-4-deployment-runbook.md).
+The local sequence and gas preview is documented in
+[`docs/stage-4-localhost-preview.md`](docs/stage-4-localhost-preview.md).

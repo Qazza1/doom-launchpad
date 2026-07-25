@@ -22,6 +22,8 @@ signer was loaded. No transaction was signed or broadcast.
 - Owner reported that the secret-safe dual-provider RPC preflight passed on
   2026-07-25. Provider secrets and the transient JSON result were deliberately
   not committed.
+- Owner reported that the non-broadcast configuration rehearsal passed against
+  the dedicated Alchemy endpoint on 2026-07-25.
 
 ## Validation results
 

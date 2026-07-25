@@ -81,6 +81,15 @@ No signer or private key was loaded.
 No transaction was signed, stored, or broadcast.
 ```
 
+Owner-confirmed status on 2026-07-25: passed against the dedicated Alchemy
+endpoint.
+
+## 4. Run the exact localhost transaction sequence
+
+Continue with `docs/stage-4-localhost-preview.md`. Rabby is not connected during
+that preview; the exact deployer is impersonated only inside temporary Anvil
+state.
+
 ## Stop conditions
 
 Stop immediately if:
