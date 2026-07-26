@@ -154,11 +154,17 @@ authorized.
 Status: blocked by Stage 4.
 
 - Deploy contracts while the factory remains paused.
-- Verify source, bytecode, constructor arguments, roles, dependencies, bindings,
-  balances, and configuration hashes.
+- [x] Read-only post-deployment verifier for bytecode, constructor values, roles,
+  dependencies, bindings, caps, and the paused state, through two providers:
+  `tools/deployment/verify-deployment.mjs`.
+- [x] Read-only per-launch observer covering allocation, permanent LP custody,
+  fee routing, canary caps, GM commitment, and escrow custody:
+  `docs/stage-5-canary-observation.md`.
+- Verify source and constructor arguments on the explorer after deployment.
 - Separately approve factory resume.
 - Execute at most three 0.01 ETH launches from the approved creator.
-- Review each launch before permitting the next one.
+- Review each launch with the observer before permitting the next one.
+- Compare indexer ingestion and the public API against direct contract reads.
 
 ## Stage 6 — launcher-first product release
 
