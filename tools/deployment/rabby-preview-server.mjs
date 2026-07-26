@@ -10,7 +10,14 @@ export const PRODUCTION_CHAIN_ID = 4663;
 /// The preview fork deliberately runs on a different chain ID. Rabby signs real transactions here,
 /// and EIP-155 binds every signature to this chain, so nothing produced during the rehearsal is a
 /// valid Robinhood mainnet transaction even if the raw bytes leak.
-export const PREVIEW_CHAIN_ID = 46630;
+///
+/// This was 46630 until the site's own launchpad page was found labelling `Robinhood Testnet ·
+/// 46630`. Isolating onto a chain that actually exists makes the signatures replayable there, which
+/// defeats the point. The value below is derived from the production chain so its origin is obvious,
+/// and is not a network anything is expected to run on. It must never equal 4663.
+export const PREVIEW_CHAIN_ID = 4_663_666;
+/// The chain the already-passed rehearsal ran on, kept so its recorded evidence still reads true.
+export const HISTORICAL_PREVIEW_CHAIN_ID = 46630;
 export const DEPLOYER = "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F";
 export const SENTINEL_BALANCE_WEI = 123_456_789_012_345_678_901n;
 export const PREVIEW_RPC_URL = "http://127.0.0.1:18546";
@@ -35,6 +42,11 @@ export function assertIsolatedChain(chainId) {
   if (value === PRODUCTION_CHAIN_ID) {
     throw new Error(
       "refusing to rehearse on chain 4663: a signature made there would be a valid mainnet transaction",
+    );
+  }
+  if (value === HISTORICAL_PREVIEW_CHAIN_ID) {
+    throw new Error(
+      "refusing to rehearse on 46630: it is a real network, so signatures made there are replayable",
     );
   }
   if (value !== PREVIEW_CHAIN_ID) {

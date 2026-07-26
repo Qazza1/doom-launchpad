@@ -10,9 +10,27 @@ and verified. `previews.rabbyTransactionPreviewComplete` and
 `signing.rehearsalComplete` are now `true`. This authorizes nothing further:
 funding, independent review, and final approval remain separate open gates.
 
+## Correction: the preview chain moved after the run
+
+The passing run used chain `46630`. That value was later found on this project's
+own launchpad page, labelled `Robinhood Testnet · 46630`.
+
+Isolating onto a chain that actually exists partly defeats the isolation.
+Signatures made on `46630` are not valid on Robinhood mainnet — that guarantee
+holds and was the point — but they would be valid on Robinhood testnet, where
+they could deploy these contracts at the deployer's testnet expense. The harness
+now uses `4663666`, which is derived from the production chain so its origin is
+obvious and is not a network anything runs on, and it explicitly refuses `46630`.
+
+The recorded run stands. Its purpose was wallet rendering, signing, and gas
+estimation, none of which depend on the chain ID, and no raw signed transaction
+was stored: the fork and its mempool were discarded when the server stopped. The
+manifest keeps `46630` because that is what the run actually used.
+
 ## Result
 
-Preview chain `46630`, starting nonce `1000`, upstream pending nonce `0`.
+Preview chain `46630` (see the correction above), starting nonce `1000`, upstream
+pending nonce `0`.
 
 | Step | Nonce | Gas used | Localhost preview gas |
 |---|---:|---:|---:|
@@ -55,7 +73,7 @@ broadcast to mainnet without the owner ever approving it. The deployment runbook
 already says not to retain a raw signed mainnet transaction; the safest way to
 honour that is to never create one.
 
-So the preview fork runs on chain ID **`46630`**, not `4663`. EIP-155 binds every
+So the preview fork runs on chain ID **`4663666`**, not `4663`. EIP-155 binds every
 signature to the chain ID it was made on, so nothing produced during this
 rehearsal is a valid mainnet transaction. That is a cryptographic guarantee, not
 a procedural one, and it holds even if the raw bytes leak.
@@ -76,7 +94,7 @@ are already covered by the impersonated localhost preview.
 
 ## Two independent guards before any prompt
 
-1. The wallet must report chain `46630`.
+1. The wallet must report chain `4663666`.
 2. The deployer's balance must sit inside a window at the local-only sentinel
    balance `123456789012345678901 wei`, which only Anvil's `anvil_setBalance`
    produces: at most the sentinel, and at most 1 ETH below it.
@@ -218,7 +236,7 @@ In Rabby, add a network before connecting:
 
 - Name: `Doom preview fork`
 - RPC: `http://127.0.0.1:18546`
-- Chain ID: `46630`
+- Chain ID: `4663666`
 
 Then connect and send one step at a time. For each step, read the Rabby prompt
 and confirm it matches the page: recipient, calldata size, and for steps 4 and 6

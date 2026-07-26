@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   DEPLOYER,
+  HISTORICAL_PREVIEW_CHAIN_ID,
   MAX_PREVIEW_SPEND_WEI,
   PREVIEW_CHAIN_ID,
   PREVIEW_NONCE_FLOOR,
@@ -61,7 +62,14 @@ test("the rehearsal refuses to run on the production chain", () => {
   );
   assert.notEqual(PREVIEW_CHAIN_ID, PRODUCTION_CHAIN_ID);
   assert.equal(assertIsolatedChain(PREVIEW_CHAIN_ID), true);
-  assert.throws(() => assertIsolatedChain(1), /preview chain must be 46630/);
+  assert.throws(() => assertIsolatedChain(1), /preview chain must be 4663666/);
+});
+
+test("the rehearsal refuses the old preview chain, which is a real network", () => {
+  // 46630 is labelled Robinhood Testnet on the project's own site. Isolating onto a chain that
+  // exists makes the signatures replayable there, which defeats the isolation.
+  assert.notEqual(PREVIEW_CHAIN_ID, HISTORICAL_PREVIEW_CHAIN_ID);
+  assert.throws(() => assertIsolatedChain(HISTORICAL_PREVIEW_CHAIN_ID), /it is a real network/);
 });
 
 test("the preview nonce starts above any cached wallet counter", () => {
