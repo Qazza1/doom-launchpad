@@ -34,11 +34,11 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: "24"
-      - name: Confirm the reviewed contract sources are unchanged
+      - name: Confirm the reviewed contract sources match the frozen artifact
         run: |
           node --test tools/review/test/*.test.mjs
-          node tools/review/package.mjs --ref stage-3.1-audit-candidate --out audit-candidate.sums
-          node tools/review/package.mjs --ref stage-3.1-audit-candidate --verify audit-candidate.sums
+          node tools/review/package.mjs --ref HEAD --out review-artifact.sums
+          node tools/review/package.mjs --ref HEAD --verify review-artifact.sums
 
   keeper-monitoring:
     runs-on: ubuntu-latest

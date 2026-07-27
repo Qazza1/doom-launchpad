@@ -29,22 +29,28 @@ the rewards tooling, except where they define data the contracts depend on.
 
 ## Reviewed artifact and checksums
 
-The contract sources are frozen at the annotated tag `stage-3.1-audit-candidate`
-(commit `3d1d28b274347b3e39c35ad33ea6a569644caed7`).
+The contract sources are frozen by digest in `config/review-artifact.json`, not by
+a tag. The `review-artifact` CI job fails whenever `src/` at HEAD stops matching
+that digest, so a contract change cannot land without a deliberate re-freeze in
+the same diff, and an accidental one cannot land at all.
 
-`src/` is byte-identical between that tag and the current branch head. Everything
-added since is tests, deployment tooling, configuration, and documentation. The
-`review-artifact` CI job asserts this on every push, so the reviewed contract set
-cannot drift unnoticed.
+- Contract digest (`src/` only, 11 files):
+  `8e36941ed01081d0272caf3066f432b23c8eb68db6323f68fa21dd1cce6dee1b`
+- Frozen at commit: `733895f6b07b4f68d58841b8e0840274e22a8276`
 
-- Contract digest (`src/` only): `ac9e7192d2af94a189806378dfe0f9bdbca3827b1776e783ec451970af8ce6c9`
-- Audit-candidate artifact digest (60 files): `af7f9db104a37b1d2d0bc8a470d49e7435d59307d178e7c48eb5f8ccf31687b7`
+This supersedes `stage-3.1-audit-candidate` (`3d1d28b`, contract digest
+`ac9e7192…`), which was frozen before the economics were reworked to 0/40/60 with
+staggered escrow release, a 1% creation fee, and a 70/15/15 creator fee share. The
+old tag remains in history as a record.
+
+The annotated tag for review is created once the code is final, immediately before
+the artifact is handed over, so that the tag names exactly what was reviewed.
 
 Reproduce and verify:
 
 ```bash
-node tools/review/package.mjs --ref stage-3.1-audit-candidate --out audit-candidate.sums
-node tools/review/package.mjs --ref stage-3.1-audit-candidate --verify audit-candidate.sums
+node tools/review/package.mjs --ref HEAD --out review-artifact.sums
+node tools/review/package.mjs --ref HEAD --verify review-artifact.sums
 ```
 
 The manifest hashes **canonical Git blob bytes**, not working-tree bytes, and is

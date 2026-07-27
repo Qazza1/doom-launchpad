@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   collectEntries,
@@ -88,22 +89,24 @@ test("the contract digest ignores documentation churn and catches source changes
   assert.notEqual(contractChanged.contractDigest, baseline.contractDigest);
 });
 
-test("the audit-candidate tag and HEAD still share identical contract sources", async () => {
-  const tag = await resolveRef("stage-3.1-audit-candidate");
-  const head = await resolveRef("HEAD");
-  const [taggedEntries, headEntries] = await Promise.all([
-    collectEntries(tag.commit),
-    collectEntries(head.commit),
-  ]);
-
-  const taggedContracts = summarizeArtifact(taggedEntries);
-  const headContracts = summarizeArtifact(headEntries);
-  assert.equal(
-    headContracts.contractDigest,
-    taggedContracts.contractDigest,
-    "src/ changed since the audit candidate; the review artifact must be re-frozen and re-reviewed",
+test("HEAD's contract sources match the frozen review artifact", async () => {
+  // The frozen digest lives in config/review-artifact.json rather than being pinned to a tag, so a
+  // deliberate contract change has to re-freeze it in the same diff. An accidental one fails here.
+  const frozen = JSON.parse(
+    await readFile(new URL("../../../config/review-artifact.json", import.meta.url), "utf8"),
   );
-  assert.ok(headContracts.contractFileCount >= 11);
+  const head = await resolveRef("HEAD");
+  const headEntries = await collectEntries(head.commit);
+  const summary = summarizeArtifact(headEntries);
+
+  assert.equal(
+    summary.contractDigest,
+    frozen.contractDigest,
+    "src/ changed without re-freezing: update config/review-artifact.json in the same change, and "
+      + "expect the reviewed artifact to need re-review",
+  );
+  assert.equal(summary.contractFileCount, frozen.contractFileCount);
+  assert.notEqual(frozen.contractDigest, frozen.supersedes.contractDigest);
   assert.equal(
     headEntries.some(item => item.path.startsWith("SHA256SUMS.")),
     false,

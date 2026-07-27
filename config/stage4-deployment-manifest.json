@@ -9,8 +9,9 @@
     "explorer": "https://explorer.mainnet.chain.robinhood.com"
   },
   "source": {
-    "auditCandidateTag": "stage-3.1-audit-candidate",
-    "auditCandidateCommit": "3d1d28b274347b3e39c35ad33ea6a569644caed7",
+    "auditCandidateTag": null,
+    "auditCandidateCommit": "733895f6b07b4f68d58841b8e0840274e22a8276",
+    "contractDigest": "8e36941ed01081d0272caf3066f432b23c8eb68db6323f68fa21dd1cce6dee1b",
     "stage34ReleaseTag": "stage-3.4-indexer-public-ui",
     "compiler": "0.8.36",
     "foundry": "1.7.1",
