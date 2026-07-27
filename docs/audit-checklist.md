@@ -1,6 +1,6 @@
 # Audit checklist and deployment blockers
 
-Last reviewed: 2026-07-25.
+Last reviewed: 2026-07-28.
 
 This list is split by **who** can honestly tick each box. Mixing them was making
 the document wrong in the safe direction, which is still wrong: a checklist full
@@ -19,14 +19,17 @@ Unchecked items in sections 2 and 3 block deployment.
 
 - [x] Stage 3 baseline committed and annotated as `stage-3-baseline`.
 - [x] Specification, roadmap, architecture, threat model, and event schemas match
-  Stage 3.1 behavior.
-- [x] Audit-candidate commit and annotated tag created
-  (`stage-3.1-audit-candidate`, `3d1d28b`).
+  current contract behaviour, including the 0/40/60 split and staggered release.
+- [x] Review artifact frozen by digest in `config/review-artifact.json`. The
+  annotated tag is created once the code is final, so it names exactly what was
+  reviewed. `stage-3.1-audit-candidate` is superseded and kept as history.
 - [x] Clean checkout reproduces dependencies, build, tests, and sizes. CI installs
   pinned dependencies from scratch on every push.
 - [x] Reviewed contract sources cannot drift unnoticed. The `review-artifact` CI
-  job regenerates and verifies the audit-candidate checksum manifest on every
-  push: `docs/independent-review-package.md`.
+  job fails whenever `src/` stops matching the frozen digest, so a contract change
+  must re-freeze in the same diff: `docs/independent-review-package.md`.
+- [x] Every event the contracts emit is declared to the indexer, checked in both
+  directions by `tools/deployment/test/integration-events.test.mjs`.
 - [x] CI passes format, build, tests, size limits, Slither 0.11.5, and Aderyn
   0.6.8.
 - [x] Static-analysis results triaged with written rationale:
@@ -95,9 +98,10 @@ unchecked until a real external review reports on them. See
 
 ### Before deployment
 
-- [ ] Fresh run of both opt-in Robinhood fork tests from the final reviewed
-  commit. They are skipped by the normal gate, so they must be run explicitly:
-  `powershell -File .\tools\verify-local.ps1 -RunRobinhoodForkTests`.
+- [x] Fresh run of both opt-in Robinhood fork tests. Passed 2026-07-28 against
+  live Robinhood Chain state with the reworked 0/40/60 economics, staggered
+  release, 1% creation fee, and the 70/15/15 locker split. Re-run from the final
+  commit before deployment.
 - [ ] Live dependency bytecode hashes recorded at the reviewed commit. The
   preflight compares them across providers but does not commit them.
 - [ ] Campaign-manager runbook and incident/pause runbook rehearsed. Both exist

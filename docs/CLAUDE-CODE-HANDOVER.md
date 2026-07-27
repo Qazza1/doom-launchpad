@@ -1,6 +1,6 @@
 # DoomStreak / Doom Launchpad — Claude Code Handover
 
-Last updated: 2026-07-25
+Last updated: 2026-07-28
 
 This document is the authoritative handover for continuing Doom Launchpad in
 Claude Code. Read it completely before changing code.
@@ -16,9 +16,10 @@ C:\Users\golis\Desktop\doomstreak-site\doom-launchpad
 GitHub:
 https://github.com/Qazza1/doom-launchpad
 
-Start from the latest remote `stage4-deployment-prep` branch. The exact
-implementation checkpoint immediately before this docs-only handover is:
-f2dee520ac1d5c16059f47bf80e8791bbe6bc66d
+Start from the latest remote `stage4-deployment-prep` branch and work from its
+head. The contract sources are frozen by digest in `config/review-artifact.json`;
+CI fails if `src/` stops matching it, so any contract change must re-freeze that
+file in the same commit.
 
 First:
 1. Open and read `docs/CLAUDE-CODE-HANDOVER.md` completely.
@@ -31,26 +32,29 @@ First:
 5. Do not deploy, fund an address, sign, or broadcast any transaction.
 
 The project is in Stage 4 deployment preparation. Stages 3.1–3.4 are complete.
-RPC preflight, Rabby control verification, a non-broadcast fork rehearsal, and
-the exact six-transaction localhost deployment preview have passed. No mainnet
-contract has been deployed and no transaction has been signed or broadcast.
+Every Stage 4 tool now exists: dual-RPC preflight, the localhost six-transaction
+preview, the chain-isolated wallet transaction preview, the unsigned transaction
+plan, the Blockscout verification bundle, the funding-refresh worksheet, the
+post-deployment verifier, and the Stage 5 canary observer. No mainnet contract
+has been deployed and no transaction has been signed or broadcast.
 
-Your immediate task is documentation/evidence closure for the already-passed
-localhost preview:
-1. Add `docs/stage-4-localhost-preview-validation.md` recording the committed
-   f2dee52 preview evidence listed in this handover.
-2. Update `docs/roadmap.md` to mark the exact six-transaction localhost preview
-   complete. Keep the final gas/funding plan pending because it must be refreshed
-   immediately before deployment.
-3. If the existing manifest schema supports it cleanly, add explicit state for
-   `localhostSequencePreviewComplete: true` and
-   `rabbyTransactionPreviewComplete: false`, updating validators/tests. Do not
-   weaken any fail-closed flag or mark a live-wallet transaction rehearsal done.
-4. Run `tools/verify-local.ps1`, inspect the diff, commit to
-   `stage4-deployment-prep`, push, and verify CI.
-5. Continue with a Blockscout source-verification rehearsal and prepare the
-   independent reviewer package. Do not treat your own review, Codex's review,
-   or the owner's review as independent security review.
+The economics were reworked on 2026-07-28 and are now frozen at 0% creator at
+launch / 40% permanent liquidity / 60% GM escrow, with the escrow releasing one
+equal share per check-in, a 1% creation fee, and a 70/15/15 creator/treasury/
+rewards split on WETH LP fees.
+
+What remains is sequencing rather than tooling:
+1. Finish the Stage 6 launcher-first site work and the Stage 6.5 mechanics the
+   owner has chosen (see `docs/launchpad-v2-mechanics.md`).
+2. Obtain an independent review of the final contract artifact. Do not treat your
+   own review, Codex's review, or the owner's review as independent.
+3. Refresh the funding worksheet from the final commit, minutes before approval.
+4. Deploy one transaction at a time, verify, then run the capped canary.
+
+When changing contracts, expect downstream consumers to break. The economics
+rework silently broke the canary observer's custody check, both opt-in fork
+tests, and the indexer event declarations. Check `tools/`, `integration/`, and
+the fork tests every time.
 
 Maintain these hard boundaries:
 - No live signing or broadcasting without a later, explicit owner instruction
@@ -67,8 +71,9 @@ Maintain these hard boundaries:
   become stale when the deployer nonce, block, gas, or code changes.
 - Do not merge this branch to main, fund the Rabby deployer, unpause the
   factory, or begin the three-launch canary without explicit owner approval.
-- Any contract source change after independent review invalidates the reviewed
-  checksum/tag and requires focused re-review.
+- Any contract source change invalidates the frozen review artifact. Re-freeze
+  `config/review-artifact.json` in the same commit; after an independent review
+  it also requires focused re-review.
 
 Use the economics, addresses, deployment order, validation evidence, roadmap,
 and file inventory in `docs/CLAUDE-CODE-HANDOVER.md` exactly. If repository code
@@ -82,23 +87,23 @@ without making a mainnet assumption.
   `C:\Users\golis\Desktop\doomstreak-site\doom-launchpad`
 - GitHub: <https://github.com/Qazza1/doom-launchpad>
 - Active branch: `stage4-deployment-prep`
-- Exact implementation checkpoint before this docs-only handover:
-  `f2dee520ac1d5c16059f47bf80e8791bbe6bc66d`
-- Commit subject: `feat: add exact localhost deployment preview`
-- Start from the latest `origin/stage4-deployment-prep`, confirm that `f2dee52`
-  is its ancestor, and ensure the working tree is clean.
-- Do not silently continue from a branch that does not contain this checkpoint.
+- Work from the head of `origin/stage4-deployment-prep` with a clean tree.
+- The contract artifact is frozen by digest in `config/review-artifact.json`, not
+  by a tag. `tools/review/package.mjs --ref HEAD` regenerates the manifest, and CI
+  fails if `src/` no longer matches the frozen digest.
 
 Useful checkpoints:
 
+- `a51fb7c` — indexer event contract and its both-directions guard
+- `91f781c` — Death Watch feed engine
+- `e240417` — fork tests updated to the new economics and passing live
+- `736ad27` — review artifact re-frozen by digest
+- `733895f` — economics reworked to 0/40/60 with staggered release
+- `61e7c2b` — Stage 5 canary launch observer
+- `6fd12e2` — post-deployment verifier through two providers
+- `0d1feaa` — funding-refresh worksheet
+- `62a50d1` — passed wallet transaction preview recorded
 - `f2dee52` — exact localhost deployment preview
-- `ad83c00` — Rabby control-verification evidence
-- `2b225a1` — canary signer setup changed to Rabby
-- `61c9c72` — Stage 4 rehearsal evidence
-- `55038ea` — signer and fork-rehearsal setup
-- `c42a901` — secret-safe dual-RPC preflight
-- `168924a` — Stage 4 preparation CI evidence
-- `fa1e6b0` — fail-closed Stage 4 deployment preparation
 
 Important tags:
 
@@ -108,8 +113,8 @@ Important tags:
 - `stage-3.3-keeper-monitoring`
 - `stage-3.4-indexer-public-ui`
 
-Latest feature CI for `f2dee52` passed:
-<https://github.com/Qazza1/doom-launchpad/actions/runs/30156968557>
+CI runs for every push are at
+<https://github.com/Qazza1/doom-launchpad/actions>.
 
 ## Product vision
 
@@ -369,18 +374,19 @@ Do not fund from this snapshot. Re-run the dual-RPC preflight and localhost
 preview immediately before the owner approves funding. A nonce change changes
 the predicted CREATE addresses.
 
-## Validation status at the handover commit
+## Current validation status
 
-- 14 Node deployment-tool tests passed.
-- 71 Solidity tests passed.
-- 2 opt-in fork tests are skipped by the normal suite, for 73 total.
-- 8 rewards-tool tests passed.
-- 13 keeper-tool tests passed.
+- 75 Solidity tests passed; 2 opt-in fork tests skipped by the normal gate, 77
+  total.
+- Both fork tests passed against live Robinhood Chain state on 2026-07-28 with
+  the reworked economics.
+- 69 Node deployment-tool tests passed.
+- 12 Death Watch tests, 11 canary-observer tests, 6 review-artifact tests.
+- 8 rewards-tool tests, 13 keeper-tool tests.
 - Contract runtime-size checks passed:
-  - `DoomLaunchFactory`: 20,574 bytes; internal limit 23,500
+  - `DoomLaunchFactory`: 21,035 bytes; internal limit 23,500
   - `V3LiquidityManager`: 6,520 bytes; internal limit 12,000
   - `PositionLocker`: 7,268 bytes; internal limit 12,000
-- GitHub Actions passed for `f2dee52`.
 
 Primary local validation command:
 
@@ -408,7 +414,8 @@ It is intentionally fail-closed:
 - mainnet deployment approved: `false`
 - final owner approval recorded: `false`
 - Rabby control verification: recorded as complete
-- live Rabby transaction rehearsal: incomplete
+- Rabby transaction rehearsal: recorded as complete, passed 2026-07-25 on an
+  isolated chain with all six gas figures matching the impersonated preview
 - independent review: incomplete
 - nonce, gas, production transaction, deployed-address, and verification
   fields: intentionally empty
@@ -417,32 +424,33 @@ Do not set deployment approval or broadcast flags during engineering work.
 
 ## What is being worked on now
 
-The project is closing Stage 4 evidence, not deploying.
+Stage 4 tooling is complete. Work has moved to the product: the launcher-first
+site and the Stage 6.5 differentiation mechanics.
 
-Immediate next implementation:
+Built and not yet wired into the public site:
 
-1. Record the committed `f2dee52` localhost preview in a dedicated validation
-   document.
-2. Mark only that roadmap item complete.
-3. Preserve the pending final gas/funding calculation.
-4. Optionally make the manifest distinguish:
-   - localhost exact-sequence preview: complete
-   - Rabby live transaction preview: incomplete
-5. Run all local validation.
-6. Commit and push the evidence checkpoint.
-7. Confirm GitHub Actions remains green.
+- `launch.html` in the site repository, matching the current economics, with
+  launch actions disabled and the creator's own downside stated plainly.
+- The Death Watch feed engine, which reads the chain directly and broadcasts only
+  transitions: `docs/death-watch.md`.
 
-Next safe engineering work:
+Next engineering work:
 
-1. Build or finish the Blockscout source-verification rehearsal and its tests.
-2. Prepare an independent reviewer package for the exact audit-candidate
-   sources, configuration, tests, threat model, checksum, and deployment plan.
-3. Obtain a real independent review.
-4. Remediate findings and obtain focused re-review if contract code changes.
+1. The Death Watch public web feed, and per-launch shareable pages.
+2. Point `index.html`'s navigation at the launch page and move the legacy NFT
+   commitment-collection launcher off the `CREATE` tab.
+3. Creator reputation tiers from the analytics dataset.
+4. Holder insurance on default — blocked on resolving the self-dealing vector
+   described in `docs/launchpad-v2-mechanics.md`.
 
-Do not skip independent review because the website currently has little or no
-traffic. The irreversible bindings, permanent LP custody, token accounting,
-and live user funds make traffic irrelevant to contract risk.
+Two structural facts to carry forward:
+
+- Factory #1 can only ever perform three launches of exactly 0.01 ETH. The canary
+  caps are contract constants the constructor enforces, so public launching needs
+  a second factory regardless.
+- Do not skip independent review because the website has little traffic. The
+  irreversible bindings, permanent LP custody, token accounting, and live user
+  funds make traffic irrelevant to contract risk.
 
 ## Remaining staged roadmap
 
@@ -697,16 +705,21 @@ successful local command grants authorization to fund, sign, or broadcast.
 
 ## Definition of the next successful handoff checkpoint
 
-The next checkpoint is successful when:
+Any checkpoint is successful when:
 
-- the `f2dee52` localhost preview evidence is documented;
-- the roadmap accurately marks that specific gate complete;
-- the final funding/gas refresh remains pending;
-- the canonical manifest remains fail-closed;
-- all local tests pass;
-- the commit is pushed to `stage4-deployment-prep`;
-- GitHub Actions is green;
-- no wallet was funded;
-- no transaction was signed or broadcast;
-- Blockscout verification rehearsal and independent review are clearly the next
-  gates.
+- `tools/verify-local.ps1` exits zero and GitHub Actions is green;
+- the canonical manifest is still fail-closed, with approval, broadcast, and
+  verification flags false and the nonce, gas, transaction, and deployed-address
+  fields empty;
+- `config/review-artifact.json` matches `src/` at HEAD, re-frozen deliberately in
+  the same commit if contracts changed;
+- every downstream consumer of a contract change was checked: `tools/canary`,
+  `tools/deathwatch`, `tools/keeper`, `integration/`, and both fork tests;
+- the roadmap marks only what actually happened;
+- no wallet was funded and no transaction was signed or broadcast.
+
+The remaining sequence is: finish the launcher-first site and the chosen Stage 6.5
+mechanics, obtain an independent review of the final artifact, refresh the funding
+worksheet from that commit, deploy one transaction at a time, verify through two
+providers, then run the capped three-launch canary with the observer between
+launches.

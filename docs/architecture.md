@@ -6,9 +6,9 @@
 DoomLaunchFactory
   ├─ deploys ownerless DoomToken
   ├─ deploys one GmEscrow per launch
-  ├─ transfers the fixed 10 / 40 / 50 allocations
+  ├─ transfers the fixed 0 / 40 / 60 allocations
   ├─ pays native liquidity to V3LiquidityManager
-  ├─ deposits half of the 3% creation fee in DoomRewards
+  ├─ deposits half of the 1% creation fee in DoomRewards
   └─ records the launch and accrues the treasury half
 
 V3LiquidityManager

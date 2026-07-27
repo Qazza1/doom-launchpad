@@ -23,7 +23,7 @@ Before signing, show an exact simulation summary:
 - 10% liquid creator allocation;
 - 40% supplied to permanent liquidity;
 - 50% held behind three daily GM check-ins;
-- 3% creation fee and 50 / 50 fee routing;
+- 1% creation fee and 50 / 50 fee routing;
 - permanent 1% full-range V3 position;
 - conditional LP-fee split;
 - no token tax, admin, upgrade, liquidity withdrawal, or rescue.

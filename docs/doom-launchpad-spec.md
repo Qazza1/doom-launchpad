@@ -60,7 +60,7 @@ blacklist, post-launch minting, owner, or pause function.
 ## 3. Launch lifecycle
 
 1. The immutable approved EOA submits name, symbol, total supply, and exactly
-   0.01 ETH of requested liquidity plus the maximum 3% creation fee.
+   0.01 ETH of requested liquidity plus the maximum 1% creation fee.
 2. The paused factory, creator gate, launch caps, supply bounds, payment, and
    canonical dependency configuration are checked.
 3. The factory deploys one fixed-supply `DoomToken` and one `GmEscrow`.
@@ -73,7 +73,7 @@ blacklist, post-launch minting, owner, or pause function.
 8. The factory verifies the permanent lock directly.
 9. Bounded token dust goes to DoomRewards; bounded native dust returns to the
    factory and then the creator.
-10. The 3% creation fee is calculated from native liquidity actually used and
+10. The 1% creation fee is calculated from native liquidity actually used and
     split equally between accrued treasury ETH and DoomRewards WETH.
 11. The factory stores the exact initial price used by the manager and emits the
     canonical event set.
@@ -117,9 +117,11 @@ deadline(n) = due(n) + grace
 ```
 
 The creator may record only when `due <= now <= deadline`. Schedule time never
-drifts. After the third successful check-in, the full escrow is released to the
-creator. Once `now > deadline`, recording is impossible and anyone may finalize
-default, depositing the full escrow into DoomRewards.
+drifts. Each successful check-in releases an equal share of the escrow, and the
+final one releases whatever remains, so nothing is stranded by integer division
+and there is no single cliff. Once `now > deadline`, recording is impossible and
+anyone may finalize default, depositing only the *unreleased* remainder into
+DoomRewards. Check-ins already honoured are never clawed back.
 
 Resolved escrows return zero for next-check-in views. `scheduleFor(n)` exposes
 historical/future configured times, and `remainingCheckIns()` exposes progress.

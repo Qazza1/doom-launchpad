@@ -1,13 +1,18 @@
 # Test matrix
 
-Local status: 68 tests pass, 0 fail, and two opt-in Robinhood fork tests are
-skipped unless explicitly enabled.
+Local status: 75 contract tests pass and 0 fail. Both opt-in Robinhood fork tests
+are skipped by the normal gate and last passed against live mainnet state on
+2026-07-28.
 
 | Requirement | Coverage |
 |---|---|
 | Fixed supply, untaxed transfers, no owner controls | `DoomToken.t.sol` |
-| Exact 10 / 40 / 50 allocations | factory happy path and 512-run supply fuzz |
-| 3% creation fee and 50 / 50 routing | fee quote, accounting, refund, zero-NFT tests |
+| Exact 0 / 40 / 60 allocations | factory happy path and 512-run supply fuzz |
+| Creator receives nothing at launch | happy-path balance assertion |
+| Escrow releases one share per check-in | per-check-in release and indivisible-commitment tests |
+| Default forfeits only the unreleased remainder | partial-release default test |
+| Release schedule sums to the commitment | schedule bound and total tests |
+| 1% creation fee and 50 / 50 routing | fee quote, accounting, refund, zero-NFT tests |
 | Exact 0.01 ETH and three-launch envelope | canary liquidity and launch-cap tests |
 | Supply bounds | lower/upper boundary and fuzz tests |
 | EOA-only approved creator | constructor and authorization tests |
@@ -18,8 +23,8 @@ skipped unless explicitly enabled.
 | Permanent position ownership | `PositionLocker.t.sol` and V3 adapter test |
 | Registrar cannot be front-run | one-time binding and unauthorized-register tests |
 | Canonical 1% fee and full-range ticks | locker and manager negative tests |
-| Eligible WETH fee split 60 / 20 / 20 | locker fee-routing test |
-| Overdue/default WETH split 0 / 20 / 80 | default and overdue-unfinalized tests |
+| Eligible WETH fee split 70 / 15 / 15 | locker fee-routing test |
+| Overdue/default WETH split 0 / 15 / 85 | default and overdue-unfinalized tests |
 | Launch-token fees 100% to rewards | locker token-fee test |
 | Permissionless collector receives nothing | keeper collection test |
 | Domain-separated Merkle leaves | reward claim and invalid-proof tests |
@@ -28,8 +33,12 @@ skipped unless explicitly enabled.
 | Returned pool/position spoof resistance | factory post-condition tests |
 | Native payout failure and reentrancy | rejecting treasury and malicious-manager tests |
 | Adversarial GM sequencing | randomized boundary handler + accounting invariants |
-| Fixed supply/accounting invariants | 128 runs × 64 calls |
+| Escrow conservation across the whole schedule | held + released + forfeited invariant, 128 runs × 64 calls |
 | Canonical Robinhood dependencies | two opt-in read-only mainnet-fork tests |
+| Every emitted event is declared to the indexer | integration event-contract test, both directions |
+| Death Watch phases, urgency, and broadcast diffing | `tools/deathwatch/test/feed.test.mjs` |
+| Deployed bytecode and state through two providers | `tools/deployment/test/verify-deployment.test.mjs` |
+| Canary launch invariants | `tools/canary/test/observe.test.mjs` |
 
 Before deployment, CI, pinned Slither/Aderyn, both fork tests, source verification,
 contract-size checks, and independent review must also pass against one tagged
