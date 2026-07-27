@@ -68,7 +68,7 @@ contract V3RobinhoodForkTest is Test {
         assertGe(record.liquidityTokenAmountUsed, record.liquidityTokenAmountAllocated * 999_999 / 1_000_000);
         assertGe(record.nativeLiquidityAmountUsed, 0.01 ether * 999_999 / 1_000_000);
         assertEq(address(manager).balance, 0);
-        assertEq(record.creationFee, record.nativeLiquidityAmountUsed * 300 / 10_000);
+        assertEq(record.creationFee, record.nativeLiquidityAmountUsed * 100 / 10_000);
         assertGt(rewards.availableRewards(WETH), 0);
 
         (uint256 launchTokenFees, uint256 wethFees, uint256 creatorWeth, uint256 treasuryWeth, uint256 rewardsWeth) =

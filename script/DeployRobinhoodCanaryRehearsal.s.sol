@@ -87,13 +87,16 @@ contract DeployRobinhoodCanaryRehearsal is Script {
         _assert(factory.maxLaunches() == 3, "MAX_LAUNCHES_MISMATCH");
         _assert(factory.maxNativeLiquidityPerLaunch() == 0.01 ether, "PER_LAUNCH_CAP_MISMATCH");
         _assert(factory.maxNativeLiquidityGlobal() == 0.03 ether, "GLOBAL_CAP_MISMATCH");
-        _assert(factory.CREATION_FEE_BPS() == 300, "CREATION_FEE_MISMATCH");
+        _assert(factory.CREATION_FEE_BPS() == 100, "CREATION_FEE_MISMATCH");
         _assert(factory.POOL_FEE() == 10_000, "POOL_FEE_MISMATCH");
         _assert(factory.REQUIRED_GM_CHECK_INS() == 3, "GM_COUNT_MISMATCH");
         _assert(factory.GM_GRACE_PERIOD_SECONDS() == 12 hours, "GM_GRACE_MISMATCH");
-        _assert(locker.CREATOR_WETH_FEE_BPS() == 6_000, "CREATOR_LP_FEE_MISMATCH");
-        _assert(locker.TREASURY_WETH_FEE_BPS() == 2_000, "TREASURY_LP_FEE_MISMATCH");
-        _assert(locker.REWARDS_WETH_FEE_BPS() == 2_000, "REWARDS_LP_FEE_MISMATCH");
+        _assert(factory.CREATOR_LIQUID_BPS() == 0, "CREATOR_ALLOCATION_MISMATCH");
+        _assert(factory.LIQUIDITY_BPS() == 4_000, "LIQUIDITY_ALLOCATION_MISMATCH");
+        _assert(factory.GM_ESCROW_BPS() == 6_000, "ESCROW_ALLOCATION_MISMATCH");
+        _assert(locker.CREATOR_WETH_FEE_BPS() == 7_000, "CREATOR_LP_FEE_MISMATCH");
+        _assert(locker.TREASURY_WETH_FEE_BPS() == 1_500, "TREASURY_LP_FEE_MISMATCH");
+        _assert(locker.REWARDS_WETH_FEE_BPS() == 1_500, "REWARDS_LP_FEE_MISMATCH");
     }
 
     function _assert(bool condition, bytes32 invariantName) internal pure {
