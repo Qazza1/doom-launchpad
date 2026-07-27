@@ -41,7 +41,7 @@ or existing reward claims.
 | Uniswap V3 fee tier | 1% (`10000`) |
 | Tick spacing | `200` |
 | Full-range ticks | `-887200` to `887200` |
-| Creation fee | 3% of native liquidity actually used |
+| Creation fee | 1% of native liquidity actually used |
 | Creation-fee treasury share | 50% |
 | Creation-fee NFT-reward share | 50% |
 | Eligible creator WETH LP-fee share | 60% |
@@ -91,8 +91,8 @@ balance behind.
 
 For WETH fees:
 
-- while creator-eligible: 60% creator, 20% treasury, 20% DoomRewards;
-- after creator default eligibility: 0% creator, 20% treasury, 80% DoomRewards.
+- while creator-eligible: 70% creator, 15% treasury, 15% DoomRewards;
+- after creator default eligibility: 0% creator, 15% treasury, 85% DoomRewards.
 
 The creator becomes ineligible when either:
 

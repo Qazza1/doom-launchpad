@@ -29,9 +29,9 @@ contract DoomLaunchFactoryTest is Test {
     address internal creator = makeAddr("creator");
 
     uint256 internal constant NATIVE_LIQUIDITY = 0.01 ether;
-    uint256 internal constant CREATION_FEE = 0.0003 ether;
-    uint256 internal constant TREASURY_FEE = 0.00015 ether;
-    uint256 internal constant NFT_REWARD_FEE = 0.00015 ether;
+    uint256 internal constant CREATION_FEE = 0.0001 ether;
+    uint256 internal constant TREASURY_FEE = 0.00005 ether;
+    uint256 internal constant NFT_REWARD_FEE = 0.00005 ether;
     uint256 internal constant REQUIRED_VALUE = NATIVE_LIQUIDITY + CREATION_FEE;
 
     function setUp() external {
@@ -99,9 +99,9 @@ contract DoomLaunchFactoryTest is Test {
         assertEq(id, 1);
         assertEq(pool, manager.pool());
         assertEq(token.totalSupply(), 1_000_000_000 ether);
-        assertEq(token.balanceOf(creator), token.totalSupply() * 10 / 100);
+        assertEq(token.balanceOf(creator), 0, "creator holds nothing at launch");
         assertEq(token.balanceOf(address(manager)), token.totalSupply() * 40 / 100);
-        assertEq(token.balanceOf(escrowAddress), token.totalSupply() * 50 / 100);
+        assertEq(token.balanceOf(escrowAddress), token.totalSupply() * 60 / 100);
         assertEq(token.balanceOf(address(factory)), 0);
         assertTrue(locker.isPermanentlyLocked(positionId));
 
@@ -182,7 +182,7 @@ contract DoomLaunchFactoryTest is Test {
         uint256 expectedTokenUsed = Math.mulDiv(allocated, 999_999, 1_000_000);
         uint256 expectedRemainder = allocated - expectedTokenUsed;
         uint256 expectedNativeUsed = Math.mulDiv(NATIVE_LIQUIDITY, 999_999, 1_000_000);
-        uint256 expectedFee = Math.mulDiv(expectedNativeUsed, 300, 10_000);
+        uint256 expectedFee = Math.mulDiv(expectedNativeUsed, 100, 10_000);
 
         assertEq(record.liquidityTokenAmountUsed, expectedTokenUsed);
         assertEq(record.liquidityTokenRemainder, expectedRemainder);
@@ -258,9 +258,9 @@ contract DoomLaunchFactoryTest is Test {
         factory.launch{value: REQUIRED_VALUE}(p);
     }
 
-    function testCreationFeeQuoteIsThreePercent() external view {
+    function testCreationFeeQuoteIsOnePercent() external view {
         assertEq(factory.quoteCreationFee(NATIVE_LIQUIDITY), CREATION_FEE);
-        assertEq(factory.quoteCreationFee(1 ether), 0.03 ether);
+        assertEq(factory.quoteCreationFee(1 ether), 0.01 ether);
     }
 
     function testInvalidUniswapConfigurationFailsSafely() external {
@@ -357,7 +357,7 @@ contract DoomLaunchFactoryTest is Test {
         (, address tokenAddress,,, address escrowAddress) = factory.launch{value: REQUIRED_VALUE}(p);
 
         DoomToken token = DoomToken(tokenAddress);
-        uint256 creatorAmount = Math.mulDiv(supply, 1_000, 10_000);
+        uint256 creatorAmount = 0;
         uint256 liquidityAmount = Math.mulDiv(supply, 4_000, 10_000);
         uint256 escrowAmount = supply - creatorAmount - liquidityAmount;
 

@@ -34,12 +34,12 @@ invalidates all later predicted addresses and stops the deployment.
 
 ## Values frozen in the audit candidate
 
-- Creator allocation: 10%.
+- Creator allocation at launch: 0%.
 - Permanent V3 liquidity: 40%.
-- GM escrow: 50%.
+- GM escrow: 60%, released one share per check-in.
 - Required GM check-ins: 3.
 - Grace period: 12 hours.
-- Creation fee: 3% of native liquidity actually used.
+- Creation fee: 1% of native liquidity actually used.
 - Canary liquidity: exactly 0.01 ETH.
 - Canary cap: 3 launches and 0.03 ETH aggregate native liquidity.
 - V3 fee tier: 1%, tick spacing 200, full range.

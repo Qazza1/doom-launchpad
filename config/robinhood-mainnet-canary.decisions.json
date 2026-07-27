@@ -42,15 +42,18 @@
     "zeroSupplyConfirmation": "confirmed_not_minted_yet"
   },
   "tokenEconomics": {
-    "creatorLiquidBps": 1000,
+    "creatorLiquidBps": 0,
     "liquidityBps": 4000,
-    "gmEscrowBps": 5000,
-    "failedGmTreatment": "entire_escrow_to_doom_rewards"
+    "gmEscrowBps": 6000,
+    "failedGmTreatment": "unreleased_escrow_to_doom_rewards",
+    "creatorReceivesNothingAtLaunch": true
   },
   "gmCommitment": {
     "requiredCheckIns": 3,
     "cadenceSeconds": 86400,
-    "gracePeriodSeconds": 43200
+    "gracePeriodSeconds": 43200,
+    "escrowRelease": "equal_share_per_check_in_final_takes_remainder",
+    "releasedCheckInsAreNotClawedBack": true
   },
   "emergencyPolicy": {
     "factoryStartsPaused": true,
@@ -61,8 +64,8 @@
     "existingEscrowsClaimsAndLpLocksUnaffected": true
   },
   "creationFee": {
-    "feeBps": 300,
-    "calculation": "3_percent_of_actual_native_liquidity_used",
+    "feeBps": 100,
+    "calculation": "1_percent_of_actual_native_liquidity_used",
     "treasuryShareBps": 5000,
     "nftRewardsShareBps": 5000,
     "nftRewardsAsset": "WETH"
@@ -80,14 +83,14 @@
     "decreaseLiquiditySupported": false,
     "lpFeeCollection": "permissionless_with_immutable_routing",
     "eligibleWethFeeSplitBps": {
-      "creator": 6000,
-      "treasury": 2000,
-      "doomRewards": 2000
+      "creator": 7000,
+      "treasury": 1500,
+      "doomRewards": 1500
     },
     "ineligibleWethFeeSplitBps": {
       "creator": 0,
-      "treasury": 2000,
-      "doomRewards": 8000
+      "treasury": 1500,
+      "doomRewards": 8500
     },
     "launchTokenFeeRecipient": "DoomRewards",
     "weth": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",

@@ -15,7 +15,7 @@ Eleven Solidity sources under `src/`:
 |---|---|
 | `DoomToken.sol` | Fixed-supply launched token, no owner controls |
 | `DoomLaunchFactory.sol` | Launch coordination, allocation, fees, caps, pausing |
-| `GmEscrow.sol` | Three-check-in creator commitment and default routing |
+| `GmEscrow.sol` | Three-check-in commitment, staggered release, default routing |
 | `DoomRewards.sol` | Isolated NFT-holder reward vault and Merkle claims |
 | `PositionLocker.sol` | Permanent LP NFT custody and fee accounting |
 | `V3LiquidityManager.sol` | Pool creation, full-range mint, locker registration |
@@ -73,7 +73,7 @@ forge test -vv
 bash tools/check-sizes.sh
 ```
 
-Expect 71 passing tests and 2 skipped fork tests. The fork tests need a Robinhood
+Expect 75 passing tests and 2 skipped fork tests. The fork tests need a Robinhood
 Chain RPC URL and `RUN_ROBINHOOD_FORK_TESTS=true`; ask the owner for an endpoint
 rather than using one committed anywhere, because none is.
 
@@ -87,13 +87,14 @@ rather than using one committed anywhere, because none is.
 
 ## Economics the contracts must enforce
 
-- Supply split: 10% creator, 40% permanent liquidity, 50% GM escrow
-- Three check-ins, one per day, 12-hour grace period
+- Supply split: 0% creator at launch, 40% permanent liquidity, 60% GM escrow
+- Three check-ins, one per day, 12-hour grace period, each releasing an equal
+  share of the escrow
 - On failure, 100% of remaining escrow goes to `DoomRewards`
-- Creation fee 3% of native liquidity actually used, split 50/50 treasury and
+- Creation fee 1% of native liquidity actually used, split 50/50 treasury and
   `DoomRewards`
-- WETH LP fees while the creator is eligible: 60/20/20 creator/treasury/rewards
-- WETH LP fees after default or a missed finalizable deadline: 0/20/80
+- WETH LP fees while the creator is eligible: 70/15/15 creator/treasury/rewards
+- WETH LP fees after default or a missed finalizable deadline: 0/15/85
 - Launch-token LP fees: 100% to `DoomRewards`
 - Canary caps: 3 launches, exactly 0.01 ETH each, 0.03 ETH aggregate
 - The factory is deployed paused; resuming it is a separate owner decision

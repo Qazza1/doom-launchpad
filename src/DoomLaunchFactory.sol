@@ -21,10 +21,14 @@ contract DoomLaunchFactory is ReentrancyGuard {
     using SafeCast for uint256;
 
     uint16 public constant BPS_DENOMINATOR = 10_000;
-    uint16 public constant CREATOR_LIQUID_BPS = 1_000;
+    /// @dev The creator receives nothing at launch. Their entire allocation is earned by completing
+    ///      the GM commitment, so no unconditional supply exists in any wallet on day zero.
+    uint16 public constant CREATOR_LIQUID_BPS = 0;
     uint16 public constant LIQUIDITY_BPS = 4_000;
-    uint16 public constant GM_ESCROW_BPS = 5_000;
-    uint16 public constant CREATION_FEE_BPS = 300;
+    uint16 public constant GM_ESCROW_BPS = 6_000;
+    /// @dev Entry is taxed lightly because the supplied liquidity is already surrendered
+    ///      permanently. Protocol revenue is meant to come from trading flow, not from attempts.
+    uint16 public constant CREATION_FEE_BPS = 100;
     uint16 public constant NFT_REWARD_FEE_SHARE_BPS = 5_000;
     uint32 public constant REQUIRED_GM_CHECK_INS = 3;
     uint32 public constant GM_CADENCE_SECONDS = 1 days;
@@ -329,7 +333,8 @@ contract DoomLaunchFactory is ReentrancyGuard {
         uint256 creatorAmount = Math.mulDiv(params.totalSupply, CREATOR_LIQUID_BPS, BPS_DENOMINATOR);
         uint256 liquidityAllocated = Math.mulDiv(params.totalSupply, LIQUIDITY_BPS, BPS_DENOMINATOR);
         uint256 escrowAmount = params.totalSupply - creatorAmount - liquidityAllocated;
-        if (creatorAmount == 0 || liquidityAllocated == 0 || escrowAmount == 0) revert ZeroAllocationAmount();
+        // creatorAmount is zero by design and is not checked here.
+        if (liquidityAllocated == 0 || escrowAmount == 0) revert ZeroAllocationAmount();
 
         GmEscrow escrow = new GmEscrow(
             launchId,
@@ -344,7 +349,7 @@ contract DoomLaunchFactory is ReentrancyGuard {
         creatorEscrow = address(escrow);
 
         IERC20 launchToken = IERC20(tokenAddress);
-        launchToken.safeTransfer(msg.sender, creatorAmount);
+        if (creatorAmount != 0) launchToken.safeTransfer(msg.sender, creatorAmount);
         launchToken.safeTransfer(creatorEscrow, escrowAmount);
         launchToken.forceApprove(address(liquidityManager), liquidityAllocated);
 

@@ -27,9 +27,9 @@ the token, the pool, and the position manager. Expected values come from
 this tool.
 
 **Allocation**
-- creator gets exactly 10% of supply
+- creator gets exactly 0% of supply at launch
 - permanent liquidity gets exactly 40%
-- GM escrow gets exactly 50%
+- GM escrow gets exactly 60%
 - the three sum to the total supply, with nothing unaccounted for
 - the token's own `totalSupply` matches the recorded supply
 
@@ -42,7 +42,7 @@ this tool.
   position manager rather than trusted from the launch record
 
 **Fees**
-- the creation fee is exactly 3% of the native liquidity actually used
+- the creation fee is exactly 1% of the native liquidity actually used
 - treasury and DoomRewards shares sum to the fee
 - the DoomRewards share is exactly 50%
 
@@ -59,9 +59,9 @@ this tool.
 - the escrow routes defaults to the deployed DoomRewards
 
 **Custody**
-- while the commitment is open, the escrow actually holds the full escrowed
-  allocation. A record saying tokens are escrowed while the balance says
-  otherwise is the failure worth catching.
+- while the commitment is open, the escrow holds the allocation minus whatever
+  released check-ins have already paid out. A record saying tokens are escrowed
+  while the balance says otherwise is the failure worth catching.
 - the pool holds at least the liquidity that was used
 
 ## What a failure means

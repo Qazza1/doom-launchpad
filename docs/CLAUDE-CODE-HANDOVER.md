@@ -120,13 +120,13 @@ retention, and revenue layers.
 The differentiator is not another generic Pump.fun clone. A launch commits a
 fixed creator allocation to a three-day "GM" survival mechanic:
 
-- The creator receives 10% of supply immediately.
+- The creator receives nothing at launch.
 - 40% provides permanent Uniswap V3-compatible liquidity.
-- 50% enters GM escrow.
+- 60% enters GM escrow, released one equal share per check-in.
 - The creator checks in once per day for three days.
 - If the streak survives, the escrowed allocation is released to the creator.
-- If the streak fails, the entire escrowed allocation moves to the separate
-  DoomRewards vault for later NFT-holder rewards.
+- If the streak fails, the unreleased escrow moves to the separate DoomRewards
+  vault for later NFT-holder rewards. Honoured check-ins are not clawed back.
 
 The public experience should eventually make launching a token the main page:
 simple and fast like successful memecoin launchpads, but styled as DoomStreak
@@ -176,29 +176,29 @@ before a production deployment.
 ### Supply and GM commitment
 
 - Token supply allocation:
-  - 10% creator
+  - 0% creator at launch
   - 40% permanent V3 liquidity
-  - 50% GM escrow
+  - 60% GM escrow
 - Required check-ins: 3
 - Frequency: one check-in per day
 - Grace period: 12 hours
-- Failed escrow allocation: 100% to DoomRewards
+- Failed escrow allocation: 100% of the unreleased remainder to DoomRewards
 - LP position: permanently locked; there is no owner release path
 
 ### Fees and rewards
 
-- Creation fee: 3% of the native liquidity actually used
+- Creation fee: 1% of the native liquidity actually used
 - Creation-fee split:
   - 50% general treasury
   - 50% DoomRewards
 - LP WETH fees while the creator remains eligible:
-  - 60% creator
-  - 20% treasury
-  - 20% DoomRewards
+  - 70% creator
+  - 15% treasury
+  - 15% DoomRewards
 - LP WETH fees after default or missed finalizable deadline:
   - 0% creator
-  - 20% treasury
-  - 80% DoomRewards
+  - 15% treasury
+  - 85% DoomRewards
 - Launch-token side LP fees:
   - 100% DoomRewards
 - NFT supply of zero is expected because no NFTs have been minted yet.

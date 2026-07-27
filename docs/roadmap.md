@@ -33,19 +33,21 @@ remain open. No deployment.
 
 ### Frozen canary economics
 
-- Fixed supply allocation: 10% creator, 40% permanent liquidity, 50% GM escrow.
+- Fixed supply allocation: 0% creator at launch, 40% permanent liquidity, 60% GM escrow.
 - Three daily GM check-ins with a 12-hour grace period.
-- Failed GM allocation: 100% of the remaining escrow to DoomRewards.
+- Escrow release: an equal share per check-in; the final one takes the remainder.
+- Failed GM allocation: 100% of the *unreleased* escrow to DoomRewards. Honoured
+  check-ins are never clawed back.
 - Pool fee: 1% Uniswap V3 fee tier.
-- Creation fee: 3% of native liquidity, split 50% treasury / 50% DoomRewards.
+- Creation fee: 1% of native liquidity, split 50% treasury / 50% DoomRewards.
 - WETH LP fees while creator remains eligible:
-  - 60% creator
-  - 20% treasury
-  - 20% DoomRewards
+  - 70% creator
+  - 15% treasury
+  - 15% DoomRewards
 - WETH LP fees after default or a missed finalizable deadline:
   - 0% creator
-  - 20% treasury
-  - 80% DoomRewards
+  - 15% treasury
+  - 85% DoomRewards
 - Launch-token LP fees: 100% DoomRewards.
 - Token supply: 1 million to 1 quadrillion whole tokens.
 - Canary native liquidity: exactly 0.01 ETH per launch.
@@ -197,6 +199,29 @@ approval.
   voice for status labels, empty states, and celebrations.
 - Move the legacy NFT commitment-collection launcher into a separate product
   route or retire it from the memecoin creation path.
+
+## Stage 6.5 — launchpad v2 differentiation mechanics
+
+Status: designed, not committed. Full detail and open questions in
+`docs/launchpad-v2-mechanics.md`.
+
+Factory #1 can only ever perform three launches of exactly 0.01 ETH, because the
+canary caps are contract constants enforced by the constructor. A second factory
+is therefore required for public launching regardless of these mechanics.
+
+- [ ] Death Watch: public live-streak feed, countdowns, and Telegram alerts.
+  Needs no contract change and can ship alongside the canary.
+- [ ] Creator reputation tiers derived from the analytics dataset, tracking what
+  happens after the streak and decaying when creators abandon coins.
+- [ ] Holder insurance: a share of forfeited escrow paid to holders of the dead
+  token at default. Blocked on resolving the self-dealing vector.
+- [ ] Bonding-curve launch phase that graduates into the permanently locked V3
+  position, so buyers fund liquidity and launching costs only gas.
+- [ ] Graduation starts the GM clock rather than ending the story.
+- [ ] Holder daily streaks with NFT-holder multipliers.
+- [ ] Hard mode: longer self-selected commitments for better fee splits.
+- [ ] Decide the v2 minimum pool depth. Below roughly 0.05 ETH a pool is not
+  tradeable.
 
 ## Stage 7 — analytics v2 and NFT-gated advanced tools
 

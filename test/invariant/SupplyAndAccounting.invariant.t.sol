@@ -43,20 +43,39 @@ contract SupplyAndAccountingInvariantTest is StdInvariant, Test {
             rewards.availableRewards(address(token)) + rewards.reservedRewards(address(token))
         );
 
+        uint256 released = escrow.releasedAmount();
+        uint256 held = token.balanceOf(address(escrow));
+        uint256 creatorBalance = token.balanceOf(creator);
+        uint256 rewardsBalance = token.balanceOf(address(rewards));
+
+        // Conservation: escrowed tokens are only ever held, released to the creator, or forfeited to
+        // the reward vault. Staggered release makes partial states reachable, so this must hold at
+        // every point in the schedule rather than only at the two end states.
+        assertEq(held + creatorBalance + rewardsBalance, ESCROW_AMOUNT);
+        assertEq(creatorBalance, released);
+        assertLe(released, ESCROW_AMOUNT);
+
         GmEscrow.Status state = escrow.status();
         if (state == GmEscrow.Status.Active) {
-            assertEq(token.balanceOf(address(escrow)), ESCROW_AMOUNT);
-            assertEq(token.balanceOf(creator), 0);
-            assertEq(rewards.availableRewards(address(token)), 0);
+            // Exactly one share per completed check-in, nothing forfeited yet.
+            assertEq(held, escrow.remainingAmount());
+            assertEq(rewardsBalance, 0);
+            assertEq(released, _expectedRelease(escrow.completedCheckIns()));
         } else if (state == GmEscrow.Status.Completed) {
-            assertEq(token.balanceOf(address(escrow)), 0);
-            assertEq(token.balanceOf(creator), ESCROW_AMOUNT);
+            assertEq(held, 0);
+            assertEq(creatorBalance, ESCROW_AMOUNT);
             assertEq(rewards.availableRewards(address(token)), 0);
         } else {
-            assertEq(token.balanceOf(address(escrow)), 0);
-            assertEq(token.balanceOf(creator), 0);
-            assertEq(token.balanceOf(address(rewards)), ESCROW_AMOUNT);
-            assertEq(rewards.availableRewards(address(token)), ESCROW_AMOUNT);
+            // A default forfeits only what was still held; honoured check-ins are never clawed back.
+            assertEq(held, 0);
+            assertEq(rewardsBalance, ESCROW_AMOUNT - released);
+            assertEq(rewards.availableRewards(address(token)), ESCROW_AMOUNT - released);
+        }
+    }
+
+    function _expectedRelease(uint32 checkIns) internal view returns (uint256 total) {
+        for (uint32 ordinal = 1; ordinal <= checkIns; ordinal++) {
+            total += escrow.releaseFor(ordinal);
         }
     }
 }

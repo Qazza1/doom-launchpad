@@ -115,15 +115,15 @@ contract PositionLockerTest is Test {
         locker.bindRegistrar(address(registrar));
     }
 
-    function testActiveCreatorReceivesSixtyTwentyTwentyWethSplit() external {
+    function testActiveCreatorReceivesSeventyFifteenFifteenWethSplit() external {
         _seedFees(100 ether, 10 ether);
 
         vm.prank(makeAddr("keeper"));
         locker.collectFees(positionId);
 
-        assertEq(weth.balanceOf(creator), 6 ether);
-        assertEq(weth.balanceOf(treasury), 2 ether);
-        assertEq(rewards.availableRewards(address(weth)), 2 ether);
+        assertEq(weth.balanceOf(creator), 7 ether);
+        assertEq(weth.balanceOf(treasury), 1.5 ether);
+        assertEq(rewards.availableRewards(address(weth)), 1.5 ether);
         assertEq(rewards.availableRewards(address(launchToken)), 100 ether);
         assertEq(weth.balanceOf(address(locker)), 0);
         assertEq(launchToken.balanceOf(address(locker)), 0);
@@ -135,9 +135,9 @@ contract PositionLockerTest is Test {
 
         locker.collectFees(positionId);
 
-        assertEq(weth.balanceOf(creator), 6 ether);
-        assertEq(weth.balanceOf(treasury), 2 ether);
-        assertEq(rewards.availableRewards(address(weth)), 2 ether);
+        assertEq(weth.balanceOf(creator), 7 ether);
+        assertEq(weth.balanceOf(treasury), 1.5 ether);
+        assertEq(rewards.availableRewards(address(weth)), 1.5 ether);
     }
 
     function testDefaultRedirectsCreatorShareToRewards() external {
@@ -147,8 +147,8 @@ contract PositionLockerTest is Test {
         locker.collectFees(positionId);
 
         assertEq(weth.balanceOf(creator), 0);
-        assertEq(weth.balanceOf(treasury), 2 ether);
-        assertEq(rewards.availableRewards(address(weth)), 8 ether);
+        assertEq(weth.balanceOf(treasury), 1.5 ether);
+        assertEq(rewards.availableRewards(address(weth)), 8.5 ether);
     }
 
     function testOverdueActiveEscrowRedirectsCreatorShareBeforeFinalization() external {
@@ -159,8 +159,8 @@ contract PositionLockerTest is Test {
         locker.collectFees(positionId);
 
         assertEq(weth.balanceOf(creator), 0);
-        assertEq(weth.balanceOf(treasury), 2 ether);
-        assertEq(rewards.availableRewards(address(weth)), 8 ether);
+        assertEq(weth.balanceOf(treasury), 1.5 ether);
+        assertEq(rewards.availableRewards(address(weth)), 8.5 ether);
     }
 
     function testLaunchTokenFeesAlwaysGoEntirelyToRewards() external {

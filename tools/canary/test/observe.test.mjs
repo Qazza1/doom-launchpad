@@ -23,7 +23,7 @@ const escrowAddress = "0x3333333333333333333333333333333333333333";
 
 const supply = 1_000_000_000n * 10n ** 18n;
 const nativeUsed = 10_000_000_000_000_000n;
-const creationFee = (nativeUsed * 300n) / 10_000n;
+const creationFee = (nativeUsed * 100n) / 10_000n;
 
 const economics = {
   creatorLiquidBps: decisions.tokenEconomics.creatorLiquidBps,
@@ -44,11 +44,11 @@ const healthy = () => ({
     creatorEscrow: escrowAddress,
     positionId: 42n,
     totalSupply: supply,
-    creatorLiquidAmount: (supply * 1000n) / 10_000n,
+    creatorLiquidAmount: 0n,
     liquidityTokenAmountAllocated: (supply * 4000n) / 10_000n,
     liquidityTokenAmountUsed: (supply * 4000n) / 10_000n - 5n,
     liquidityTokenRemainder: 5n,
-    escrowTokenAmount: (supply * 5000n) / 10_000n,
+    escrowTokenAmount: (supply * 6000n) / 10_000n,
     nativeLiquidityAmountRequested: nativeUsed,
     nativeLiquidityAmountUsed: nativeUsed,
     creationFee,
@@ -71,7 +71,8 @@ const healthy = () => ({
     creator,
     token,
     doomRewards: addresses.DoomRewards,
-    committedAmount: (supply * 5000n) / 10_000n,
+    committedAmount: (supply * 6000n) / 10_000n,
+    releasedAmount: 0n,
     requiredCheckIns: 3n,
     completedCheckIns: 0n,
     remainingCheckIns: 3n,
@@ -84,8 +85,8 @@ const healthy = () => ({
   },
   balances: {
     tokenTotalSupply: supply,
-    creator: (supply * 1000n) / 10_000n,
-    escrow: (supply * 5000n) / 10_000n,
+    creator: 0n,
+    escrow: (supply * 6000n) / 10_000n,
     pool: (supply * 4000n) / 10_000n - 5n,
   },
   positionOwner: addresses.PositionLocker,
@@ -123,7 +124,7 @@ test("a broken allocation split is caught", () => {
   const skewed = healthy();
   skewed.record.creatorLiquidAmount = (supply * 2000n) / 10_000n;
   const failures = evaluateLaunch(skewed);
-  assert.ok(failures.some(item => item.includes("creator allocation is not 10%")));
+  assert.ok(failures.some(item => item.includes("creator allocation is not 0%")));
   assert.ok(failures.some(item => item.includes("do not sum to total supply")));
 });
 
@@ -152,7 +153,7 @@ test("an LP position that is not permanently locked is caught", () => {
 test("a wrong creation fee or split is caught", () => {
   const overcharged = healthy();
   overcharged.record.creationFee = creationFee * 2n;
-  assert.ok(evaluateLaunch(overcharged).some(item => item.includes("not 3% of the native liquidity")));
+  assert.ok(evaluateLaunch(overcharged).some(item => item.includes("not 1% of the native liquidity")));
 
   const misrouted = healthy();
   misrouted.record.treasuryFee = creationFee;
@@ -195,7 +196,7 @@ test("escrowed tokens must actually sit in the escrow while the commitment is op
   const drained = healthy();
   drained.balances.escrow = 0n;
   assert.ok(
-    evaluateLaunch(drained).some(item => item.includes("does not hold the full escrowed allocation")),
+    evaluateLaunch(drained).some(item => item.includes("does not hold the unreleased part")),
   );
 
   // After a completed commitment the escrow is expected to be empty, so the check does not apply.
@@ -203,6 +204,34 @@ test("escrowed tokens must actually sit in the escrow while the commitment is op
   completed.escrow.completedCheckIns = 3n;
   completed.balances.escrow = 0n;
   assert.deepEqual(evaluateLaunch(completed), []);
+});
+
+test("a partially released escrow is judged against what it should still hold", () => {
+  const escrowed = (supply * 6000n) / 10_000n;
+  const share = escrowed / 3n;
+
+  // One check-in honoured: the escrow should hold two thirds, and the creator holds the rest.
+  const partial = healthy();
+  partial.escrow.completedCheckIns = 1n;
+  partial.escrow.remainingCheckIns = 2n;
+  partial.escrow.releasedAmount = share;
+  partial.balances.escrow = escrowed - share;
+  partial.balances.creator = share;
+  assert.deepEqual(evaluateLaunch(partial), []);
+
+  // Still holding everything after a release is an accounting failure, not a pass.
+  const unreleased = structuredClone(partial);
+  unreleased.balances.escrow = escrowed;
+  assert.ok(
+    evaluateLaunch(unreleased).some(item => item.includes("does not hold the unreleased part")),
+  );
+
+  // Releasing more than was ever committed must be caught.
+  const overReleased = healthy();
+  overReleased.escrow.releasedAmount = escrowed + 1n;
+  assert.ok(
+    evaluateLaunch(overReleased).some(item => item.includes("released more than it ever held")),
+  );
 });
 
 test("a supply mismatch between the token and the record is caught", () => {

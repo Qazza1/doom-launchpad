@@ -26,9 +26,12 @@ contract PositionLocker is ERC721Holder, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint16 public constant BPS_DENOMINATOR = 10_000;
-    uint16 public constant CREATOR_WETH_FEE_BPS = 6_000;
-    uint16 public constant TREASURY_WETH_FEE_BPS = 2_000;
-    uint16 public constant REWARDS_WETH_FEE_BPS = 2_000;
+    /// @dev The creator can never recover the liquidity they supplied, so the fee stream is their
+    ///      only return on it. The treasury rate is the same whether or not the creator is still
+    ///      eligible; after a default the creator's share falls to the reward vault.
+    uint16 public constant CREATOR_WETH_FEE_BPS = 7_000;
+    uint16 public constant TREASURY_WETH_FEE_BPS = 1_500;
+    uint16 public constant REWARDS_WETH_FEE_BPS = 1_500;
     uint24 public constant POOL_FEE = 10_000;
     int24 public constant FULL_RANGE_TICK_LOWER = -887200;
     int24 public constant FULL_RANGE_TICK_UPPER = 887200;

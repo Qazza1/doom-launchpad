@@ -57,11 +57,15 @@ if ($manifest.deploymentSafety.enabled -ne $false -or
     $manifest.deploymentSafety.mainnetDeploymentApproved -ne $false) {
     throw "Mainnet canary manifest is not fail-closed. Refusing to continue."
 }
-if ($manifest.creationFee.feeBps -ne 300 -or
+if ($manifest.creationFee.feeBps -ne 100 -or
+    $manifest.tokenEconomics.creatorLiquidBps -ne 0 -or
+    $manifest.tokenEconomics.liquidityBps -ne 4000 -or
+    $manifest.tokenEconomics.gmEscrowBps -ne 6000 -or
+    $manifest.liquidity.eligibleWethFeeSplitBps.creator -ne 7000 -or
     $manifest.liquidity.poolFee -ne 10000 -or
     $manifest.liquidity.releaseSupported -ne $false -or
     $manifest.pilotLimits.maxNativeLiquidityPerLaunchWei -ne "10000000000000000") {
-    throw "Stage 3.1 economics in the manifest do not match the frozen canary."
+    throw "Economics in the manifest do not match the frozen canary."
 }
 
 Write-Host "Manifest valid and deployment remains disabled."

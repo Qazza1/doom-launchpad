@@ -44,6 +44,76 @@ contract GmEscrowTest is Test {
         assertEq(token.balanceOf(address(escrow)), 0);
     }
 
+    function testEachCheckInReleasesItsOwnShare() external {
+        uint256 share = AMOUNT / REQUIRED;
+        uint256 releasedSoFar;
+
+        for (uint32 ordinal = 1; ordinal <= REQUIRED; ++ordinal) {
+            vm.warp(escrow.nextCheckInAt());
+            vm.prank(creator);
+            escrow.recordGm();
+
+            releasedSoFar += ordinal == REQUIRED ? AMOUNT - share * (REQUIRED - 1) : share;
+            assertEq(escrow.releasedAmount(), releasedSoFar, "released total");
+            assertEq(token.balanceOf(creator), releasedSoFar, "creator balance");
+            assertEq(escrow.remainingAmount(), AMOUNT - releasedSoFar, "remaining");
+            assertEq(token.balanceOf(address(escrow)), AMOUNT - releasedSoFar, "escrow balance");
+        }
+
+        // No cliff, and no dust stranded by integer division.
+        assertEq(escrow.releasedAmount(), AMOUNT);
+        assertEq(token.balanceOf(address(escrow)), 0);
+    }
+
+    function testDefaultForfeitsOnlyTheUnreleasedRemainder() external {
+        vm.warp(escrow.nextCheckInAt());
+        vm.prank(creator);
+        escrow.recordGm();
+
+        uint256 released = escrow.releasedAmount();
+        assertGt(released, 0);
+
+        vm.warp(uint256(escrow.nextDeadline()) + 1);
+        escrow.finalizeDefault();
+
+        assertEq(uint256(escrow.status()), uint256(GmEscrow.Status.Defaulted));
+        // The honoured check-in is not clawed back.
+        assertEq(token.balanceOf(creator), released);
+        assertEq(token.balanceOf(address(rewards)), AMOUNT - released);
+        assertEq(rewards.availableRewards(address(token)), AMOUNT - released);
+        assertEq(token.balanceOf(address(escrow)), 0);
+        assertEq(escrow.remainingAmount(), AMOUNT - released);
+    }
+
+    function testReleaseScheduleIsBoundedAndSumsToTheCommitment() external {
+        uint256 total;
+        for (uint32 ordinal = 1; ordinal <= REQUIRED; ++ordinal) {
+            total += escrow.releaseFor(ordinal);
+        }
+        assertEq(total, AMOUNT, "schedule must distribute the whole commitment");
+
+        vm.expectPartialRevert(GmEscrow.InvalidCheckInOrdinal.selector);
+        escrow.releaseFor(0);
+        vm.expectPartialRevert(GmEscrow.InvalidCheckInOrdinal.selector);
+        escrow.releaseFor(REQUIRED + 1);
+    }
+
+    function testIndivisibleCommitmentStrandsNothing() external {
+        // A commitment that does not divide evenly must still pay out to the last wei.
+        uint256 odd = 100_000 ether + 2 wei;
+        GmEscrow oddEscrow = new GmEscrow(2, address(token), creator, address(rewards), odd, REQUIRED, CADENCE, GRACE);
+        token.transfer(address(oddEscrow), odd);
+
+        for (uint256 i; i < REQUIRED; ++i) {
+            vm.warp(oddEscrow.nextCheckInAt());
+            vm.prank(creator);
+            oddEscrow.recordGm();
+        }
+
+        assertEq(token.balanceOf(creator), odd);
+        assertEq(token.balanceOf(address(oddEscrow)), 0);
+    }
+
     function testCreatorCannotUnlockEarly() external {
         vm.prank(creator);
         vm.expectPartialRevert(GmEscrow.CheckInTooEarly.selector);

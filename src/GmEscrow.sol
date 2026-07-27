@@ -41,6 +41,8 @@ contract GmEscrow is ReentrancyGuard {
     uint32 public immutable gracePeriodSeconds;
 
     uint32 public completedCheckIns;
+    /// @notice Tokens already released to the creator across completed check-ins.
+    uint256 public releasedAmount;
     Status public status;
 
     event CommitmentCreated(
@@ -61,6 +63,15 @@ contract GmEscrow is ReentrancyGuard {
         uint64 recordedAt,
         uint64 nextCheckInAt,
         uint64 nextDeadline
+    );
+    event EscrowReleased(
+        uint256 indexed launchId,
+        address indexed token,
+        address indexed creator,
+        uint32 checkIn,
+        uint256 amount,
+        uint256 releasedTotal,
+        uint256 remaining
     );
     event CommitmentCompleted(
         uint256 indexed launchId,
@@ -156,7 +167,24 @@ contract GmEscrow is ReentrancyGuard {
         return status == Status.Active ? requiredCheckIns - completedCheckIns : 0;
     }
 
-    /// @notice Records one scheduled GM and releases escrow on final completion.
+    /// @notice Escrowed tokens still held for the creator, and the amount a default would redirect.
+    function remainingAmount() public view returns (uint256) {
+        return committedAmount - releasedAmount;
+    }
+
+    /// @notice Tokens the given check-in ordinal releases.
+    /// @dev The final ordinal releases whatever remains, so integer division cannot strand dust.
+    function releaseFor(uint32 ordinal) public view returns (uint256) {
+        if (ordinal == 0 || ordinal > requiredCheckIns) {
+            revert InvalidCheckInOrdinal(ordinal, requiredCheckIns);
+        }
+        if (ordinal == requiredCheckIns) {
+            return committedAmount - (committedAmount / requiredCheckIns) * (requiredCheckIns - 1);
+        }
+        return committedAmount / requiredCheckIns;
+    }
+
+    /// @notice Records one scheduled GM and releases that check-in's share of the escrow.
     function recordGm() external onlyCreator nonReentrant {
         if (status != Status.Active) revert CommitmentResolved(status);
         _requireFunded();
@@ -185,9 +213,18 @@ contract GmEscrow is ReentrancyGuard {
             launchId, address(token), creator, checkIns, uint64(block.timestamp), followingDue, followingDeadline
         );
 
+        // Each check-in releases its own share, so the creator's holding grows as the commitment is
+        // honoured instead of arriving as one cliff the market has to absorb on the final day.
+        uint256 release = releaseFor(checkIns);
+        uint256 releasedTotal = releasedAmount + release;
+        releasedAmount = releasedTotal;
+        token.safeTransfer(creator, release);
+        emit EscrowReleased(
+            launchId, address(token), creator, checkIns, release, releasedTotal, committedAmount - releasedTotal
+        );
+
         if (checkIns == requiredCheckIns) {
-            token.safeTransfer(creator, committedAmount);
-            emit CommitmentCompleted(launchId, address(token), creator, committedAmount, uint64(block.timestamp));
+            emit CommitmentCompleted(launchId, address(token), creator, releasedTotal, uint64(block.timestamp));
         }
     }
 
@@ -203,30 +240,34 @@ contract GmEscrow is ReentrancyGuard {
 
         status = Status.Defaulted;
 
+        // Only the unreleased remainder is redirected. Check-ins already honoured are not clawed back.
+        uint256 forfeited = remainingAmount();
+
         uint256 sourceBalanceBefore = token.balanceOf(address(this));
         uint256 rewardsBalanceBefore = token.balanceOf(address(doomRewards));
-        token.forceApprove(address(doomRewards), committedAmount);
-        doomRewards.depositFailedAllocation(address(token), committedAmount, launchId);
+        token.forceApprove(address(doomRewards), forfeited);
+        doomRewards.depositFailedAllocation(address(token), forfeited, launchId);
         token.forceApprove(address(doomRewards), 0);
 
         uint256 sourceBalanceAfter = token.balanceOf(address(this));
         uint256 rewardsBalanceAfter = token.balanceOf(address(doomRewards));
         if (sourceBalanceAfter > sourceBalanceBefore || rewardsBalanceAfter < rewardsBalanceBefore) {
-            revert RewardDepositMismatch(committedAmount, 0, 0);
+            revert RewardDepositMismatch(forfeited, 0, 0);
         }
         uint256 sourceDelta = sourceBalanceBefore - sourceBalanceAfter;
         uint256 rewardsDelta = rewardsBalanceAfter - rewardsBalanceBefore;
-        if (sourceDelta != committedAmount || rewardsDelta != committedAmount) {
-            revert RewardDepositMismatch(committedAmount, sourceDelta, rewardsDelta);
+        if (sourceDelta != forfeited || rewardsDelta != forfeited) {
+            revert RewardDepositMismatch(forfeited, sourceDelta, rewardsDelta);
         }
 
         emit CommitmentDefaulted(
-            launchId, address(token), creator, committedAmount, address(doomRewards), uint64(block.timestamp)
+            launchId, address(token), creator, forfeited, address(doomRewards), uint64(block.timestamp)
         );
     }
 
     function _requireFunded() internal view {
+        uint256 required = remainingAmount();
         uint256 balance = token.balanceOf(address(this));
-        if (balance < committedAmount) revert EscrowNotFunded(committedAmount, balance);
+        if (balance < required) revert EscrowNotFunded(required, balance);
     }
 }

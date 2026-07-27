@@ -67,15 +67,23 @@ export function evaluateLaunch({ record, economics, limits, escrow, balances, po
   const supply = record.totalSupply;
 
   // Allocation: 10% creator, 40% permanent liquidity, 50% GM escrow, summing to the whole supply.
+  // Percentages come from the frozen decisions file, so the messages cannot drift from the contract.
+  const pct = bps => `${Number(bps) / 100}%`;
   const expectedCreator = (supply * BigInt(economics.creatorLiquidBps)) / BPS;
   const expectedLiquidity = (supply * BigInt(economics.liquidityBps)) / BPS;
   const expectedEscrow = (supply * BigInt(economics.gmEscrowBps)) / BPS;
-  check(record.creatorLiquidAmount === expectedCreator, "creator allocation is not 10% of supply");
+  check(
+    record.creatorLiquidAmount === expectedCreator,
+    `creator allocation is not ${pct(economics.creatorLiquidBps)} of supply`,
+  );
   check(
     record.liquidityTokenAmountAllocated === expectedLiquidity,
-    "liquidity allocation is not 40% of supply",
+    `liquidity allocation is not ${pct(economics.liquidityBps)} of supply`,
   );
-  check(record.escrowTokenAmount === expectedEscrow, "escrow allocation is not 50% of supply");
+  check(
+    record.escrowTokenAmount === expectedEscrow,
+    `escrow allocation is not ${pct(economics.gmEscrowBps)} of supply`,
+  );
   check(
     record.creatorLiquidAmount + record.liquidityTokenAmountAllocated + record.escrowTokenAmount
       === supply,
@@ -98,7 +106,10 @@ export function evaluateLaunch({ record, economics, limits, escrow, balances, po
 
   // Creation fee: 3% of the native liquidity actually used, split 50/50.
   const expectedFee = (record.nativeLiquidityAmountUsed * BigInt(economics.creationFeeBps)) / BPS;
-  check(record.creationFee === expectedFee, "the creation fee is not 3% of the native liquidity used");
+  check(
+    record.creationFee === expectedFee,
+    `the creation fee is not ${pct(economics.creationFeeBps)} of the native liquidity used`,
+  );
   check(
     record.treasuryFee + record.nftRewardFee === record.creationFee,
     "fee split does not reconcile with the creation fee",
@@ -150,11 +161,14 @@ export function evaluateLaunch({ record, economics, limits, escrow, balances, po
     "the escrow does not route defaults to DoomRewards",
   );
 
-  // Token custody: the escrow must actually hold the escrowed tokens while the commitment is open.
+  // Token custody. The escrow releases one share per honoured check-in, so what it should still be
+  // holding is the allocation minus whatever has already been released — not the whole allocation.
+  const released = BigInt(escrow.releasedAmount ?? 0n);
+  check(released <= record.escrowTokenAmount, "the escrow released more than it ever held");
   if (Number(escrow.completedCheckIns) < Number(escrow.requiredCheckIns)) {
     check(
-      balances.escrow === record.escrowTokenAmount,
-      "the escrow does not hold the full escrowed allocation",
+      balances.escrow === record.escrowTokenAmount - released,
+      "the escrow does not hold the unreleased part of the escrowed allocation",
     );
   }
   check(
@@ -232,6 +246,7 @@ export async function main(argv = process.argv.slice(2)) {
     token: await escrowAddress("token()"),
     doomRewards: await escrowAddress("doomRewards()"),
     committedAmount: await escrowUint("committedAmount()"),
+    releasedAmount: await escrowUint("releasedAmount()"),
     requiredCheckIns: await escrowUint("requiredCheckIns()"),
     completedCheckIns: await escrowUint("completedCheckIns()"),
     remainingCheckIns: await escrowUint("remainingCheckIns()"),

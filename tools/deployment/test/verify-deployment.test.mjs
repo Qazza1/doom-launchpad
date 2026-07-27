@@ -51,16 +51,16 @@ test("the expected state covers the frozen economics and the paused factory", ()
   const state = expected();
   assert.deepEqual(Object.keys(state).sort(), [...CONTRACT_NAMES].sort());
   assert.deepEqual(state.DoomLaunchFactory["launchesPaused()"], ["bool", true]);
-  assert.deepEqual(state.DoomLaunchFactory["CREATION_FEE_BPS()"], ["uint", "300"]);
-  assert.deepEqual(state.DoomLaunchFactory["CREATOR_LIQUID_BPS()"], ["uint", "1000"]);
+  assert.deepEqual(state.DoomLaunchFactory["CREATION_FEE_BPS()"], ["uint", "100"]);
+  assert.deepEqual(state.DoomLaunchFactory["CREATOR_LIQUID_BPS()"], ["uint", "0"]);
   assert.deepEqual(state.DoomLaunchFactory["LIQUIDITY_BPS()"], ["uint", "4000"]);
-  assert.deepEqual(state.DoomLaunchFactory["GM_ESCROW_BPS()"], ["uint", "5000"]);
+  assert.deepEqual(state.DoomLaunchFactory["GM_ESCROW_BPS()"], ["uint", "6000"]);
   assert.deepEqual(state.DoomLaunchFactory["REQUIRED_GM_CHECK_INS()"], ["uint", "3"]);
   assert.deepEqual(
     state.DoomLaunchFactory["maxNativeLiquidityGlobal()"],
     ["uint", "30000000000000000"],
   );
-  assert.deepEqual(state.PositionLocker["CREATOR_WETH_FEE_BPS()"], ["uint", "6000"]);
+  assert.deepEqual(state.PositionLocker["CREATOR_WETH_FEE_BPS()"], ["uint", "7000"]);
   assert.deepEqual(state.V3LiquidityManager["expectedChainId()"], ["uint", "4663"]);
   // The bindings must point at each other, not at anything else.
   assert.deepEqual(
