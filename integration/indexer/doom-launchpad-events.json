@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "chainId": 4663,
   "contracts": {
     "DoomLaunchFactory": [
@@ -20,6 +20,7 @@
     "GmEscrow": [
       "event CommitmentCreated(uint256 indexed launchId,address indexed token,address indexed creator,uint256 committedAmount,uint64 startTime,uint32 requiredCheckIns,uint32 cadenceSeconds,uint32 gracePeriodSeconds)",
       "event GmRecorded(uint256 indexed launchId,address indexed token,address indexed creator,uint32 completedCheckIns,uint64 recordedAt,uint64 nextCheckInAt,uint64 nextDeadline)",
+      "event EscrowReleased(uint256 indexed launchId,address indexed token,address indexed creator,uint32 checkIn,uint256 amount,uint256 releasedTotal,uint256 remaining)",
       "event CommitmentCompleted(uint256 indexed launchId,address indexed token,address indexed creator,uint256 releasedAmount,uint64 completedAt)",
       "event CommitmentDefaulted(uint256 indexed launchId,address indexed token,address indexed creator,uint256 rewardAmount,address doomRewards,uint64 defaultedAt)"
     ],

@@ -62,6 +62,9 @@ CREATE TABLE doom_commitments (
   creator TEXT NOT NULL,
   status TEXT NOT NULL CHECK(status IN ('active','completed','defaulted')),
   completed_check_ins INTEGER NOT NULL DEFAULT 0,
+  committed_amount TEXT NOT NULL DEFAULT '0',
+  released_amount TEXT NOT NULL DEFAULT '0',
+  remaining_amount TEXT NOT NULL DEFAULT '0',
   next_check_in_at INTEGER,
   next_deadline INTEGER,
   default_eligible INTEGER NOT NULL DEFAULT 0,
@@ -129,6 +132,15 @@ within JavaScript's safe-integer range.
 9. Mark a default funded only when `CommitmentDefaulted` has a matching
    `FailedAllocationDeposited` from the exact escrow in the same transaction.
 10. Reconcile every `PositionFeesCollected` split before displaying totals.
+11. Track escrow release from `EscrowReleased`, which carries the per-check-in
+    amount, the running `releasedTotal`, and the `remaining` balance. The escrow
+    pays out one share per honoured check-in, so a commitment's held balance is
+    the allocation minus what has already been released. Treating the whole
+    allocation as still escrowed overstates what a missed deadline costs by up
+    to two thirds.
+12. Redirect only `remaining` on a default. `CommitmentDefaulted.rewardAmount` is
+    the unreleased remainder, not the original commitment; check-ins already
+    honoured are never clawed back.
 
 ## Status and badge rules
 

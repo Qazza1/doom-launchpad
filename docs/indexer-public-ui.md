@@ -73,6 +73,8 @@ then use Blockscout's **Read Contract** panel or a read-only RPC client for:
 - `GmEscrow.nextCheckInAt()`
 - `GmEscrow.nextDeadline()`
 - `GmEscrow.remainingCheckIns()`
+- `GmEscrow.releasedAmount()`
+- `GmEscrow.remainingAmount()`
 - `PositionLocker.isPermanentlyLocked(positionId)`
 - `PositionLocker.lockState(positionId)`
 - `PositionLocker.creatorFeeEligible(positionId)`
