@@ -103,6 +103,12 @@ try {
     & $forgePath test -vv
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+    # Reads the compiled ABIs, so it must run after the build rather than with the other Node tests.
+    $integrationTests = Get-ChildItem -LiteralPath (Join-Path $projectRoot "tools\integration\test") `
+        -Filter "*.test.mjs" | ForEach-Object { $_.FullName }
+    & $nodeCommand.Source --test $integrationTests
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
     & $npmCommand.Source test --prefix (Join-Path $projectRoot "tools\rewards")
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
