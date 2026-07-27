@@ -87,6 +87,11 @@ $canaryTests = Get-ChildItem -LiteralPath (Join-Path $projectRoot "tools\canary\
 & $nodeCommand.Source --test $canaryTests
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+$deathWatchTests = Get-ChildItem -LiteralPath (Join-Path $projectRoot "tools\deathwatch\test") `
+    -Filter "*.test.mjs" | ForEach-Object { $_.FullName }
+& $nodeCommand.Source --test $deathWatchTests
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 & $forgePath --version
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 

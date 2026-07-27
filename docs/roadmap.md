@@ -209,8 +209,9 @@ Factory #1 can only ever perform three launches of exactly 0.01 ETH, because the
 canary caps are contract constants enforced by the constructor. A second factory
 is therefore required for public launching regardless of these mechanics.
 
-- [ ] Death Watch: public live-streak feed, countdowns, and Telegram alerts.
-  Needs no contract change and can ship alongside the canary.
+- [x] Death Watch engine and Telegram broadcast, reading the chain directly with
+  no indexer dependency: `docs/death-watch.md`.
+- [ ] Death Watch public web feed on the site.
 - [ ] Creator reputation tiers derived from the analytics dataset, tracking what
   happens after the streak and decaying when creators abandon coins.
 - [ ] Holder insurance: a share of forfeited escrow paid to holders of the dead

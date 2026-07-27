@@ -20,6 +20,7 @@ jobs:
         run: |
           node --test tools/deployment/test/*.test.mjs
           node --test tools/canary/test/*.test.mjs
+          node --test tools/deathwatch/test/*.test.mjs
           node tools/deployment/verify-manifest.mjs config/stage4-deployment-manifest.json
 
   review-artifact:

@@ -16,3 +16,5 @@ tools/keeper/state/
 tools/deployment/output/
 tools/review/output/
 tools/canary/output/
+tools/deathwatch/output/
+tools/deathwatch/state/

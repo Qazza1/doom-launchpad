@@ -1,0 +1,98 @@
+# Death Watch
+
+The GM commitment already produces a three-day cliffhanger per launch. Nothing
+currently broadcasts it. Death Watch is the layer that does.
+
+It is the first Stage 6.5 mechanic because it needs **no contract change** and can
+run from the moment the first canary token exists.
+
+## Why this and not something cleverer
+
+pump.fun's growth engine was the feed, not the bonding curve. Polymarket turned
+uncertainty into content. A countdown with real money on it and a public winner or
+loser at the end is the most shareable thing this product owns, and it already
+exists in the contracts — it is simply invisible.
+
+## What it reads
+
+Everything comes straight from the chain: `launchCount()` and `getLaunch(id)` on
+the factory, then each `GmEscrow`'s status, check-in counts, schedule, committed
+and released amounts. No indexer, no database, no API key.
+
+That matters for two reasons. It works the instant the canary deploys, and it can
+never disagree with the contracts, because there is nothing in between.
+
+The watcher is **read-only**. It has no signer and sends no transaction, so it can
+never check in for a creator or finalise a default on anyone's behalf.
+
+## The state machine
+
+| Phase | Meaning |
+|---|---|
+| `waiting` | Between windows. Nothing to do yet. |
+| `window_open` | The creator must check in now. The countdown targets the deadline. |
+| `finalizable` | The deadline passed while still active. No longer savable; anyone can finalise the default. |
+| `survived` | All check-ins honoured. Escrow fully released. |
+| `dead` | Defaulted. The unreleased escrow went to the reward vault. |
+
+`finalizable` is deliberately its own phase rather than being folded into `dead`.
+The commitment is lost but not yet resolved, and that gap is the most watchable
+moment the product has.
+
+**At stake** is the unreleased remainder, not the whole commitment. With staggered
+release, honoured check-ins are already the creator's and cannot be lost, so
+showing the full escrow would overstate the drama by up to two thirds.
+
+## What gets broadcast
+
+Only transitions, never the current state on a timer. A feed that reposts itself
+every poll is one people mute.
+
+- `launched` — a new commitment appeared
+- `window_open` — the check-in window opened
+- `final_hour` — under an hour left, fired once per window
+- `checked_in` — a day survived and a share released
+- `deadline_missed` — the window closed unsaved
+- `survived` — the full streak honoured
+- `defaulted` — finalised, escrow gone to NFT holders
+
+Backfill is handled: a launch first seen already `survived` or `dead` announces
+nothing, so pointing the watcher at existing history does not spam the channel
+with obituaries.
+
+Events render into the same alert shape the keeper's Telegram sender already
+accepts, so escaping and delivery are the code paths that were already tested
+rather than a second implementation.
+
+## Run
+
+```powershell
+$env:ROBINHOOD_RPC_URL = "https://rpc.mainnet.chain.robinhood.com"
+node .\tools\deathwatch\watch.mjs --factory <factory address>
+```
+
+Prints the feed and any new events, writes a snapshot to the Git-ignored
+`tools/deathwatch/output/feed.json`, and records state in
+`tools/deathwatch/state/feed.json` so the next poll can diff against it.
+
+Add `--broadcast` with `DEATHWATCH_TELEGRAM_BOT_TOKEN` and
+`DEATHWATCH_TELEGRAM_CHAT_ID` set to publish. Without the flag it never sends,
+which makes a dry run the default.
+
+Use a **separate bot and channel** from the keeper. The keeper is private
+operational alerting for the owner; Death Watch is public. Mixing them leaks
+operational detail into a public channel.
+
+## Untrusted input
+
+Token `name()` and `symbol()` are creator-controlled. The decoder rejects an
+absurd declared length, strips control characters, and the Telegram sender escapes
+what remains. Nothing renders them as markup.
+
+## Not built yet
+
+- The public web feed. The snapshot JSON is the data contract for it; the page
+  can equally read the chain directly, since everything needed is a public call.
+- Per-launch shareable pages, which belong with the Stage 6 token detail work.
+- The Doom Pool betting layer, which is a prediction market and carries
+  regulatory questions the spectator layer does not.
