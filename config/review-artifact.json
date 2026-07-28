@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
-  "contractDigest": "8e36941ed01081d0272caf3066f432b23c8eb68db6323f68fa21dd1cce6dee1b",
-  "frozenAtCommit": "733895f6b07b4f68d58841b8e0840274e22a8276",
+  "contractDigest": "7aab9e3b0c0c7066ee31e89807900e63112b0c4815338825e02f5d85fa4684c8",
+  "frozenAtCommit": "740a473bd0f2830a17650be7a3b4008be1f82441",
   "frozenAt": "2026-07-28",
   "contractFileCount": 11,
   "annotatedTag": null,
   "supersedes": {
-    "tag": "stage-3.1-audit-candidate",
-    "commit": "3d1d28b274347b3e39c35ad33ea6a569644caed7",
-    "contractDigest": "ac9e7192d2af94a189806378dfe0f9bdbca3827b1776e783ec451970af8ce6c9",
-    "reason": "economics reworked to 40/0/60 with staggered escrow release, 1% creation fee, and a 70/15/15 creator fee share"
+    "tag": null,
+    "commit": "733895f6b07b4f68d58841b8e0840274e22a8276",
+    "contractDigest": "8e36941ed01081d0272caf3066f432b23c8eb68db6323f68fa21dd1cce6dee1b",
+    "reason": "remediated the 2026-07-28 first-party findings with exact V3 pool-price diagnosis and whole-token supply enforcement"
   },
   "note": "The digest covers src/ only, over canonical Git blob bytes. CI fails when HEAD's contract sources stop matching it, so a contract change cannot land without a deliberate re-freeze in the same diff. The annotated tag is created once the code is final, immediately before the artifact is handed to a reviewer."
 }

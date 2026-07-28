@@ -8,8 +8,9 @@ conclusion below as a claim for the independent reviewer to check.
 
 ## Remediation status
 
-The 2026-07-28 remediation is implemented and has passed the full local gate. It
-remains subject to contract-artifact re-freeze, CI, and independent review:
+The 2026-07-28 remediation is frozen at contract commit `740a473` (contract
+digest `7aab9e3b…`) and has passed the full local gate. It remains subject to CI
+and independent review:
 
 - **M-1 remediated as a diagnostic control:** `V3LiquidityManager` reads
   `slot0` immediately after pool acquisition and reverts with
@@ -207,10 +208,10 @@ deposits (expected sources: the factory and the locker).
 5. Hand M-1, M-2, and I-5 to the independent reviewer as focus questions in
    `docs/independent-review-package.md`.
 
-Implementation note: actions 1-5 are now implemented except for the artifact
-re-freeze, CI confirmation, and independent focused review. The incident
-runbook intentionally does not promise a recovery swap; it requires evidence
-that any recovery is bounded for the observed hostile pool state.
+Implementation note: actions 1-5 are now implemented and the artifact is
+re-frozen. CI confirmation and independent focused review remain open. The
+incident runbook intentionally does not promise a recovery swap; it requires
+evidence that any recovery is bounded for the observed hostile pool state.
 
 The remediation gate passed 78 contract tests with 2 live-RPC fork tests skipped,
 plus 65 deployment, 17 Death Watch, 12 canary, 7 review-artifact, 8 event-contract,

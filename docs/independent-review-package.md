@@ -35,13 +35,13 @@ that digest, so a contract change cannot land without a deliberate re-freeze in
 the same diff, and an accidental one cannot land at all.
 
 - Contract digest (`src/` only, 11 files):
-  `8e36941ed01081d0272caf3066f432b23c8eb68db6323f68fa21dd1cce6dee1b`
-- Frozen at commit: `733895f6b07b4f68d58841b8e0840274e22a8276`
+  `7aab9e3b0c0c7066ee31e89807900e63112b0c4815338825e02f5d85fa4684c8`
+- Frozen at commit: `740a473bd0f2830a17650be7a3b4008be1f82441`
 
-This supersedes `stage-3.1-audit-candidate` (`3d1d28b`, contract digest
-`ac9e7192…`), which was frozen before the economics were reworked to 0/40/60 with
-staggered escrow release, a 1% creation fee, and a 70/15/15 creator fee share. The
-old tag remains in history as a record.
+This supersedes the economics-rework artifact (`733895f`, contract digest
+`8e36941…`) after the 2026-07-28 first-party findings were remediated with exact
+V3 pool-price diagnosis and whole-token supply enforcement. Historical tags and
+digests remain in Git as records; none constitute independent review.
 
 The annotated tag for review is created once the code is final, immediately before
 the artifact is handed over, so that the tag names exactly what was reviewed.
