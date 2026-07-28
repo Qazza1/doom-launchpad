@@ -69,6 +69,10 @@ Retention effect: leaving for another launchpad means starting from zero.
 Layer: indexer and frontend can ship first; contract-enforced tiered splits come
 with factory #2.
 
+The read-only indexer and frontend layer is implemented as Doom Record v1. Its
+formula, evidence gates, decay, limitations, and enforcement boundary are frozen
+in `docs/creator-reputation.md`. Contract-enforced fee tiers remain unbuilt.
+
 ### 3. Death Watch — ship first, needs no contract
 
 Every live streak, its countdown, and its outcome, as a public feed plus Telegram

@@ -213,8 +213,9 @@ is therefore required for public launching regardless of these mechanics.
   no indexer dependency: `docs/death-watch.md`.
 - [x] Death Watch public web feed on the site, backed by confirmed indexer chain
   time and fail-closed before deployment.
-- [ ] Creator reputation tiers derived from the analytics dataset, tracking what
-  happens after the streak and decaying when creators abandon coins.
+- [x] Creator Doom Record v1 derived from the analytics dataset, tracking
+  post-streak survival and decaying when recent launches are abandoned. Public
+  tiers are read-only; contract-enforced economics remain a factory #2 task.
 - [ ] Holder insurance: a share of forfeited escrow paid to holders of the dead
   token at default. Blocked on resolving the self-dealing vector.
 - [ ] Bonding-curve launch phase that graduates into the permanently locked V3
