@@ -92,11 +92,22 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+      - name: Require read-only access to the private production indexer
+        env:
+          INDEXER_REPO_READ_TOKEN: ${{ secrets.INDEXER_REPO_READ_TOKEN }}
+        run: |
+          if [ -z "$INDEXER_REPO_READ_TOKEN" ]; then
+            echo "::error title=Missing private-indexer token::Add the INDEXER_REPO_READ_TOKEN repository secret with read-only Contents access to Qazza1/OnchainDiligence-indexer."
+            exit 1
+          fi
       - name: Check out the production indexer event consumer
         uses: actions/checkout@v5
         with:
           repository: Qazza1/OnchainDiligence-indexer
+          ref: main
           path: production-indexer
+          token: ${{ secrets.INDEXER_REPO_READ_TOKEN }}
+          persist-credentials: false
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: v1.7.1
