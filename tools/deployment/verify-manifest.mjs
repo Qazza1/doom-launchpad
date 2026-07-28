@@ -1,4 +1,6 @@
 import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
@@ -69,6 +71,40 @@ export function validatePredeploymentManifest(manifest) {
         : value === null
     ),
     "independent review fields must be empty and false",
+  );
+  const acceptance = manifest?.ownerRiskAcceptance;
+  require(
+    acceptance?.independentThirdPartyReviewWaived === true,
+    "the capped-canary independent-review exception must be explicit",
+  );
+  require(
+    acceptance?.scope === "capped_three_launch_mainnet_canary",
+    "owner risk acceptance must be limited to the capped canary",
+  );
+  require(DATE.test(acceptance?.acceptedAt || ""), "owner risk acceptance date is missing");
+  require(
+    acceptance?.evidence === "docs/stage-4-owner-risk-acceptance.md",
+    "owner risk acceptance evidence path is invalid",
+  );
+  require(
+    /^[0-9a-f]{64}$/.test(acceptance?.evidenceSha256 || ""),
+    "owner risk acceptance evidence digest is invalid",
+  );
+  require(
+    acceptance?.nonBroadcastFinalizationAuthorized === true,
+    "non-broadcast finalization authorization must be recorded",
+  );
+  require(
+    acceptance?.mainnetDeploymentAuthorized === false,
+    "owner risk acceptance must not authorize mainnet deployment",
+  );
+  require(
+    acceptance?.factoryResumeAuthorized === false,
+    "owner risk acceptance must not authorize factory resume",
+  );
+  require(
+    acceptance?.firstCanaryLaunchAuthorized === false,
+    "owner risk acceptance must not authorize a canary launch",
   );
   require(
     manifest?.signing?.method === "rabby_browser_wallet",
@@ -176,6 +212,16 @@ async function main(path) {
   if (!path) throw new Error("usage: node verify-manifest.mjs <manifest.json>");
   const manifest = JSON.parse(await readFile(path, "utf8"));
   const errors = validatePredeploymentManifest(manifest);
+  const evidencePath = resolve(dirname(path), "..", manifest?.ownerRiskAcceptance?.evidence || "");
+  try {
+    const evidence = await readFile(evidencePath);
+    const actual = createHash("sha256").update(evidence).digest("hex");
+    if (actual !== manifest?.ownerRiskAcceptance?.evidenceSha256) {
+      errors.push("owner risk acceptance evidence digest does not match");
+    }
+  } catch {
+    errors.push("owner risk acceptance evidence cannot be read");
+  }
   if (errors.length) {
     for (const error of errors) console.error(`- ${error}`);
     process.exitCode = 1;

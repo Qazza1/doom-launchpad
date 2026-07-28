@@ -4,17 +4,17 @@ No step in this document currently authorizes a broadcast.
 
 ## Gate A — freeze and review
 
-1. Give the independent reviewer commit `733895f6b07b4f68d58841b8e0840274e22a8276`,
-   contract digest `8e36941ed01081d0272caf3066f432b23c8eb68db6323f68fa21dd1cce6dee1b`,
-   and `docs/independent-review-package.md`. The old
-   `stage-3.1-audit-candidate` tag is superseded and must not be reviewed as the
-   deployment candidate.
-2. Record reviewer identity, report URI, report SHA-256, and reviewed commit.
-3. Remediate every accepted finding on a new branch.
-4. Obtain focused re-review of every contract change.
-5. Create an annotated reviewed tag only after the current digest has completed
-   independent review. If any contract source changes, deliberately re-freeze
-   the digest and obtain focused re-review before tagging.
+1. The canary contract source is commit
+   `740a473bd0f2830a17650be7a3b4008be1f82441`, contract digest
+   `7aab9e3b0c0c7066ee31e89807900e63112b0c4815338825e02f5d85fa4684c8`.
+2. Independent review was not completed. On 2026-07-29 the owner explicitly
+   accepted that risk for this capped three-launch canary only:
+   `docs/stage-4-owner-risk-acceptance.md`.
+3. Keep the manifest's `independentReview` fields empty; never describe the
+   owner exception as an independent audit.
+4. Any later contract-source change invalidates this acceptance target and
+   requires a new digest, a new explicit decision, and repeated technical gates.
+5. The exception does not apply to a public or replacement factory.
 
 ## Gate B — operator preparation
 
@@ -47,7 +47,8 @@ Do not fund the deployer from an estimate written before this gate.
 The owner must review and explicitly approve the final manifest immediately
 before broadcast. At that moment all of these must be true:
 
-- independent review and focused re-review are complete;
+- either independent review is complete, or the exact capped-canary owner risk
+  exception remains valid for the unchanged contract digest;
 - source commit, archive checksum, constructor arguments, and dependency
   addresses match;
 - deployer nonce and balance match the worksheet;

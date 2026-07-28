@@ -21,6 +21,23 @@ test("broadcast approval is rejected", () => {
   assert.ok(errors.some(error => error.includes("mainnetDeploymentApproved")));
 });
 
+test("owner review waiver is narrow and never authorizes a transaction", () => {
+  assert.equal(canonical.ownerRiskAcceptance.independentThirdPartyReviewWaived, true);
+  assert.equal(canonical.ownerRiskAcceptance.scope, "capped_three_launch_mainnet_canary");
+  assert.equal(canonical.ownerRiskAcceptance.nonBroadcastFinalizationAuthorized, true);
+  assert.equal(canonical.ownerRiskAcceptance.mainnetDeploymentAuthorized, false);
+  assert.equal(canonical.ownerRiskAcceptance.factoryResumeAuthorized, false);
+  assert.equal(canonical.ownerRiskAcceptance.firstCanaryLaunchAuthorized, false);
+  assert.equal(canonical.independentReview.reviewer, null);
+
+  const broadened = copy();
+  broadened.ownerRiskAcceptance.scope = "public_factory";
+  broadened.ownerRiskAcceptance.mainnetDeploymentAuthorized = true;
+  const errors = validatePredeploymentManifest(broadened);
+  assert.ok(errors.some(error => error.includes("limited to the capped canary")));
+  assert.ok(errors.some(error => error.includes("must not authorize mainnet deployment")));
+});
+
 test("dependency-unsafe deployment order is rejected", () => {
   const manifest = copy();
   [manifest.deploymentOrder[0], manifest.deploymentOrder[1]] =

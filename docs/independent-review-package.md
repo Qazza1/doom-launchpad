@@ -7,6 +7,12 @@ Nothing in this repository has been deployed. No transaction has been signed or
 broadcast. Independent review is a hard gate before deployment, and neither the
 owner's review, nor Codex's, nor Claude's counts as independent.
 
+On 2026-07-29 the owner explicitly accepted an exception to that project policy
+for the capped three-launch canary only. No independent review is claimed, the
+manifest's independent-review fields remain empty, and deployment, factory
+resume, and the first launch still require separate approvals:
+`docs/stage-4-owner-risk-acceptance.md`.
+
 ## What is being reviewed
 
 Eleven Solidity sources under `src/`:

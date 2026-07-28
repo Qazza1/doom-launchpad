@@ -124,6 +124,8 @@ authorized.
   `docs/independent-review-package.md`.
 - [ ] Independent smart-contract audit/review against one tagged commit.
 - [ ] Remediation and focused re-review of every contract change.
+- [x] Record the owner's explicit 2026-07-29 risk acceptance to proceed without
+  independent third-party review for the capped three-launch canary only.
 - [x] Remediate the 2026-07-28 first-party findings: exact V3 pool-price
   assertion, whole-token validation, canary dust accounting, manifest digest
   cross-check, canonical reward-deposit attribution, and deadline-boundary test.

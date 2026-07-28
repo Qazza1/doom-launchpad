@@ -10,7 +10,7 @@
     "enabled": false,
     "broadcast": false,
     "mainnetDeploymentApproved": false,
-    "reason": "Stage 4 deployment preparation is in progress. Mainnet broadcasting remains fail-closed until independent review, remediation and focused re-review, signed deployment inputs, operational rehearsal, and explicit final approval immediately before broadcast."
+    "reason": "Stage 4 deployment preparation is in progress. On 2026-07-29 the owner explicitly waived independent third-party review for the capped three-launch canary and authorized non-broadcast finalization only. Mainnet broadcasting remains fail-closed until fresh network and fork checks, unsigned deployment inputs, operational rehearsal, and separate explicit final approval immediately before broadcast."
   },
   "implementationStatus": {
     "stage1": "complete",

@@ -33,6 +33,17 @@
     "allFindingsRemediated": false,
     "focusedReReviewComplete": false
   },
+  "ownerRiskAcceptance": {
+    "independentThirdPartyReviewWaived": true,
+    "scope": "capped_three_launch_mainnet_canary",
+    "acceptedAt": "2026-07-29",
+    "evidence": "docs/stage-4-owner-risk-acceptance.md",
+    "evidenceSha256": "2813f21306fde2d4e274bbf892f52ac9a529ed857b8ab64fef7feb06be2bdec5",
+    "nonBroadcastFinalizationAuthorized": true,
+    "mainnetDeploymentAuthorized": false,
+    "factoryResumeAuthorized": false,
+    "firstCanaryLaunchAuthorized": false
+  },
   "signing": {
     "method": "rabby_browser_wallet",
     "wallet": "Rabby",

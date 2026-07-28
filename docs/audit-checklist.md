@@ -11,7 +11,9 @@ of stale unchecked boxes trains you to skim it.
   these, no matter how many of our own tests pass.
 - **Section 3** is open work, blocked work, and operational rehearsals.
 
-Unchecked items in sections 2 and 3 block deployment.
+Unchecked items in sections 2 and 3 block deployment unless an item has a
+specific, written owner exception. The 2026-07-29 exception applies only to
+section 2 for this capped three-launch canary; section 3 remains blocking.
 
 ## 1. Verified by us, with evidence
 
@@ -74,6 +76,11 @@ Our tests cover every item below, and that is not the same as review. These stay
 unchecked until a real external review reports on them. See
 `docs/independent-review-package.md`.
 
+Owner exception: independent third-party review was not completed. The owner
+accepted that residual risk for the capped three-launch canary only on
+2026-07-29. These boxes intentionally remain unchecked:
+`docs/stage-4-owner-risk-acceptance.md`.
+
 - [ ] Independent line-by-line review of all contracts, interfaces, mocks, and
   deployment scripts.
 - [ ] No proxy, owner backdoor, arbitrary call, rescue, hidden mint, transfer tax,
@@ -126,7 +133,8 @@ unchecked until a real external review reports on them. See
 
 ## Final canary gate
 
-1. One external review is completed against the exact tagged commit.
+1. One external review is completed against the exact tagged commit, or the
+   recorded capped-canary owner exception applies to the unchanged digest.
 2. Every critical and high finding is fixed and re-reviewed; accepted lower
    findings are public.
 3. Source verification and gas funding are rehearsed.
