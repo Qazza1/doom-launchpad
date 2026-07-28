@@ -1,5 +1,9 @@
 # Stage 3.4 validation
 
+> Historical Stage 3.4 delivery evidence. Contract counts and sizes below refer
+> to the superseded Stage 3.1 contract candidate; current contract evidence is
+> tracked in `docs/independent-review-package.md`.
+
 Validation date: 2026-07-25. No wallet key was loaded and no transaction was
 signed or broadcast.
 

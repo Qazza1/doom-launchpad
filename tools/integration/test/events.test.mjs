@@ -9,10 +9,20 @@ const integration = JSON.parse(
   ),
 );
 
-/// Canonical signature: name plus argument types only. That is what determines topic0, and it is
-/// what an indexer actually matches on, so comparing it ignores harmless naming differences.
+const REQUIRED_CONTRACTS = [
+  "DoomLaunchFactory",
+  "DoomRewards",
+  "GmEscrow",
+  "PositionLocker",
+  "V3LiquidityManager",
+];
+
+/// Names are harmless, but `indexed` placement is not: it controls whether a value is decoded from
+/// a topic or the data body. Compare both the topic signature and indexed layout.
 function canonicalFromAbi(entry) {
-  const types = (entry.inputs || []).map(input => input.type).join(",");
+  const types = (entry.inputs || [])
+    .map(input => `${input.type}${input.indexed ? " indexed" : ""}`)
+    .join(",");
   return `${entry.name}(${types})`;
 }
 
@@ -21,7 +31,10 @@ function canonicalFromDeclaration(declaration) {
   if (!match) throw new Error(`malformed event declaration: ${declaration}`);
   const args = match[2].trim();
   if (!args) return `${match[1]}()`;
-  const types = args.split(",").map(part => part.trim().split(/\s+/)[0]).join(",");
+  const types = args.split(",").map(part => {
+    const fields = part.trim().split(/\s+/);
+    return `${fields[0]}${fields.includes("indexed") ? " indexed" : ""}`;
+  }).join(",");
   return `${match[1]}(${types})`;
 }
 
@@ -31,6 +44,21 @@ async function abiEvents(contract) {
   );
   return artifact.abi.filter(entry => entry.type === "event").map(canonicalFromAbi);
 }
+
+test("the integration guard covers every launchpad event source", () => {
+  assert.deepEqual(Object.keys(integration.contracts).sort(), REQUIRED_CONTRACTS);
+});
+
+test("indexed event fields are part of the guarded layout", () => {
+  assert.equal(
+    canonicalFromDeclaration("event Example(uint256 indexed launchId,address creator)"),
+    "Example(uint256 indexed,address)",
+  );
+  assert.notEqual(
+    canonicalFromDeclaration("event Example(uint256 indexed launchId,address creator)"),
+    canonicalFromDeclaration("event Example(uint256 launchId,address indexed creator)"),
+  );
+});
 
 test("every event the contracts emit is declared for the indexer", async () => {
   // An event the contracts emit but the integration file omits is invisible to the indexer, and
@@ -60,6 +88,13 @@ test("the integration file declares nothing the contracts do not emit", async ()
     }
   }
   assert.deepEqual(stale, [], "these declarations no longer match any contract event");
+});
+
+test("event declarations are unique inside each contract", () => {
+  for (const [contract, declarations] of Object.entries(integration.contracts)) {
+    const canonical = declarations.map(canonicalFromDeclaration);
+    assert.equal(new Set(canonical).size, canonical.length, `${contract} contains duplicate declarations`);
+  }
 });
 
 test("the staggered release event carries what a launch page needs", () => {

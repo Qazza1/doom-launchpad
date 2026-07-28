@@ -35,8 +35,8 @@ are skipped by the normal gate and last passed against live mainnet state on
 | Adversarial GM sequencing | randomized boundary handler + accounting invariants |
 | Escrow conservation across the whole schedule | held + released + forfeited invariant, 128 runs × 64 calls |
 | Canonical Robinhood dependencies | two opt-in read-only mainnet-fork tests |
-| Every emitted event is declared to the indexer | integration event-contract test, both directions |
-| Death Watch phases, urgency, and broadcast diffing | `tools/deathwatch/test/feed.test.mjs` |
+| Every emitted event is declared to the indexer with the same indexed layout | integration event-contract test, exact source set and both directions |
+| Death Watch phases, chain-time snapshots, urgency, broadcast diffing, and delivery checkpoints | `tools/deathwatch/test/feed.test.mjs` and `watch.test.mjs` |
 | Deployed bytecode and state through two providers | `tools/deployment/test/verify-deployment.test.mjs` |
 | Canary launch invariants | `tools/canary/test/observe.test.mjs` |
 

@@ -1,10 +1,10 @@
 # Threat model and trust boundaries
 
-Assessment status: Stage 3.1 audit candidate, not production-ready.
+Assessment status: digest-frozen Stage 4 review candidate, not production-ready.
 
 ## Assets
 
-- Fixed token supply and 10 / 40 / 50 allocation integrity.
+- Fixed token supply and 0 / 40 / 60 allocation integrity.
 - Creator GM escrow and its terminal outcome.
 - Creator-provided native liquidity and permanent V3 position.
 - Accrued LP fees and deterministic recipient splits.
@@ -59,8 +59,8 @@ liquidity, change LP-fee percentages, rescue arbitrary assets, or upgrade code.
 6. Every registered position remains owned by the permanent locker.
 7. Only the bound manager can register positions.
 8. LP fee collection cannot decrease liquidity or transfer the position.
-9. Eligible WETH fees reconcile to 60 / 20 / 20; ineligible fees reconcile to
-   0 / 20 / 80; launch-token fees reconcile 100% to rewards.
+9. Eligible WETH fees reconcile to 70 / 15 / 15; ineligible fees reconcile to
+   0 / 15 / 85; launch-token fees reconcile 100% to rewards.
 10. Claimed plus remaining campaign allocation never exceeds its reservation.
 11. A campaign claim cannot be replayed for another chain, vault, campaign, or
     account.

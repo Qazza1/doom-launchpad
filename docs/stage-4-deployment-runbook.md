@@ -4,12 +4,17 @@ No step in this document currently authorizes a broadcast.
 
 ## Gate A — freeze and review
 
-1. Give the independent reviewer the exact `stage-3.1-audit-candidate` tag and
-   its checksum manifest.
+1. Give the independent reviewer commit `733895f6b07b4f68d58841b8e0840274e22a8276`,
+   contract digest `8e36941ed01081d0272caf3066f432b23c8eb68db6323f68fa21dd1cce6dee1b`,
+   and `docs/independent-review-package.md`. The old
+   `stage-3.1-audit-candidate` tag is superseded and must not be reviewed as the
+   deployment candidate.
 2. Record reviewer identity, report URI, report SHA-256, and reviewed commit.
 3. Remediate every accepted finding on a new branch.
 4. Obtain focused re-review of every contract change.
-5. Create a new reviewed tag if any contract byte changes.
+5. Create an annotated reviewed tag only after the current digest has completed
+   independent review. If any contract source changes, deliberately re-freeze
+   the digest and obtain focused re-review before tagging.
 
 ## Gate B — operator preparation
 

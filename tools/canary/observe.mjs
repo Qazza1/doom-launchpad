@@ -66,8 +66,8 @@ export function evaluateLaunch({ record, economics, limits, escrow, balances, po
   };
   const supply = record.totalSupply;
 
-  // Allocation: 10% creator, 40% permanent liquidity, 50% GM escrow, summing to the whole supply.
-  // Percentages come from the frozen decisions file, so the messages cannot drift from the contract.
+  // Allocation percentages come from the frozen decisions file, so the observer cannot drift from
+  // the contract when the economics change.
   const pct = bps => `${Number(bps) / 100}%`;
   const expectedCreator = (supply * BigInt(economics.creatorLiquidBps)) / BPS;
   const expectedLiquidity = (supply * BigInt(economics.liquidityBps)) / BPS;
@@ -104,7 +104,7 @@ export function evaluateLaunch({ record, economics, limits, escrow, balances, po
   check(record.positionId > 0n, "no LP position id was recorded");
   check(!/^0x0{40}$/i.test(record.pool), "no pool address was recorded");
 
-  // Creation fee: 3% of the native liquidity actually used, split 50/50.
+  // Creation fee percentage and recipient split come from the frozen decisions file.
   const expectedFee = (record.nativeLiquidityAmountUsed * BigInt(economics.creationFeeBps)) / BPS;
   check(
     record.creationFee === expectedFee,

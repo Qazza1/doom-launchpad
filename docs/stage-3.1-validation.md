@@ -1,5 +1,9 @@
 # Stage 3.1 validation
 
+> Historical validation record for the superseded `stage-3.1-audit-candidate`
+> tag. The current 0 / 40 / 60 digest-frozen review candidate and its evidence
+> are described in `docs/independent-review-package.md` and `docs/roadmap.md`.
+
 Validated locally on 2026-07-24. No contracts were deployed and no real funds
 were used.
 

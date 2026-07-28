@@ -23,8 +23,8 @@ PositionLocker
   └─ permissionlessly collects and routes fees at immutable percentages
 
 GmEscrow
-  ├─ releases committed tokens to the creator after three valid GMs
-  └─ deposits them in DoomRewards after a permissionless default
+  ├─ releases one committed share to the creator after each valid GM
+  └─ deposits only the unreleased remainder in DoomRewards after a permissionless default
 
 DoomRewards
   ├─ accounts for failed allocations, creation-fee rewards, LP fees, and dust

@@ -92,6 +92,11 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+      - name: Check out the production indexer event consumer
+        uses: actions/checkout@v5
+        with:
+          repository: Qazza1/OnchainDiligence-indexer
+          path: production-indexer
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: v1.7.1
@@ -117,7 +122,9 @@ jobs:
       - run: bash tools/check-sizes.sh
       # Compares the compiled ABIs against the indexer's event declarations, so it has to run in
       # the job that actually builds. The deployment-preparation job has no out/ directory.
-      - name: Confirm every emitted event is declared to the indexer
+      - name: Confirm contracts, integration artifact, and production indexer agree
+        env:
+          DOOM_PRODUCTION_INDEXER_ABI: production-indexer/doom-launchpad-abis.js
         run: node --test tools/integration/test/*.test.mjs
       - uses: actions/upload-artifact@v6
         if: always()

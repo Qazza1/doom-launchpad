@@ -8,6 +8,7 @@ import {
   deriveEntry,
   feedEvents,
   formatCountdown,
+  formatTokenAmount,
   phaseOf,
   toAlert,
   urgencyOf,
@@ -43,6 +44,13 @@ test("countdowns read the way a person scans them", () => {
   assert.equal(formatCountdown(-500), "0s");
 });
 
+test("token amounts are human-readable without losing the raw value", () => {
+  assert.equal(formatTokenAmount(600_000_000n * 10n ** 18n), "600000000");
+  assert.equal(formatTokenAmount(1_234_500_000_000_000_000n), "1.2345");
+  assert.equal(formatTokenAmount(42n, 0), "42");
+  assert.throws(() => formatTokenAmount(1n, -1), /invalid token decimals/);
+});
+
 test("the phase distinguishes waiting, open, and past saving", () => {
   assert.equal(phaseOf(escrow(), NOW), PHASE.waiting);
   assert.equal(phaseOf(escrow({ nextCheckInAt: NOW - 1 }), NOW), PHASE.open);
@@ -65,6 +73,7 @@ test("at stake is what a missed deadline actually costs, not the whole commitmen
   });
   // Two thirds still riding on it; the honoured check-in is already the creator's.
   assert.equal(entry.atStake, "400000000");
+  assert.equal(entry.atStakeFormatted, "0.0000000004");
   assert.equal(entry.released, "200000000");
   assert.equal(entry.committed, "600000000");
   assert.equal(entry.checkInsDone, 1);
@@ -205,6 +214,7 @@ test("events render into the alert shape the Telegram sender already accepts", (
   assert.ok(alert.title.includes("DOOM1"));
   assert.ok(alert.summary.includes("Final hour"));
   assert.ok(alert.details.some(detail => detail.startsWith("At stake")));
+  assert.ok(alert.summary.includes("DoomRewards"));
   assert.ok(alert.id.startsWith("deathwatch:final_hour:1:"));
 
   // Distinct ids per check-in stop the keeper's de-duplication from swallowing later days.

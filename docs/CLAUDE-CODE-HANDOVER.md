@@ -267,7 +267,9 @@ anything differs. The deployed factory must remain paused.
 - The earlier review's implementable security remediations were incorporated.
 - Unit, fuzz, invariant, reentrancy, permission, accounting, deadline,
   Merkle-claim, and locker postcondition coverage exists.
-- The tagged `stage-3.1-audit-candidate` is the review baseline.
+- The tagged `stage-3.1-audit-candidate` is historical and superseded.
+- The current review baseline is commit `733895f6b07b4f68d58841b8e0840274e22a8276`
+  with the contract digest recorded in `config/review-artifact.json`.
 - Independent external review remains a mainnet gate.
 
 ### Stage 3.2 — rewards operations
@@ -380,8 +382,9 @@ the predicted CREATE addresses.
   total.
 - Both fork tests passed against live Robinhood Chain state on 2026-07-28 with
   the reworked economics.
-- 69 Node deployment-tool tests passed.
-- 12 Death Watch tests, 11 canary-observer tests, 6 review-artifact tests.
+- 65 Node deployment-tool tests passed.
+- 17 Death Watch tests, 8 indexer-event contract tests, 11 canary-observer
+  tests, 6 review-artifact tests.
 - 8 rewards-tool tests, 13 keeper-tool tests.
 - Contract runtime-size checks passed:
   - `DoomLaunchFactory`: 21,035 bytes; internal limit 23,500

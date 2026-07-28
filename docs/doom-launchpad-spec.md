@@ -1,6 +1,6 @@
 # Doom Launchpad canary specification
 
-**Status:** Stage 3.1 audit-candidate rebuild; not deployed; not production-ready.
+**Status:** Digest-frozen Stage 4 review candidate; not deployed; not production-ready.
 **Chain:** Robinhood Chain mainnet, chain ID 4663.
 **Scope:** contracts and additive integration artifacts under `doom-launchpad/`.
 
@@ -8,9 +8,9 @@
 
 Doom Launchpad creates ownerless fixed-supply ERC-20 tokens with creator-funded
 Uniswap V3 liquidity. The liquidity position is held permanently by an ownerless
-locker. The creator commits 50% of supply to three scheduled GM check-ins. A
-missed commitment sends the escrowed allocation into an isolated NFT-holder
-reward vault.
+locker. The creator receives nothing at launch and earns a 60% allocation over
+three scheduled GM check-ins. A missed commitment sends only the unreleased
+remainder into an isolated NFT-holder reward vault.
 
 The commitment and lock are risk signals, not buyer protection, insurance, a
 promise of liquidity value, or a guarantee against creator selling. Permanent
@@ -32,9 +32,9 @@ or existing reward claims.
 
 | Parameter | Value |
 | --- | --- |
-| Creator liquid allocation | 10% |
+| Creator liquid allocation | 0% |
 | Permanent-liquidity allocation | 40% |
-| GM escrow allocation | 50% |
+| GM escrow allocation | 60% |
 | GM check-ins | 3 |
 | GM cadence | 24 hours |
 | GM grace period | 12 hours |
@@ -44,9 +44,9 @@ or existing reward claims.
 | Creation fee | 1% of native liquidity actually used |
 | Creation-fee treasury share | 50% |
 | Creation-fee NFT-reward share | 50% |
-| Eligible creator WETH LP-fee share | 60% |
-| Treasury WETH LP-fee share | 20% |
-| NFT-reward WETH LP-fee share | 20% normally; 80% after creator default eligibility |
+| Eligible creator WETH LP-fee share | 70% |
+| Treasury WETH LP-fee share | 15% |
+| NFT-reward WETH LP-fee share | 15% normally; 85% after creator default eligibility |
 | Launch-token LP fees | 100% DoomRewards |
 | Supply bounds | 1 million to 1 quadrillion whole tokens |
 | Native liquidity | exactly 0.01 ETH |
@@ -64,7 +64,7 @@ blacklist, post-launch minting, owner, or pause function.
 2. The paused factory, creator gate, launch caps, supply bounds, payment, and
    canonical dependency configuration are checked.
 3. The factory deploys one fixed-supply `DoomToken` and one `GmEscrow`.
-4. It transfers 10% to the creator and 50% into the escrow.
+4. It transfers 60% into the escrow; the creator receives no tokens at launch.
 5. It approves 40% to the one-time-bound V3 liquidity manager.
 6. The manager derives the canonical token order, creates/initializes the 1%
    pool, and mints a full-range position using at least 99.9999% of both assets.

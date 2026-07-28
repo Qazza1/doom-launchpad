@@ -54,7 +54,7 @@ every poll is one people mute.
 - `checked_in` — a day survived and a share released
 - `deadline_missed` — the window closed unsaved
 - `survived` — the full streak honoured
-- `defaulted` — finalised, escrow gone to NFT holders
+- `defaulted` — finalised, unreleased escrow moved to DoomRewards for future campaigns
 
 Backfill is handled: a launch first seen already `survived` or `dead` announces
 nothing, so pointing the watcher at existing history does not spam the channel
@@ -71,9 +71,18 @@ $env:ROBINHOOD_RPC_URL = "https://rpc.mainnet.chain.robinhood.com"
 node .\tools\deathwatch\watch.mjs --factory <factory address>
 ```
 
-Prints the feed and any new events, writes a snapshot to the Git-ignored
-`tools/deathwatch/output/feed.json`, and records state in
-`tools/deathwatch/state/feed.json` so the next poll can diff against it.
+Prints the feed and any new events and atomically writes a snapshot to the
+Git-ignored `tools/deathwatch/output/feed.json`. Every read is pinned to one
+explicit block and deadlines are evaluated against that block's chain timestamp,
+not the computer clock.
+
+Dry-run history is stored separately from the Telegram delivery checkpoint. A
+dry run therefore cannot consume alerts that a later `--broadcast` run still
+needs to send. Broadcast state advances only after successful delivery; partial
+delivery records individual event IDs so unsent alerts remain retryable. The
+delivery guarantee is at least once: a crash after Telegram accepts a message
+but before the local ID checkpoint can duplicate that one message, but a failed
+send cannot silently lose it.
 
 Add `--broadcast` with `DEATHWATCH_TELEGRAM_BOT_TOKEN` and
 `DEATHWATCH_TELEGRAM_CHAT_ID` set to publish. Without the flag it never sends,

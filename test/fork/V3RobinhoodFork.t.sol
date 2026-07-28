@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {DoomLaunchFactory} from "../../src/DoomLaunchFactory.sol";
@@ -57,18 +58,26 @@ contract V3RobinhoodForkTest is Test {
         });
         vm.deal(creator, 1 ether);
         vm.prank(creator);
-        (uint256 launchId, address token, address pool, uint256 positionId,) =
-            launchFactory.launch{value: 0.0103 ether}(params);
+        uint256 creatorBalanceBefore = creator.balance;
+        (uint256 launchId, address token, address pool, uint256 positionId, address escrow) =
+            launchFactory.launch{value: 0.0101 ether}(params);
 
         DoomLaunchFactory.LaunchRecord memory record = launchFactory.getLaunch(launchId);
         assertEq(pool, IUniswapV3Factory(V3_FACTORY).getPool(token, WETH, 10_000));
         assertEq(IERC721(NPM).ownerOf(positionId), address(locker));
         assertTrue(locker.isPermanentlyLocked(positionId));
         assertTrue(record.liquidityPermanent);
+        assertEq(record.creatorLiquidAmount, 0);
+        assertEq(record.liquidityTokenAmountAllocated, params.totalSupply * 4_000 / 10_000);
+        assertEq(record.escrowTokenAmount, params.totalSupply * 6_000 / 10_000);
+        assertEq(IERC20(token).balanceOf(creator), 0);
+        assertEq(IERC20(token).balanceOf(escrow), record.escrowTokenAmount);
         assertGe(record.liquidityTokenAmountUsed, record.liquidityTokenAmountAllocated * 999_999 / 1_000_000);
         assertGe(record.nativeLiquidityAmountUsed, 0.01 ether * 999_999 / 1_000_000);
         assertEq(address(manager).balance, 0);
         assertEq(record.creationFee, record.nativeLiquidityAmountUsed * 100 / 10_000);
+        assertEq(record.treasuryFee + record.nftRewardFee, record.creationFee);
+        assertEq(creatorBalanceBefore - creator.balance, record.nativeLiquidityAmountUsed + record.creationFee);
         assertGt(rewards.availableRewards(WETH), 0);
 
         (uint256 launchTokenFees, uint256 wethFees, uint256 creatorWeth, uint256 treasuryWeth, uint256 rewardsWeth) =

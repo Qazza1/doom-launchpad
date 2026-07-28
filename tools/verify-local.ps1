@@ -58,13 +58,25 @@ if ($manifest.deploymentSafety.enabled -ne $false -or
     throw "Mainnet canary manifest is not fail-closed. Refusing to continue."
 }
 if ($manifest.creationFee.feeBps -ne 100 -or
+    $manifest.creationFee.treasuryShareBps -ne 5000 -or
+    $manifest.creationFee.nftRewardsShareBps -ne 5000 -or
     $manifest.tokenEconomics.creatorLiquidBps -ne 0 -or
     $manifest.tokenEconomics.liquidityBps -ne 4000 -or
     $manifest.tokenEconomics.gmEscrowBps -ne 6000 -or
+    $manifest.gmCommitment.requiredCheckIns -ne 3 -or
+    $manifest.gmCommitment.cadenceSeconds -ne 86400 -or
+    $manifest.gmCommitment.gracePeriodSeconds -ne 43200 -or
     $manifest.liquidity.eligibleWethFeeSplitBps.creator -ne 7000 -or
+    $manifest.liquidity.eligibleWethFeeSplitBps.treasury -ne 1500 -or
+    $manifest.liquidity.eligibleWethFeeSplitBps.doomRewards -ne 1500 -or
+    $manifest.liquidity.ineligibleWethFeeSplitBps.creator -ne 0 -or
+    $manifest.liquidity.ineligibleWethFeeSplitBps.treasury -ne 1500 -or
+    $manifest.liquidity.ineligibleWethFeeSplitBps.doomRewards -ne 8500 -or
     $manifest.liquidity.poolFee -ne 10000 -or
     $manifest.liquidity.releaseSupported -ne $false -or
-    $manifest.pilotLimits.maxNativeLiquidityPerLaunchWei -ne "10000000000000000") {
+    $manifest.pilotLimits.maxLaunches -ne 3 -or
+    $manifest.pilotLimits.maxNativeLiquidityPerLaunchWei -ne "10000000000000000" -or
+    $manifest.pilotLimits.maxNativeLiquidityGlobalWei -ne "30000000000000000") {
     throw "Economics in the manifest do not match the frozen canary."
 }
 

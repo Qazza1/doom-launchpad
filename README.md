@@ -7,15 +7,15 @@ authorizes a deployment.
 ## Canary design
 
 - Ownerless, fixed-supply ERC-20 with no transfer tax or post-launch controls.
-- Supply split: 10% creator, 40% permanent Uniswap V3 liquidity, 50% GM escrow.
+- Supply split: 0% creator at launch, 40% permanent Uniswap V3 liquidity, 60% GM escrow.
 - Three daily GM check-ins with a 12-hour grace period.
-- A missed commitment sends the escrowed allocation to `DoomRewards`.
+- Each successful check-in releases one share; a miss sends only the unreleased remainder to `DoomRewards`.
 - Exactly 0.01 ETH liquidity, at most three launches, from one approved EOA.
-- 3% creation fee, split equally between treasury and NFT-holder rewards.
+- 1% creation fee, split equally between treasury and NFT-holder rewards.
 - 1% full-range V3 position held permanently by an ownerless locker.
 - Permissionless fee collection:
-  - eligible creator: WETH 60% creator / 20% treasury / 20% rewards;
-  - defaulted or overdue creator: WETH 0% / 20% / 80%;
+  - eligible creator: WETH 70% creator / 15% treasury / 15% rewards;
+  - defaulted or overdue creator: WETH 0% / 15% / 85%;
   - launch-token fees: 100% rewards.
 - Factory starts paused. The guardian can pause but only the operator can resume.
 
@@ -26,9 +26,10 @@ The authoritative product rules and delivery gates are in
 ## Version-control boundary
 
 The pre-redesign Stage 3 implementation is preserved at commit `3f777fc` and
-annotated tag `stage-3-baseline`. The contract audit candidate is preserved at
-tag `stage-3.1-audit-candidate`. Rewards operations are developed on the
-`stage3.2-rewards-ops` branch.
+annotated tag `stage-3-baseline`. The old `stage-3.1-audit-candidate` tag is
+historical and has been superseded. The current contract candidate is frozen by
+the digest and commit in `config/review-artifact.json`; it does not yet have an
+audit-complete tag.
 
 ## Local verification
 

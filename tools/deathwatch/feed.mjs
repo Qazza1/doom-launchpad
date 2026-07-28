@@ -19,6 +19,19 @@ export const CRITICAL_SECONDS = 3600;
 const asNumber = value => Number(value ?? 0);
 const asBigInt = value => BigInt(value ?? 0);
 
+export function formatTokenAmount(value, decimals = 18) {
+  const amount = asBigInt(value);
+  const places = Number(decimals);
+  if (!Number.isInteger(places) || places < 0 || places > 255) {
+    throw new Error(`invalid token decimals: ${decimals}`);
+  }
+  if (places === 0) return amount.toString();
+  const scale = 10n ** BigInt(places);
+  const whole = amount / scale;
+  const fraction = (amount % scale).toString().padStart(places, "0").replace(/0+$/, "");
+  return fraction ? `${whole}.${fraction}` : whole.toString();
+}
+
 /// Human countdown. Deliberately coarse: a feed reading "2h 14m" is easier to scan than "2:14:07",
 /// and seconds only matter once almost nothing is left.
 export function formatCountdown(seconds) {
@@ -84,8 +97,12 @@ export function deriveEntry({ launch, escrow, now }) {
     phase,
     // What dies if this deadline is missed. Honoured check-ins are already the creator's.
     atStake: (committed - released).toString(),
+    atStakeFormatted: formatTokenAmount(committed - released),
     released: released.toString(),
+    releasedFormatted: formatTokenAmount(released),
     committed: committed.toString(),
+    committedFormatted: formatTokenAmount(committed),
+    tokenDecimals: 18,
     checkInsDone: asNumber(escrow.completedCheckIns),
     checkInsRequired: asNumber(escrow.requiredCheckIns),
     nextCheckInAt: due,
@@ -162,7 +179,7 @@ export function toAlert(event) {
     },
     final_hour: {
       title: `${who} has ${entry.countdown} left`,
-      summary: `Final hour of the window. Miss it and the escrow goes to NFT holders.`,
+      summary: `Final hour of the window. Miss it and the unreleased escrow goes to DoomRewards.`,
     },
     checked_in: {
       title: `${who} survived day ${entry.checkInsDone}`,
@@ -178,7 +195,7 @@ export function toAlert(event) {
     },
     defaulted: {
       title: `${who} is dead`,
-      summary: `The commitment defaulted. The unreleased escrow went to DoomStreak NFT holders.`,
+      summary: `The commitment defaulted. The unreleased escrow moved to DoomRewards for future campaigns.`,
     },
   };
 
@@ -193,7 +210,7 @@ export function toAlert(event) {
     details: [
       `Token ${entry.token}`,
       `Creator ${entry.creator}`,
-      `At stake ${entry.atStake}`,
+      `At stake ${entry.atStakeFormatted} ${entry.symbol || "tokens"}`,
     ],
   };
 }

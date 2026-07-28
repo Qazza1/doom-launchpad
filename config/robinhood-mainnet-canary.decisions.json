@@ -16,11 +16,11 @@
     "stage1": "complete",
     "stage2": "implemented_and_locally_tested",
     "stage3": "preserved_at_git_tag_stage-3-baseline",
-    "stage3_1": "complete_and_tagged_stage-3.1-audit-candidate",
+    "stage3_1": "historical_candidate_superseded_by_digest_frozen_0_40_60_candidate",
     "stage3_2": "complete_and_tagged_stage-3.2-rewards-ops",
     "stage3_3": "complete_and_tagged_stage-3.3-keeper-monitoring",
     "stage3_4": "complete_and_tagged_stage-3.4-indexer-public-ui",
-    "stage4": "deployment_preparation_in_progress",
+    "stage4": "digest_frozen_candidate_at_733895f_pending_independent_review_and_reverification",
     "productionReady": false
   },
   "roles": {
