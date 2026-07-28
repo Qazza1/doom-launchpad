@@ -25,7 +25,7 @@ if ($null -ne $forgeCommand) {
     throw "Foundry forge was not found. Restore the workspace-local Foundry v1.7.1 binaries."
 }
 
-$primarySecure = Read-Host "Alchemy Robinhood Mainnet HTTPS URL" -AsSecureString
+$primarySecure = Read-Host "Primary Robinhood Mainnet HTTPS RPC URL" -AsSecureString
 $primary = ConvertFrom-Secret $primarySecure
 
 try {
@@ -38,10 +38,18 @@ try {
     }
 
     $env:ROBINHOOD_RPC_URL = $primary
+    $env:RUN_ROBINHOOD_FORK_TESTS = "true"
     $env:ROBINHOOD_REHEARSAL_ACK = "true"
 
     Push-Location $projectRoot
     try {
+        & $forgePath test `
+            --match-path "test/fork/*.t.sol" `
+            -vv
+        if ($LASTEXITCODE -ne 0) {
+            throw "The opt-in Robinhood mainnet fork tests failed."
+        }
+
         & $forgePath script `
             "script/DeployRobinhoodCanaryRehearsal.s.sol:DeployRobinhoodCanaryRehearsal" `
             --rpc-url robinhood_mainnet `
@@ -54,12 +62,13 @@ try {
     }
 } finally {
     Remove-Item Env:ROBINHOOD_RPC_URL -ErrorAction SilentlyContinue
+    Remove-Item Env:RUN_ROBINHOOD_FORK_TESTS -ErrorAction SilentlyContinue
     Remove-Item Env:ROBINHOOD_REHEARSAL_ACK -ErrorAction SilentlyContinue
     $primary = $null
     $primarySecure.Dispose()
 }
 
 Write-Host ""
-Write-Host "Non-broadcast Robinhood mainnet fork rehearsal passed."
+Write-Host "Both Robinhood mainnet fork tests and the non-broadcast deployment rehearsal passed."
 Write-Host "No signer or private key was loaded."
 Write-Host "No transaction was signed, stored, or broadcast."

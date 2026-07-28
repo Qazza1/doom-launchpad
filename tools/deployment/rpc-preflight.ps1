@@ -11,8 +11,8 @@ function Read-SecretText {
     }
 }
 
-$primary = Read-SecretText "Paste the Alchemy Robinhood Mainnet HTTPS RPC URL"
-$fallback = Read-SecretText "Paste the QuickNode Robinhood Mainnet HTTPS RPC URL"
+$primary = Read-SecretText "Paste the primary Robinhood Mainnet HTTPS RPC URL"
+$fallback = Read-SecretText "Paste the fallback Robinhood Mainnet HTTPS RPC URL"
 
 try {
     $env:ROBINHOOD_RPC_URL = $primary

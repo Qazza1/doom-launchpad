@@ -61,12 +61,15 @@ The required balance is `gas x ceiling x 1.25`, rounded up.
 
 ## What it writes
 
-Both files go to the Git-ignored `tools/deployment/output/funding/`:
+All three files go to the Git-ignored `tools/deployment/output/funding/`:
 
 - `funding-worksheet.json` — the observed state, both providers' fee readings,
   the chosen ceiling, predicted addresses, required balance, and the shortfall.
 - `stage4-deployment-manifest.proposal.json` — a copy of the canonical manifest
   with `noncePlan` and `gasPlan` filled in.
+- `transaction-plan.json` — the exact six value-free, unsigned transactions for
+  Rabby review, including nonces, predicted addresses, constructor arguments,
+  calldata, and calldata digests.
 
 **The canonical `config/stage4-deployment-manifest.json` is never modified.** The
 runbook requires populating a copy and leaving the fail-closed template alone, so
@@ -76,9 +79,11 @@ the repository's committed manifest stays empty and CI keeps checking that it is
 
 `validateFundingProposal` rejects a proposal that carries deployment approval,
 owner approval, a broadcast flag, any verification claim, any independent-review
-field, or any deployed transaction. It also requires the six nonces to be
-sequential from the observed pending nonce, and re-derives the funding arithmetic
-rather than trusting what is written.
+field, or any deployed transaction. It also rejects any broadening of the
+recorded owner exception beyond non-broadcast preparation for the capped
+three-launch canary. The validator requires the six nonces to be sequential from
+the observed pending nonce and re-derives the funding arithmetic rather than
+trusting what is written.
 
 A funding worksheet is allowed to know two new things: the current nonce and the
 current gas cost. Nothing else.
@@ -92,7 +97,7 @@ transfer regardless of how recent the worksheet looks.
 
 ## What happens after
 
-Nothing automatic. The owner reads the worksheet and decides whether to fund the
-deployer, and that decision is only appropriate once independent review is
-complete and every other Stage 4 gate has passed. Funding is a transfer the owner
+Nothing automatic. The owner reads the worksheet and separately decides whether
+to fund the deployer after every applicable review requirement has passed or a
+narrow exception has been explicitly recorded. Funding is a transfer the owner
 makes; no tool in this repository moves value.

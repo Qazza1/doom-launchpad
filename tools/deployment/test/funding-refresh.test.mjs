@@ -137,6 +137,38 @@ test("a funding proposal can never carry an approval, verification, or review cl
   assert.ok(
     validateFundingProposal(deployed).some(error => error.includes("must not record deployed transactions")),
   );
+
+  const deploymentAuthorized = proposal();
+  deploymentAuthorized.ownerRiskAcceptance.mainnetDeploymentAuthorized = true;
+  assert.ok(
+    validateFundingProposal(deploymentAuthorized).some(error =>
+      error.includes("cannot authorize mainnet deployment")
+    ),
+  );
+
+  const resumeAuthorized = proposal();
+  resumeAuthorized.ownerRiskAcceptance.factoryResumeAuthorized = true;
+  assert.ok(
+    validateFundingProposal(resumeAuthorized).some(error =>
+      error.includes("cannot authorize factory resume")
+    ),
+  );
+
+  const launchAuthorized = proposal();
+  launchAuthorized.ownerRiskAcceptance.firstCanaryLaunchAuthorized = true;
+  assert.ok(
+    validateFundingProposal(launchAuthorized).some(error =>
+      error.includes("cannot authorize the first canary launch")
+    ),
+  );
+
+  const broadenedScope = proposal();
+  broadenedScope.ownerRiskAcceptance.scope = "all_mainnet_deployments";
+  assert.ok(
+    validateFundingProposal(broadenedScope).some(error =>
+      error.includes("limited to the capped three-launch canary")
+    ),
+  );
 });
 
 test("funding arithmetic that does not reconcile is rejected", () => {

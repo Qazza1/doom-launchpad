@@ -124,6 +124,31 @@ export function validateFundingProposal(manifest, { predictedAddresses } = {}) {
     ),
     "a funding worksheet cannot record an independent review",
   );
+  const riskAcceptance = manifest?.ownerRiskAcceptance || {};
+  require(
+    riskAcceptance.independentThirdPartyReviewWaived === true,
+    "the recorded independent-review waiver must remain present",
+  );
+  require(
+    riskAcceptance.scope === "capped_three_launch_mainnet_canary",
+    "the owner exception must remain limited to the capped three-launch canary",
+  );
+  require(
+    riskAcceptance.nonBroadcastFinalizationAuthorized === true,
+    "the owner exception must authorize only non-broadcast finalization",
+  );
+  require(
+    riskAcceptance.mainnetDeploymentAuthorized === false,
+    "a funding worksheet cannot authorize mainnet deployment",
+  );
+  require(
+    riskAcceptance.factoryResumeAuthorized === false,
+    "a funding worksheet cannot authorize factory resume",
+  );
+  require(
+    riskAcceptance.firstCanaryLaunchAuthorized === false,
+    "a funding worksheet cannot authorize the first canary launch",
+  );
 
   const noncePlan = manifest?.noncePlan || {};
   const startingNonce = noncePlan.startingNonce;
@@ -325,8 +350,9 @@ export async function main() {
       broadcastAuthorized: false,
     },
     warning:
-      "Proposal only. Funding the deployer is an owner decision taken after independent review, and "
-      + "the worksheet must be regenerated if the nonce, block, fees, balance, or commit move.",
+      "Proposal only. Funding the deployer requires a separate owner decision after every applicable "
+      + "review gate or narrowly recorded owner exception, and the worksheet must be regenerated if "
+      + "the nonce, block, fees, balance, or commit move.",
   };
 
   await mkdir(outputRoot, { recursive: true });
@@ -338,6 +364,11 @@ export async function main() {
   await writeFile(
     resolve(outputRoot, "stage4-deployment-manifest.proposal.json"),
     `${JSON.stringify(proposal, null, 2)}\n`,
+    "utf8",
+  );
+  await writeFile(
+    resolve(outputRoot, "transaction-plan.json"),
+    `${JSON.stringify(plan, null, 2)}\n`,
     "utf8",
   );
 
@@ -352,6 +383,7 @@ export async function main() {
     console.log(`  ${name}: ${address}`);
   }
   console.log(`Worksheet: ${resolve(outputRoot, "funding-worksheet.json")}`);
+  console.log(`Unsigned transaction plan: ${resolve(outputRoot, "transaction-plan.json")}`);
   console.log("The canonical manifest was not modified. The proposal is a separate copy.");
   console.log(`Valid for ${WORKSHEET_VALID_SECONDS} seconds; regenerate if anything moves.`);
   console.log("No wallet was funded. Funding and deployment remain owner decisions.");

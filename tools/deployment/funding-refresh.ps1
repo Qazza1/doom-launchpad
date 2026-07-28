@@ -15,8 +15,8 @@ Write-Host "This reads live nonce, fee, and balance state from both providers."
 Write-Host "It writes a funding proposal only. No wallet is funded and nothing is signed."
 Write-Host "Run the localhost preview from the current commit first."
 
-$primary = Read-SecretText "Paste the Alchemy Robinhood Mainnet HTTPS RPC URL"
-$fallback = Read-SecretText "Paste the QuickNode Robinhood Mainnet HTTPS RPC URL"
+$primary = Read-SecretText "Paste the primary Robinhood Mainnet HTTPS RPC URL"
+$fallback = Read-SecretText "Paste the fallback Robinhood Mainnet HTTPS RPC URL"
 
 try {
     $env:ROBINHOOD_RPC_URL = $primary
@@ -32,5 +32,5 @@ try {
     $fallback = $null
 }
 
-Write-Host "Funding worksheet written. URLs were not printed or stored."
+Write-Host "Funding worksheet and unsigned six-transaction plan written. URLs were not printed or stored."
 Write-Host "Funding the deployer remains a separate owner decision."
