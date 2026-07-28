@@ -98,10 +98,23 @@ Token `name()` and `symbol()` are creator-controlled. The decoder rejects an
 absurd declared length, strips control characters, and the Telegram sender escapes
 what remains. Nothing renders them as markup.
 
+## Public web feed
+
+The production analytics service exposes `GET /launchpad/death-watch`. It builds
+the public feed from the reorg-aware launchpad index and evaluates every deadline
+against the timestamp of the last confirmed indexed block. The website displays
+that state in the **Death Watch** tab and refreshes it every 30 seconds.
+
+The browser countdown is display-only. Reaching zero never changes a launch to
+defaulted or default-eligible locally; the UI waits for the next confirmed index
+response. Before deployment, while indexing is disabled, or when confirmed chain
+time is unavailable, the feed shows an explicit fail-closed state.
+
+Creator-controlled token names and symbols are escaped before being inserted into
+the page. Each indexed launch links to the existing shareable `?launch=<id>`
+detail view.
+
 ## Not built yet
 
-- The public web feed. The snapshot JSON is the data contract for it; the page
-  can equally read the chain directly, since everything needed is a public call.
-- Per-launch shareable pages, which belong with the Stage 6 token detail work.
 - The Doom Pool betting layer, which is a prediction market and carries
   regulatory questions the spectator layer does not.

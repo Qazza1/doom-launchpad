@@ -158,13 +158,12 @@ Never describe a permanent position merely as “locked until” a date.
 
 ## Public API additions
 
-- `GET /launchpad/launch/:token`
-- `GET /launchpad/creator/:wallet`
-- `GET /launchpad/commitment/:escrow`
-- `GET /launchpad/position/:positionId`
-- `GET /launchpad/rewards/:token`
-- `GET /launchpad/campaign/:campaignId`
-- `GET /launchpad/feed?cursor=...`
+- `GET /launchpad/health`
+- `GET /launchpad/launches`
+- `GET /launchpad/death-watch`
+- `GET /launchpad/launch/:id`
+- `GET /launchpad/token/:token`
+- `GET /launchpad/creator/:creator`
 
 Safety facts, freshness, and confidence remain public even if advanced analytics
 are later gated for NFT holders.
