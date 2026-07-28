@@ -8,6 +8,7 @@
 !*.env.example
 *.log
 /.tools/
+/.claude/
 /slither-report.json
 /report.md
 node_modules/
