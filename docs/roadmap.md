@@ -235,8 +235,10 @@ Status: planned after the launcher-first release.
 - Preserve one consistent token-detail page with risk, liquidity, volume,
   holders, creator history, launchpad, permanent LP status, score freshness,
   confidence, and a shareable URL.
-- Add useful watchlist alerts such as creator launched again, liquidity fell,
-  commitment defaulted, or risk score changed.
+- [x] Ship browser-local watchlist snapshots and alert history for creator
+  launches, liquidity falls, commitment outcomes, risk changes, and Doom Record
+  changes. This read-only version checks on visits or manual refresh; background
+  and push delivery remain a later milestone.
 - Keep essential launch and risk information public.
 - Introduce NFT-holder access only for clearly labelled advanced analytics,
   exports, deeper wallet graphs, or faster alerts after ownership and reward
