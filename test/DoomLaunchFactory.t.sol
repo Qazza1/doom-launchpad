@@ -289,6 +289,15 @@ contract DoomLaunchFactoryTest is Test {
         factory.launch{value: REQUIRED_VALUE}(p);
     }
 
+    function testFractionalTokenSupplyFailsClearly() external {
+        DoomLaunchFactory.LaunchParams memory p = _params();
+        p.totalSupply += 1;
+
+        vm.prank(creator);
+        vm.expectRevert(abi.encodeWithSelector(DoomLaunchFactory.FractionalSupplyNotAllowed.selector, p.totalSupply));
+        factory.launch{value: REQUIRED_VALUE}(p);
+    }
+
     function testSpoofedLockerTermsFailSafely() external {
         MockPool spoofedPool = new MockPool();
         manager.setRecordedPoolOverride(address(spoofedPool));
@@ -349,7 +358,9 @@ contract DoomLaunchFactoryTest is Test {
     }
 
     function testFuzzFixedAllocationAccounting(uint128 rawSupply) external {
-        uint256 supply = bound(uint256(rawSupply), factory.MIN_TOTAL_SUPPLY(), factory.MAX_TOTAL_SUPPLY());
+        uint256 wholeTokens =
+            bound(uint256(rawSupply), factory.MIN_TOTAL_SUPPLY() / 1 ether, factory.MAX_TOTAL_SUPPLY() / 1 ether);
+        uint256 supply = wholeTokens * 1 ether;
         DoomLaunchFactory.LaunchParams memory p = _params();
         p.totalSupply = supply;
 

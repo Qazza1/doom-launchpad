@@ -7,6 +7,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ICanonicalV3PositionManager} from "./interfaces/ICanonicalV3PositionManager.sol";
 import {ILiquidityManager} from "./interfaces/ILiquidityManager.sol";
 import {IPositionLocker} from "./interfaces/IPositionLocker.sol";
@@ -41,6 +42,7 @@ contract V3LiquidityManager is ILiquidityManager, IERC721Receiver, ReentrancyGua
     error InvalidNativeValue(uint256 expected, uint256 supplied);
     error InvalidLiquidityParams();
     error InvalidPool(address pool);
+    error PoolPriceMismatch(uint160 expectedSqrtPriceX96, uint160 actualSqrtPriceX96);
     error ZeroLiquidity();
     error NativeTransferFailed(address recipient, uint256 amount);
     error ResidualBalance(address asset, uint256 amount);
@@ -168,6 +170,10 @@ contract V3LiquidityManager is ILiquidityManager, IERC721Receiver, ReentrancyGua
             token0, token1, POOL_FEE, params.sqrtPriceX96
         );
         if (pool == address(0) || pool.code.length == 0) revert InvalidPool(pool);
+        (uint160 actualSqrtPriceX96,,,,,,) = IUniswapV3Pool(pool).slot0();
+        if (actualSqrtPriceX96 != params.sqrtPriceX96) {
+            revert PoolPriceMismatch(params.sqrtPriceX96, actualSqrtPriceX96);
+        }
 
         launchToken.forceApprove(address(nonfungiblePositionManager), params.tokenAmount);
         IERC20(address(wrappedNative)).forceApprove(address(nonfungiblePositionManager), params.nativeAmount);

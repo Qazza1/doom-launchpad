@@ -6,6 +6,31 @@ gate, none of the section-2 audit-checklist boxes are ticked by it, and the
 deployment manifest's `independentReview` block remains empty. Treat every
 conclusion below as a claim for the independent reviewer to check.
 
+## Remediation status
+
+The 2026-07-28 remediation is implemented and has passed the full local gate. It
+remains subject to contract-artifact re-freeze, CI, and independent review:
+
+- **M-1 remediated as a diagnostic control:** `V3LiquidityManager` reads
+  `slot0` immediately after pool acquisition and reverts with
+  `PoolPriceMismatch` before approvals or minting when the price is not exact.
+  This makes the griefing attempt explicit; it does not eliminate the underlying
+  permissionless-pool denial of service. Public factory v2 must treat prevention
+  or bounded recovery as an architecture requirement.
+- **M-2 accepted:** staggered release remains intentional. Interfaces must show
+  the unreleased amount currently at risk, not the original 60% allocation.
+- **L-1 fixed:** the canary observer assigns allocation division dust to escrow,
+  exactly as the factory does.
+- **L-2 fixed:** the factory now rejects supplies that are not a multiple of
+  `1 ether`, so the documented bounds are whole-token bounds.
+- **L-3 fixed:** tests require the deployment manifest digest, review-artifact
+  digest, frozen commit, and audit-candidate commit to agree.
+- **L-4 fixed in the production reducer:** raw permissionless deposits remain
+  stored, while derived totals accept only the canonical factory, creator
+  escrow, or position locker appropriate to each event class.
+- **I-5 confirmed:** creator fee eligibility is intentionally inclusive at the
+  exact deadline and becomes ineligible one chain-time second later.
+
 ## Scope and method
 
 - Commit: `781e044` (branch head; `src/` digest matches
@@ -19,7 +44,7 @@ conclusion below as a claim for the independent reviewer to check.
   launch atomicity, and front-running/griefing surfaces.
 - Supporting tooling and integration files reviewed where they consume contract
   state.
-- Full local gate at this commit: 75 contract tests (2 fork tests separately
+- Full local gate at the audit commit: 75 contract tests (2 fork tests separately
   passing against live mainnet state on 2026-07-28), 65 deployment, 17 death
   watch, 11 canary, 8 review, 8 rewards, 13 keeper — all green. Slither 0.11.5
   and Aderyn 0.6.8 are green in CI; they were not re-run locally.
@@ -47,9 +72,13 @@ while the poisoned price stands.
 The utilization minimums do their real job here: the attacker cannot make the
 launch *succeed* at a bad price and extract value; they can only make it fail.
 
-**Recovery without any code change:** the pool has zero liquidity, so a single
-swap with `sqrtPriceLimitX96` set to the expected launch price moves `slot0` to
-exactly that value at negligible cost. Relaunch afterwards.
+**Recovery is not assumed:** an attacker can initialize the pool and may be able
+to add one-sided liquidity. A price-moving swap is therefore not guaranteed to
+be negligible, exact, or safe. On `PoolPriceMismatch`, stop launches, inspect
+`slot0`, active liquidity, initialized ticks, and balances through two RPCs, and
+do not submit a recovery swap unless it has been independently rehearsed with a
+strict maximum loss. If those conditions cannot be proven, abandon the affected
+factory and deploy a reviewed replacement.
 
 **Recommended remediation (contract, requires re-freeze):** after
 `createAndInitializePoolIfNecessary`, read `slot0` and revert with a dedicated
@@ -177,3 +206,12 @@ deposits (expected sources: the factory and the locker).
    latest.
 5. Hand M-1, M-2, and I-5 to the independent reviewer as focus questions in
    `docs/independent-review-package.md`.
+
+Implementation note: actions 1-5 are now implemented except for the artifact
+re-freeze, CI confirmation, and independent focused review. The incident
+runbook intentionally does not promise a recovery swap; it requires evidence
+that any recovery is bounded for the observed hostile pool state.
+
+The remediation gate passed 78 contract tests with 2 live-RPC fork tests skipped,
+plus 65 deployment, 17 Death Watch, 12 canary, 7 review-artifact, 8 event-contract,
+8 rewards, 13 keeper, and 22 production-indexer tests.

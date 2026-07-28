@@ -97,6 +97,27 @@ test("a healthy canary launch passes every invariant", () => {
   assert.deepEqual(evaluateLaunch(healthy()), []);
 });
 
+test("allocation rounding dust belongs to escrow", () => {
+  const observed = healthy();
+  const oddSupply = supply + 1n;
+  const creatorAllocation = (oddSupply * 0n) / 10_000n;
+  const liquidityAllocation = (oddSupply * 4000n) / 10_000n;
+  const escrowAllocation = oddSupply - creatorAllocation - liquidityAllocation;
+
+  observed.record.totalSupply = oddSupply;
+  observed.record.creatorLiquidAmount = creatorAllocation;
+  observed.record.liquidityTokenAmountAllocated = liquidityAllocation;
+  observed.record.liquidityTokenAmountUsed = liquidityAllocation;
+  observed.record.liquidityTokenRemainder = 0n;
+  observed.record.escrowTokenAmount = escrowAllocation;
+  observed.escrow.committedAmount = escrowAllocation;
+  observed.balances.tokenTotalSupply = oddSupply;
+  observed.balances.escrow = escrowAllocation;
+  observed.balances.pool = liquidityAllocation;
+
+  assert.deepEqual(evaluateLaunch(observed), []);
+});
+
 test("the launch record decodes in the contract's field order", () => {
   const words = [
     token.slice(2).padStart(64, "0"),

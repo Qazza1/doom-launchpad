@@ -71,7 +71,9 @@ export function evaluateLaunch({ record, economics, limits, escrow, balances, po
   const pct = bps => `${Number(bps) / 100}%`;
   const expectedCreator = (supply * BigInt(economics.creatorLiquidBps)) / BPS;
   const expectedLiquidity = (supply * BigInt(economics.liquidityBps)) / BPS;
-  const expectedEscrow = (supply * BigInt(economics.gmEscrowBps)) / BPS;
+  // The factory gives all division dust to escrow so the three allocations always reconcile
+  // exactly to total supply.
+  const expectedEscrow = supply - expectedCreator - expectedLiquidity;
   check(
     record.creatorLiquidAmount === expectedCreator,
     `creator allocation is not ${pct(economics.creatorLiquidBps)} of supply`,

@@ -124,6 +124,12 @@ authorized.
   `docs/independent-review-package.md`.
 - [ ] Independent smart-contract audit/review against one tagged commit.
 - [ ] Remediation and focused re-review of every contract change.
+- [x] Remediate the 2026-07-28 first-party findings: exact V3 pool-price
+  assertion, whole-token validation, canary dust accounting, manifest digest
+  cross-check, canonical reward-deposit attribution, and deadline-boundary test.
+- [ ] Re-freeze the remediated contract digest and include the changes in the
+  independent review target.
+- [ ] Obtain green CI for the re-frozen remediation.
 - [x] Production RPC and fallback RPC secret-safe preflight.
 - [x] Dedicated Rabby address/control proof.
 - [x] Exact six-transaction localhost execution preview; Rabby remains

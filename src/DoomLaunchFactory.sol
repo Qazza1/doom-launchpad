@@ -53,6 +53,7 @@ contract DoomLaunchFactory is ReentrancyGuard {
     error InvalidNameLength(uint256 length);
     error InvalidSymbolLength(uint256 length);
     error InvalidSupply();
+    error FractionalSupplyNotAllowed(uint256 supplied);
     error SupplyOutsideCanaryBounds(uint256 minimum, uint256 maximum, uint256 supplied);
     error ZeroAllocationAmount();
     error InitialPriceOutOfRange(uint256 sqrtPriceX96);
@@ -511,6 +512,7 @@ contract DoomLaunchFactory is ReentrancyGuard {
         if (params.totalSupply < MIN_TOTAL_SUPPLY || params.totalSupply > MAX_TOTAL_SUPPLY) {
             revert SupplyOutsideCanaryBounds(MIN_TOTAL_SUPPLY, MAX_TOTAL_SUPPLY, params.totalSupply);
         }
+        if (params.totalSupply % 1 ether != 0) revert FractionalSupplyNotAllowed(params.totalSupply);
         if (params.nativeLiquidityAmount != CANARY_NATIVE_LIQUIDITY) {
             revert InvalidCanaryLiquidity(CANARY_NATIVE_LIQUIDITY, params.nativeLiquidityAmount);
         }

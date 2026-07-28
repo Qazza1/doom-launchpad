@@ -112,3 +112,23 @@ test("HEAD's contract sources match the frozen review artifact", async () => {
     false,
   );
 });
+
+test("the deployment manifest references the exact frozen review artifact", async () => {
+  const [frozen, manifest] = await Promise.all([
+    readFile(new URL("../../../config/review-artifact.json", import.meta.url), "utf8").then(JSON.parse),
+    readFile(new URL("../../../config/stage4-deployment-manifest.json", import.meta.url), "utf8")
+      .then(JSON.parse),
+  ]);
+
+  assert.equal(
+    manifest.source.contractDigest,
+    frozen.contractDigest,
+    "deployment manifest contractDigest drifted from config/review-artifact.json",
+  );
+  assert.equal(
+    manifest.source.auditCandidateCommit,
+    frozen.frozenAtCommit,
+    "deployment manifest audit candidate is not the commit whose artifact was frozen",
+  );
+  assert.equal(manifest.source.auditCandidateTag, frozen.annotatedTag);
+});

@@ -16,7 +16,30 @@ contract MockCanonicalV3Factory {
     }
 }
 
-contract MockCanonicalV3Pool {}
+contract MockCanonicalV3Pool {
+    uint160 public sqrtPriceX96;
+
+    function initialize(uint160 sqrtPriceX96_) external {
+        require(sqrtPriceX96 == 0, "already initialized");
+        sqrtPriceX96 = sqrtPriceX96_;
+    }
+
+    function slot0()
+        external
+        view
+        returns (
+            uint160,
+            int24 tick,
+            uint16 observationIndex,
+            uint16 observationCardinality,
+            uint16 observationCardinalityNext,
+            uint8 feeProtocol,
+            bool unlocked
+        )
+    {
+        return (sqrtPriceX96, 0, 0, 0, 0, 0, true);
+    }
+}
 
 contract MockCanonicalPositionManager is ERC721 {
     using SafeERC20 for IERC20;
@@ -50,6 +73,11 @@ contract MockCanonicalPositionManager is ERC721 {
         usePpm = value;
     }
 
+    function preInitializePool(uint160 sqrtPriceX96) external {
+        MockCanonicalV3Pool(pool).initialize(sqrtPriceX96);
+        initializedPrice = sqrtPriceX96;
+    }
+
     function mintTestPosition(
         address recipient,
         address token0,
@@ -76,7 +104,9 @@ contract MockCanonicalPositionManager is ERC721 {
         external
         returns (address)
     {
-        initializedPrice = sqrtPriceX96;
+        MockCanonicalV3Pool target = MockCanonicalV3Pool(pool);
+        if (target.sqrtPriceX96() == 0) target.initialize(sqrtPriceX96);
+        initializedPrice = target.sqrtPriceX96();
         return pool;
     }
 

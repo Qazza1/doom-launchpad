@@ -141,6 +141,22 @@ within JavaScript's safe-integer range.
 12. Redirect only `remaining` on a default. `CommitmentDefaulted.rewardAmount` is
     the unreleased remainder, not the original commitment; check-ins already
     honoured are never clawed back.
+13. Store every `DoomRewards` deposit event as raw canonical log data, but count
+    it in derived launch totals only when the event's `source` argument matches
+    the canonical launch contract below. The emitting `source_address` is the
+    rewards vault and is not the caller.
+
+| Reward event | Required `source` |
+|---|---|
+| `FailedAllocationDeposited` | that launch's exact `creatorEscrow` |
+| `FeeRewardsDeposited` | that launch's exact factory |
+| `LiquidityRemainderDeposited` | that launch's exact factory |
+| `LpFeeRewardsDeposited` | that launch's exact `positionLocker` |
+
+Derive these identities from the complete canonical event set before applying
+reward totals. Factory fee and liquidity-remainder deposits can appear before
+`LaunchCreated` in log order within the same transaction. Unknown or mismatched
+sources remain visible as ignored raw deposits and must not affect public totals.
 
 ## Status and badge rules
 

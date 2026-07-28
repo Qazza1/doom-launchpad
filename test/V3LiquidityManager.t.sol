@@ -132,6 +132,22 @@ contract V3LiquidityManagerTest is Test {
         boundFactory.provide{value: AMOUNT}(_params());
     }
 
+    function testRejectsPreInitializedPoolAtUnexpectedPriceBeforeMinting() external {
+        uint160 attackerPrice = ONE_TO_ONE_PRICE + 1;
+        npm.preInitializePool(attackerPrice);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(V3LiquidityManager.PoolPriceMismatch.selector, ONE_TO_ONE_PRICE, attackerPrice)
+        );
+        boundFactory.provide{value: AMOUNT}(_params());
+
+        assertEq(npm.nextId(), 1);
+        assertEq(token.balanceOf(address(boundFactory)), AMOUNT);
+        assertEq(token.balanceOf(address(manager)), 0);
+        assertEq(weth.balanceOf(address(manager)), 0);
+        assertEq(address(manager).balance, 0);
+    }
+
     function testOnlyBoundFactoryCanProvideLiquidity() external {
         vm.expectPartialRevert(V3LiquidityManager.UnauthorizedFactory.selector);
         manager.createAndLockLiquidity{value: AMOUNT}(_params());

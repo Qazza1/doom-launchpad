@@ -151,6 +151,18 @@ contract PositionLockerTest is Test {
         assertEq(rewards.availableRewards(address(weth)), 8.5 ether);
     }
 
+    function testActiveCreatorRemainsFeeEligibleAtExactDeadline() external {
+        uint64 deadline = escrow.nextDeadline();
+        vm.warp(deadline);
+        _seedFees(0, 10 ether);
+
+        locker.collectFees(positionId);
+
+        assertEq(weth.balanceOf(creator), 7 ether);
+        assertEq(weth.balanceOf(treasury), 1.5 ether);
+        assertEq(rewards.availableRewards(address(weth)), 1.5 ether);
+    }
+
     function testOverdueActiveEscrowRedirectsCreatorShareBeforeFinalization() external {
         uint64 deadline = escrow.nextDeadline();
         vm.warp(uint256(deadline) + 1);

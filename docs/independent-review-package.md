@@ -79,7 +79,7 @@ forge test -vv
 bash tools/check-sizes.sh
 ```
 
-Expect 75 passing tests and 2 skipped fork tests. The fork tests need a Robinhood
+Expect 78 passing tests and 2 skipped fork tests. The fork tests need a Robinhood
 Chain RPC URL and `RUN_ROBINHOOD_FORK_TESTS=true`; ask the owner for an endpoint
 rather than using one committed anywhere, because none is.
 
@@ -166,6 +166,17 @@ should be treated as claims to check rather than assurances.
    logic sound against replay across chains, vaults, and campaigns?
 8. Does anything in the deployment sequence or constructor validation permit a
    partially wired system to look correctly configured?
+9. Is the post-acquisition `slot0` equality check early and exact enough to make
+   pre-initialized-pool griefing fail before approvals/minting, and do all state
+   changes roll back? What prevention or safely bounded recovery would public
+   factory v2 require?
+10. Does staggered release correctly leave 60%, 40%, then 20% of total supply at
+    risk before successive deadlines, and is default limited to the unreleased
+    remainder?
+11. Is creator fee eligibility intentionally and correctly inclusive at the
+    exact deadline, then redirected one second later?
+12. Does whole-token validation cover every launch entry path without creating
+    overflow or allocation edge cases at the minimum and maximum supply?
 
 ## Deliverables
 

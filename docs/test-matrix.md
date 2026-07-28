@@ -1,6 +1,6 @@
 # Test matrix
 
-Local status: 75 contract tests pass and 0 fail. Both opt-in Robinhood fork tests
+Local status: 78 contract tests pass and 0 fail. Both opt-in Robinhood fork tests
 are skipped by the normal gate and last passed against live mainnet state on
 2026-07-28.
 
@@ -14,7 +14,7 @@ are skipped by the normal gate and last passed against live mainnet state on
 | Release schedule sums to the commitment | schedule bound and total tests |
 | 1% creation fee and 50 / 50 routing | fee quote, accounting, refund, zero-NFT tests |
 | Exact 0.01 ETH and three-launch envelope | canary liquidity and launch-cap tests |
-| Supply bounds | lower/upper boundary and fuzz tests |
+| Whole-token supply and bounds | fractional rejection, lower/upper boundary, and whole-token fuzz tests |
 | EOA-only approved creator | constructor and authorization tests |
 | Factory starts paused; guardian cannot resume | pause permission tests |
 | GM cadence/deadline boundaries | `GmEscrow.t.sol` |
@@ -30,6 +30,7 @@ are skipped by the normal gate and last passed against live mainnet state on
 | Domain-separated Merkle leaves | reward claim and invalid-proof tests |
 | Claims, reservations, recycling | `DoomRewards.t.sol` plus 512-run claim fuzz |
 | V3 utilization and dust handling | manager/factory utilization tests |
+| Pre-initialized V3 pool price mismatch | exact `slot0` assertion, rollback, and pre-mint rejection test |
 | Returned pool/position spoof resistance | factory post-condition tests |
 | Native payout failure and reentrancy | rejecting treasury and malicious-manager tests |
 | Adversarial GM sequencing | randomized boundary handler + accounting invariants |
@@ -39,6 +40,9 @@ are skipped by the normal gate and last passed against live mainnet state on
 | Death Watch phases, chain-time snapshots, urgency, broadcast diffing, and delivery checkpoints | `tools/deathwatch/test/feed.test.mjs` and `watch.test.mjs` |
 | Deployed bytecode and state through two providers | `tools/deployment/test/verify-deployment.test.mjs` |
 | Canary launch invariants | `tools/canary/test/observe.test.mjs` |
+| Canary allocation rounding | escrow-remainder regression for non-divisible wei supply |
+| Inclusive creator-fee deadline | exact-deadline eligibility and one-second-overdue tests |
+| Permissionless rewards event attribution | indexer valid-source, wrong-source, and log-order tests |
 
 Before deployment, CI, pinned Slither/Aderyn, both fork tests, source verification,
 contract-size checks, and independent review must also pass against one tagged

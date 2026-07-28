@@ -28,6 +28,31 @@ status message. Never ask users to transfer assets to an “emergency” address
 - Publish facts and uncertainty; do not describe funds as recovered or protected
   without an onchain reconciliation.
 
+## `PoolPriceMismatch` / pre-initialized V3 pool
+
+`PoolPriceMismatch(expected, actual)` means the canonical token/WETH 1% pool
+already exists at a price different from the factory's exact launch price. The
+launch reverts atomically before minting the LP position; no launch record,
+escrow, fee accrual, or native-liquidity accounting should persist.
+
+1. Do not retry the launch and do not improvise a swap.
+2. Record the factory, predicted token, pool, expected and actual
+   `sqrtPriceX96`, transaction, block, and both RPC responses.
+3. Read `slot0`, active liquidity, initialized ticks, token balances, and pool
+   observations directly. A pool can be initialized before the token exists,
+   and it may also contain one-sided liquidity.
+4. Reconcile that the reverted launch changed no factory counter, cap,
+   allocation, escrow, rewards, or locker state.
+5. A recovery swap is permitted only after a fork rehearsal proves its exact
+   calldata, price limit, maximum input/loss, post-swap price, and relaunch
+   behavior against the observed pool state. Require a second-person review.
+6. If bounded recovery cannot be proven, keep the factory paused and deploy a
+   newly reviewed replacement. Never market the slot0 assertion as prevention;
+   it is precise diagnosis and fail-closed behavior.
+
+For public factory v2, permissionless pool pre-initialization is an architecture
+blocker, not an operator runbook item.
+
 ## Resume gate
 
 Only the operator can resume. Resume requires a written root-cause assessment,
