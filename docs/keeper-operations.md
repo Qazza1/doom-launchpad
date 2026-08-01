@@ -64,8 +64,10 @@ must have one replica and a persistent volume mounted at `/data`.
 
 Required variables are `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`,
 `ROBINHOOD_RPC_URL`, and `ROBINHOOD_FALLBACK_RPC_URL`. Set
-`KEEPER_INTERVAL_SECONDS=60`. Do not add a wallet seed, private key, deployer
-credential, operator key, or guardian key.
+`KEEPER_INTERVAL_SECONDS=60` and `KEEPER_STARTUP_NOTIFY=1`. The startup notice
+is sent once and recorded on the `/data` volume, so ordinary restarts do not
+repeat it. Do not add a wallet seed, private key, deployer credential, operator
+key, or guardian key.
 
 ## Failure handling
 

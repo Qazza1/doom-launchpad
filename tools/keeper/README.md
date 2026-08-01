@@ -45,3 +45,5 @@ npm run daemon --prefix tools/keeper -- \
 Set `KEEPER_INTERVAL_SECONDS=60` and mount the Railway volume at `/data`.
 The repository includes `Dockerfile.keeper`; set Railway's
 `RAILWAY_DOCKERFILE_PATH` variable to that filename.
+Set `KEEPER_STARTUP_NOTIFY=1` for one persistent-volume-deduplicated Telegram
+message proving that the production host can reach the bot.

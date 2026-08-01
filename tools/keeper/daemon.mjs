@@ -1,8 +1,11 @@
 import { spawn } from "node:child_process";
+import { access, mkdir, rename, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initialDaemonHealth, parseIntervalSeconds, recordCheckResult } from "./lib/daemon.mjs";
+import { loadKeeperEnv, requireEnvironment } from "./lib/env.mjs";
+import { sendTelegramAlert } from "./lib/telegram.mjs";
 
 function parseArgs(argv) {
   const result = {};
@@ -30,6 +33,7 @@ let health = initialDaemonHealth(Math.floor(Date.now() / 1000), intervalSeconds)
 let stopping = false;
 let child = null;
 let resolveWait = null;
+const startupMarkerPath = resolve(dirname(statePath), "production-startup-notified.json");
 
 const server = createServer((request, response) => {
   if (request.method !== "GET" || request.url !== "/health") {
@@ -74,8 +78,44 @@ function runCheck() {
   });
 }
 
+async function maybeSendStartupNotice() {
+  if (process.env.KEEPER_STARTUP_NOTIFY !== "1") return;
+  try {
+    await access(startupMarkerPath);
+    return;
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+
+  loadKeeperEnv();
+  const observedAt = Math.floor(Date.now() / 1000);
+  await sendTelegramAlert({
+    token: requireEnvironment("TELEGRAM_BOT_TOKEN"),
+    chatId: requireEnvironment("TELEGRAM_CHAT_ID"),
+    observedAt,
+    alert: {
+      id: "keeper:production-online",
+      severity: "info",
+      title: "DoomStreak production keeper online",
+      summary: "Railway started the read-only Robinhood mainnet monitor.",
+      details: ["Factory remains expected to be paused.", "No signing key is loaded."],
+      action: "No action required. Confirm this one-time delivery and keep the service online.",
+    },
+  });
+  await mkdir(dirname(startupMarkerPath), { recursive: true });
+  const temporaryPath = `${startupMarkerPath}.${process.pid}.tmp`;
+  await writeFile(temporaryPath, `${JSON.stringify({ observed_at: observedAt })}\n`, { flag: "wx" });
+  await rename(temporaryPath, startupMarkerPath);
+  console.log("Sent one-time production keeper startup notification.");
+}
+
 async function loop() {
   while (!stopping) {
+    try {
+      await maybeSendStartupNotice();
+    } catch (error) {
+      console.error(`Production keeper startup notification failed: ${error.message}`);
+    }
     await runCheck();
     if (stopping) break;
     const delayMs = Math.max(0, (health.next_run_at * 1000) - Date.now());
