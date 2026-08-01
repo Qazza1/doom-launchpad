@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DoomStreak — Locked Mainnet Deployment Step</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
+    body { margin: 0; background: #080411; color: #f7efff; }
+    main { width: min(900px, calc(100% - 32px)); margin: 40px auto; }
+    .danger { border: 3px solid #ff2c91; background: #26071d; padding: 22px; border-radius: 18px; }
+    .card { border: 1px solid #4c3863; background: #160827; padding: 20px; border-radius: 16px; margin-top: 18px; }
+    h1 { margin-top: 0; } code, pre { font-family: ui-monospace, Consolas, monospace; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #090410; padding: 14px; border-radius: 10px; }
+    label { display: block; margin: 18px 0 8px; }
+    input { width: 100%; box-sizing: border-box; padding: 14px; background: #090410; color: white; border: 1px solid #71518e; border-radius: 9px; }
+    button { margin-top: 16px; padding: 14px 20px; border: 0; border-radius: 10px; font-weight: 800; background: #ff2c91; color: white; cursor: pointer; }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+    .ok { color: #83ff44; } .error { color: #ff739f; } .muted { color: #bda8cd; }
+  </style>
+</head>
+<body>
+<main>
+  <section class="danger">
+    <h1>ROBINHOOD MAINNET — ONE LOCKED STEP</h1>
+    <p>This is not the preview chain. The page exposes exactly one transaction from the owner-approved plan.</p>
+    <p>Confirm chain <strong>4663</strong>, the dedicated deployer, zero value, nonce, and payload before signing.</p>
+  </section>
+  <section class="card" id="details">Loading locked plan…</section>
+  <section class="card">
+    <label for="confirmation">Type the exact confirmation displayed above:</label>
+    <input id="confirmation" autocomplete="off" spellcheck="false">
+    <button id="submit" disabled>Connect Rabby</button>
+    <p id="status" class="muted">Waiting for the local server.</p>
+  </section>
+</main>
+<script src="/rabby-mainnet.js"></script>
+</body>
+</html>

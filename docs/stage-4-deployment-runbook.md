@@ -59,7 +59,8 @@ before broadcast. At that moment all of these must be true:
 ## Gate E — one transaction at a time
 
 If Gate D is eventually satisfied, submit only the next transaction from
-`docs/stage-4-constructor-worksheet.md`. After every receipt:
+`docs/stage-4-constructor-worksheet.md` through the locked one-step Rabby flow in
+`docs/stage-4-rabby-mainnet-executor.md`. After every receipt:
 
 1. require successful status and the expected sender/nonce;
 2. record transaction hash, block number, gas used, and deployed address;
