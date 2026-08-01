@@ -15,6 +15,7 @@ Nothing here authorizes anything. No stage adds a send path.
 | D | Localhost fork rehearsal of resume and launch, separately | not started — needs a live RPC at run time, best done interactively |
 | E | Wallet comparison harness, no send path | not started — needs a live RPC and a wallet, best done interactively |
 | F | Owner runbook with STOP checkpoints | **done** — `docs/stage-5-owner-runbook.md` |
+| G | Non-broadcast preparation CLI tying A-C together | **done** — `tools/canary/prepare.mjs`, 3 tests |
 
 Update this table in the same commit as the work. A stage is done only when its
 tests pass in `tools/verify-local.ps1`.
