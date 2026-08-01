@@ -1,3 +1,10 @@
+import { setDefaultResultOrder } from "node:dns";
+
+// Telegram's IPv6 route is intermittently reset on some networks even when
+// IPv4 is healthy. Prefer IPv4 while retaining IPv6 as a fallback. This is the
+// programmatic equivalent of Node's --dns-result-order=ipv4first flag.
+setDefaultResultOrder("ipv4first");
+
 const BOT_TOKEN = /^\d+:[A-Za-z0-9_-]{20,}$/;
 const CHAT_ID = /^-?\d+$/;
 
