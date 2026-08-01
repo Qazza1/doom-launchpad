@@ -54,6 +54,24 @@ The local dual-provider verification report SHA-256 was
 `9d512733616009285abc37a04bd0d25200cbdd92ffd6a6879c2b82ac9563f00f`.
 RPC URLs and credentials were neither printed nor committed.
 
+## Production keeper
+
+The separate Railway service `doom-launchpad-keeper` completed its first
+healthy read-only production cycle on 2026-08-01 at `16:51:14Z`, using keeper
+commit `85b3b8b9c81e8813d1235b48a05cccef7c3475e0`:
+
+- collected Robinhood mainnet block `25196211` on chain `4663`;
+- evaluated the deployed factory, locker, rewards vault, roles, dependencies,
+  caps, pause state, and reward accounting;
+- reported zero active alerts;
+- delivered and then resolved the intentionally surfaced RPC-collection alert;
+- persisted Telegram deduplication state on a Railway volume;
+- retained a 60-second monitoring interval;
+- loaded no signing key and exposed no transaction path.
+
+Telegram delivery and primary/fallback RPC operation are therefore proven from
+the production host. This does not authorize resuming the factory.
+
 ## Explorer verification
 
 Blockscout independently reports all four contracts as fully verified, not

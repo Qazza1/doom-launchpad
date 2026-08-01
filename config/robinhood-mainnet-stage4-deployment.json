@@ -118,6 +118,24 @@
       }
     }
   },
+  "operations": {
+    "keeper": {
+      "status": "online_healthy",
+      "verifiedAt": "2026-08-01T16:51:14Z",
+      "sourceCommit": "85b3b8b9c81e8813d1235b48a05cccef7c3475e0",
+      "railwayService": "doom-launchpad-keeper",
+      "readOnly": true,
+      "signingKeyLoaded": false,
+      "intervalSeconds": 60,
+      "persistentAlertState": true,
+      "telegramDeliveryVerified": true,
+      "observedChainId": 4663,
+      "observedBlock": 25196211,
+      "activeAlerts": 0,
+      "priorCollectionFailureResolved": true,
+      "factoryExpectedPaused": true
+    }
+  },
   "authorization": {
     "independentReviewWaiverScope": "capped_three_launch_mainnet_canary",
     "factoryResumeAuthorized": false,
