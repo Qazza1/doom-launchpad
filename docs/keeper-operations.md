@@ -53,11 +53,12 @@ input.
 
 ## Railway worker
 
-Use a separate Railway service sourced from this repository. It must have one
-replica and a persistent volume mounted at `/data`.
+Use a separate Railway service sourced from this repository's `main` branch. It
+must have one replica and a persistent volume mounted at `/data`.
 
-- Build command: `npm ci --prefix tools/keeper`
-- Start command: `npm run daemon --prefix tools/keeper -- --config config/keeper.mainnet.json --state /data/keeper-alerts.json`
+- Dockerfile variable: `RAILWAY_DOCKERFILE_PATH=Dockerfile.keeper`
+- Build command override: leave empty
+- Start command override: leave empty
 - Health path: `/health`
 - Health timeout: `30`
 
