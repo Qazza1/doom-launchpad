@@ -29,3 +29,17 @@ npm run monitor --prefix tools/keeper -- \
 ```
 
 See `docs/keeper-operations.md` for the alert rules and failure boundaries.
+
+## Production daemon
+
+The production runner repeats the same read-only monitor and exposes a
+secret-free `GET /health` endpoint. Its alert state must live on persistent
+storage so restarts do not resend every active alert.
+
+```bash
+npm run daemon --prefix tools/keeper -- \
+  --config config/keeper.mainnet.json \
+  --state /data/keeper-alerts.json
+```
+
+Set `KEEPER_INTERVAL_SECONDS=60` and mount the Railway volume at `/data`.

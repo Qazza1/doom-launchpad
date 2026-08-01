@@ -1,0 +1,43 @@
+{
+  "schema": "doom.keeper-config.v1",
+  "enabled": true,
+  "chainId": 4663,
+  "networkName": "Robinhood Chain Mainnet",
+  "explorerUrl": "https://robinhoodchain.blockscout.com",
+  "rpcUrlEnvironmentVariable": "ROBINHOOD_RPC_URL",
+  "fallbackRpcUrlEnvironmentVariable": "ROBINHOOD_FALLBACK_RPC_URL",
+  "factoryDeploymentBlock": "25105648",
+  "contracts": {
+    "factory": "0xDC0DF0Ba9e519D1E082F8B45307450F418eED9dE",
+    "positionLocker": "0xdaE01c32131fF283f403b4C1fD71018Fa31cfAC0",
+    "doomRewards": "0x615f6E6B0AEA7Ac94F4391424aF601F9290dd9dC",
+    "liquidityManager": "0xbf36be8861ca4fe9920B10fc526E3fD039F88519",
+    "nonfungiblePositionManager": "0x73991a25C818Bf1f1128dEAaB1492D45638DE0D3",
+    "nftCollection": "0xB1b37dca046d0e70D9F5de673202D69c7DEF9be6",
+    "wrappedNative": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73"
+  },
+  "expectedCanaryLimits": {
+    "maxLaunches": "3",
+    "maxNativeLiquidityPerLaunch": "10000000000000000",
+    "maxNativeLiquidityGlobal": "30000000000000000"
+  },
+  "expectedRoles": {
+    "operator": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "emergencyGuardian": "0x3EeF0a7Ee9420a1035a4541582B384bc4405A439",
+    "approvedCreator": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "treasury": "0x9038C3AB7caE02a8aae730E705fdF7a15945eb7E",
+    "campaignManager": "0x4F81E3939232815e3C98B124A17BaC75304C82D8"
+  },
+  "expectedFactoryPaused": true,
+  "thresholds": {
+    "rpcStaleSeconds": 180,
+    "rpcFutureToleranceSeconds": 60,
+    "gmReminderLeadSeconds": 3600,
+    "gmCriticalLeadSeconds": 900,
+    "feeCollectionReminderSeconds": 86400,
+    "feeLogLookbackBlocks": 100000,
+    "warningRepeatSeconds": 1800,
+    "criticalRepeatSeconds": 300,
+    "infoRepeatSeconds": 21600
+  }
+}

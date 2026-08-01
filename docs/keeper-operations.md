@@ -51,6 +51,21 @@ repeat active alerts. A one-minute schedule is appropriate for the 15-minute
 critical GM lead, but the hosting/scheduler choice remains a Stage 4 operations
 input.
 
+## Railway worker
+
+Use a separate Railway service sourced from this repository. It must have one
+replica and a persistent volume mounted at `/data`.
+
+- Build command: `npm ci --prefix tools/keeper`
+- Start command: `npm run daemon --prefix tools/keeper -- --config config/keeper.mainnet.json --state /data/keeper-alerts.json`
+- Health path: `/health`
+- Health timeout: `30`
+
+Required variables are `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`,
+`ROBINHOOD_RPC_URL`, and `ROBINHOOD_FALLBACK_RPC_URL`. Set
+`KEEPER_INTERVAL_SECONDS=60`. Do not add a wallet seed, private key, deployer
+credential, operator key, or guardian key.
+
 ## Failure handling
 
 - A critical monitor failure must not trigger an automatic transaction.
