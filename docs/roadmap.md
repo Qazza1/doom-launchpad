@@ -112,12 +112,14 @@ fail-closed before contract deployment. No launch transaction is enabled.
 - [x] Obtain and record the green indexer CI run.
 - [x] Deploy the read-only indexer with no factory configuration.
 - [x] Deploy the public website after production API validation.
-- [ ] Fill verified addresses and deployment block only after Stage 4.
+- [ ] Fill the read-only indexer with the verified factory address and deployment
+  block, then validate its public API against direct contract reads.
 
 ## Stage 4 — independent review and deployment preparation
 
-Status: fail-closed deployment preparation in progress. No broadcast is
-authorized.
+Status: completed on 2026-08-01. Contracts were deployed one transaction at a
+time, independently verified, and left paused. Evidence:
+`docs/stage-4-mainnet-deployment-evidence.md`.
 
 - [x] Independent reviewer package, frozen artifact checksums, and a CI job that
   fails if reviewed contract sources drift:
@@ -131,7 +133,7 @@ authorized.
   cross-check, canonical reward-deposit attribution, and deadline-boundary test.
 - [x] Re-freeze the remediated contract digest and include the changes in the
   independent review target.
-- [ ] Obtain green CI for the re-frozen remediation.
+- [x] Obtain green CI for the re-frozen remediation.
 - [x] Production RPC and fallback RPC secret-safe preflight.
 - [x] Dedicated Rabby address/control proof.
 - [x] Exact six-transaction localhost execution preview; Rabby remains
@@ -145,9 +147,8 @@ authorized.
 - [x] Funding-refresh tool that re-reads nonce, fees, and balance from both
   providers and writes a proposal without touching the canonical manifest:
   `docs/stage-4-funding-refresh.md`.
-- [ ] Exact gas estimate and deployer funding plan for the final reviewed commit.
-  The tool exists; the numbers must be generated from that commit, minutes before
-  the owner approves funding.
+- [x] Exact gas estimate and deployer funding plan for the final reviewed commit,
+  followed by exact owner-approved funding of the calculated shortfall.
 - [x] Fail-closed deployment manifest and constructor/nonce worksheet.
 - [x] Correct dependency-safe deployment and irreversible-binding order.
 - [x] Production deployment and post-deployment verification scripts. The
@@ -157,20 +158,24 @@ authorized.
 - [x] Blockscout source-verification rehearsal. Evidence:
   `docs/stage-4-blockscout-verification.md`. Verification of deployed source
   itself remains a Gate F step.
-- [ ] Final signed manifest and explicit owner approval immediately before broadcast.
+- [x] Explicit owner approval bound to the plan hash and commit immediately
+  before broadcast. The public completed deployment record is
+  `config/robinhood-mainnet-stage4-deployment.json`; the original fail-closed
+  template remains unchanged.
 
 ## Stage 5 — capped mainnet canary
 
-Status: blocked by Stage 4.
+Status: deployed and paused; operational integration is next. Factory resume and
+the first canary launch remain separately blocked pending explicit owner approval.
 
-- Deploy contracts while the factory remains paused.
+- [x] Deploy contracts while the factory remains paused.
 - [x] Read-only post-deployment verifier for bytecode, constructor values, roles,
   dependencies, bindings, caps, and the paused state, through two providers:
   `tools/deployment/verify-deployment.mjs`.
 - [x] Read-only per-launch observer covering allocation, permanent LP custody,
   fee routing, canary caps, GM commitment, and escrow custody:
   `docs/stage-5-canary-observation.md`.
-- Verify source and constructor arguments on the explorer after deployment.
+- [x] Verify source and constructor arguments on the explorer after deployment.
 - Separately approve factory resume.
 - Execute at most three 0.01 ETH launches from the approved creator.
 - Review each launch with the observer before permitting the next one.
