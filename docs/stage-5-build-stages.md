@@ -12,9 +12,9 @@ Nothing here authorizes anything. No stage adds a send path.
 | A | Plan generator, binding fields, deterministic plan hash | **done** — `tools/canary/launch-plan.mjs`, 8 tests |
 | B | Guards: stale plan, changed field, wrong chain/account/nonce/value | **done** — `tools/canary/plan-guards.mjs`, 10 tests |
 | C | Read-only dual-provider preflight | **done** — `tools/canary/preflight.mjs`, 8 tests |
-| D | Localhost fork rehearsal of resume and launch, separately | not started |
-| E | Wallet comparison harness, no send path | not started |
-| F | Owner runbook with STOP checkpoints | not started |
+| D | Localhost fork rehearsal of resume and launch, separately | not started — needs a live RPC at run time, best done interactively |
+| E | Wallet comparison harness, no send path | not started — needs a live RPC and a wallet, best done interactively |
+| F | Owner runbook with STOP checkpoints | **done** — `docs/stage-5-owner-runbook.md` |
 
 Update this table in the same commit as the work. A stage is done only when its
 tests pass in `tools/verify-local.ps1`.
