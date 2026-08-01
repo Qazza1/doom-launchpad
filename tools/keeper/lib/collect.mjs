@@ -10,8 +10,13 @@ async function read(client, address, abi, functionName, args = []) {
   return client.readContract({ address, abi, functionName, args });
 }
 
+export function shouldScanFeeLogs(lockerHasCode, launchCount) {
+  return lockerHasCode && BigInt(launchCount) > 0n;
+}
+
 export async function collectKeeperState(client, config, observedAt = Math.floor(Date.now() / 1000)) {
-  const [chainId, head] = await Promise.all([client.getChainId(), client.getBlock({ blockTag: "latest" })]);
+  const chainId = await client.getChainId();
+  const head = await client.getBlock({ blockTag: "latest" });
   const factoryAddress = config.contracts.factory;
   const factoryHasCode = await hasCode(client, factoryAddress);
   if (!factoryHasCode) {
@@ -27,21 +32,26 @@ export async function collectKeeperState(client, config, observedAt = Math.floor
     };
   }
 
-  const factoryReads = await Promise.all([
-    read(client, factoryAddress, factoryAbi, "operator"),
-    read(client, factoryAddress, factoryAbi, "emergencyGuardian"),
-    read(client, factoryAddress, factoryAbi, "approvedCreator"),
-    read(client, factoryAddress, factoryAbi, "treasury"),
-    read(client, factoryAddress, factoryAbi, "doomRewards"),
-    read(client, factoryAddress, factoryAbi, "wrappedNative"),
-    read(client, factoryAddress, factoryAbi, "liquidityManager"),
-    read(client, factoryAddress, factoryAbi, "positionLocker"),
-    read(client, factoryAddress, factoryAbi, "maxLaunches"),
-    read(client, factoryAddress, factoryAbi, "maxNativeLiquidityPerLaunch"),
-    read(client, factoryAddress, factoryAbi, "maxNativeLiquidityGlobal"),
-    read(client, factoryAddress, factoryAbi, "launchesPaused"),
-    read(client, factoryAddress, factoryAbi, "launchCount"),
-  ]);
+  // Keep reads sequential. Entry-tier RPCs commonly reject a burst of more
+  // than ten simultaneous eth_call requests even though every call is valid.
+  const factoryReads = [];
+  for (const functionName of [
+    "operator",
+    "emergencyGuardian",
+    "approvedCreator",
+    "treasury",
+    "doomRewards",
+    "wrappedNative",
+    "liquidityManager",
+    "positionLocker",
+    "maxLaunches",
+    "maxNativeLiquidityPerLaunch",
+    "maxNativeLiquidityGlobal",
+    "launchesPaused",
+    "launchCount",
+  ]) {
+    factoryReads.push(await read(client, factoryAddress, factoryAbi, functionName));
+  }
   const [
     operator,
     emergencyGuardian,
@@ -85,10 +95,8 @@ export async function collectKeeperState(client, config, observedAt = Math.floor
     maxNativeLiquidityGlobal: maxNativeLiquidityGlobal.toString(),
   };
 
-  const [lockerHasCode, rewardsHasCode] = await Promise.all([
-    hasCode(client, config.contracts.positionLocker),
-    hasCode(client, config.contracts.doomRewards),
-  ]);
+  const lockerHasCode = await hasCode(client, config.contracts.positionLocker);
+  const rewardsHasCode = await hasCode(client, config.contracts.doomRewards);
 
   const lockerActual = lockerHasCode
     ? {
@@ -107,7 +115,10 @@ export async function collectKeeperState(client, config, observedAt = Math.floor
       }
     : {};
 
-  const feeLogs = lockerHasCode
+  // Before the first launch there cannot be a position or a fee-collection
+  // event. Avoid a large historical eth_getLogs request that some providers
+  // reject even when the result would be empty.
+  const feeLogs = shouldScanFeeLogs(lockerHasCode, launchCount)
     ? await client.getLogs({
         address: config.contracts.positionLocker,
         event: feesCollectedEvent,
@@ -177,11 +188,21 @@ export async function collectKeeperState(client, config, observedAt = Math.floor
   if (rewardsHasCode) {
     const rewardTokens = new Set([getAddress(config.contracts.wrappedNative), ...launches.map((launch) => launch.token)]);
     for (const token of [...rewardTokens].sort((left, right) => left.localeCompare(right))) {
-      const [actualBalance, availableRewards, reservedRewards] = await Promise.all([
-        read(client, token, erc20Abi, "balanceOf", [config.contracts.doomRewards]),
-        read(client, config.contracts.doomRewards, rewardsAbi, "availableRewards", [token]),
-        read(client, config.contracts.doomRewards, rewardsAbi, "reservedRewards", [token]),
-      ]);
+      const actualBalance = await read(client, token, erc20Abi, "balanceOf", [config.contracts.doomRewards]);
+      const availableRewards = await read(
+        client,
+        config.contracts.doomRewards,
+        rewardsAbi,
+        "availableRewards",
+        [token],
+      );
+      const reservedRewards = await read(
+        client,
+        config.contracts.doomRewards,
+        rewardsAbi,
+        "reservedRewards",
+        [token],
+      );
       rewardBalances.push({
         token,
         actualBalance: actualBalance.toString(),

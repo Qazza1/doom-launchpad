@@ -4,7 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { EMPTY_ALERT_STATE, readAlertState, reconcileAlerts, writeAlertState } from "../lib/alerts.mjs";
-import { collectKeeperState } from "../lib/collect.mjs";
+import { collectKeeperState, shouldScanFeeLogs } from "../lib/collect.mjs";
 import { evaluateKeeperState } from "../lib/rules.mjs";
 import { formatTelegramAlert, sendTelegramAlert, telegramRequest, validateBotToken } from "../lib/telegram.mjs";
 
@@ -377,4 +377,10 @@ test("collector reconstructs one launch through read-only contract calls", async
   assert.equal(state.launches[0].currentlyLocked, true);
   assert.equal(state.launches[0].completedCheckIns, 1);
   assert.equal(state.doomRewards.balances.length, 2);
+});
+
+test("collector skips historical fee logs until a launch exists", () => {
+  assert.equal(shouldScanFeeLogs(true, 0n), false);
+  assert.equal(shouldScanFeeLogs(false, 1n), false);
+  assert.equal(shouldScanFeeLogs(true, 1n), true);
 });
