@@ -3,6 +3,7 @@ import { createPublicClient, http } from "viem";
 import { EMPTY_ALERT_STATE, readAlertState, reconcileAlerts, writeAlertState } from "./lib/alerts.mjs";
 import { collectKeeperState } from "./lib/collect.mjs";
 import { readKeeperConfig } from "./lib/config.mjs";
+import { safeErrorClass } from "./lib/diagnostics.mjs";
 import { loadKeeperEnv, requireEnvironment } from "./lib/env.mjs";
 import { evaluateKeeperState } from "./lib/rules.mjs";
 import { sendTelegramAlert, validateBotToken, validateChatId } from "./lib/telegram.mjs";
@@ -32,7 +33,7 @@ function collectionFailure(error) {
     severity: "critical",
     title: "Keeper could not collect on-chain state",
     summary: "The RPC snapshot or a required contract read failed.",
-    details: [],
+    details: [`Failure class: ${safeErrorClass(error)}`],
     action: "Check both RPCs. Do not rely on deadline or lock freshness until monitoring recovers.",
   };
 }
@@ -59,14 +60,21 @@ const primaryUrl = requireEnvironment(config.rpcUrlEnvironmentVariable);
 const fallbackUrl = process.env[config.fallbackRpcUrlEnvironmentVariable]?.trim();
 const observedAt = Math.floor(Date.now() / 1000);
 let alerts;
+let collectionFailed = false;
 
 try {
   let state;
   try {
     state = await collectKeeperState(publicClient(primaryUrl), config, observedAt);
   } catch (primaryError) {
+    console.error(`Primary RPC snapshot failed [${safeErrorClass(primaryError)}].`);
     if (!fallbackUrl) throw primaryError;
-    state = await collectKeeperState(publicClient(fallbackUrl), config, observedAt);
+    try {
+      state = await collectKeeperState(publicClient(fallbackUrl), config, observedAt);
+    } catch (fallbackError) {
+      console.error(`Fallback RPC snapshot failed [${safeErrorClass(fallbackError)}].`);
+      throw fallbackError;
+    }
     alerts = [
       {
         id: "rpc:primary-failed",
@@ -81,6 +89,7 @@ try {
   alerts = [...(alerts ?? []), ...evaluateKeeperState(state, config)];
   console.log(`Collected block ${state.headNumber} on chain ${state.chainId}; ${alerts.length} active alert(s).`);
 } catch (error) {
+  collectionFailed = true;
   alerts = [collectionFailure(error)];
 }
 
@@ -112,3 +121,4 @@ for (const notification of notifications) {
 }
 await writeAlertState(statePath, nextState);
 console.log(`Keeper check complete; ${notifications.length} notification(s) sent.`);
+if (collectionFailed) process.exitCode = 1;
