@@ -6,7 +6,10 @@ COPY tools/keeper/package.json tools/keeper/package-lock.json ./tools/keeper/
 RUN npm ci --prefix tools/keeper --omit=dev
 
 COPY tools/keeper ./tools/keeper
-COPY config/keeper.mainnet.json ./config/keeper.mainnet.json
+COPY config/keeper.mainnet.json \
+  config/robinhood-mainnet-stage4-deployment.json \
+  config/stage4-deployment-manifest.json \
+  ./config/
 
 RUN npm test --prefix tools/keeper
 
