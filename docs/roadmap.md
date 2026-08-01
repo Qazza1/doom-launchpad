@@ -91,7 +91,10 @@ address configuration remains a Stage 4 operation.
 - [x] No keeper action is required for asset safety; delayed execution affects
   freshness only.
 - [x] Owner confirms receipt of the local Telegram setup alert.
-- [ ] Fill and verify deployed addresses after Stage 4 deployment.
+- [x] Fill and verify deployed addresses after Stage 4 deployment. The production
+  keeper runs read-only on Railway with the verified addresses in
+  `config/keeper.mainnet.json`, two RPC providers, no signing key, and zero
+  active alerts.
 
 ## Stage 3.4 — indexer, API, and public UI
 
@@ -112,8 +115,15 @@ fail-closed before contract deployment. No launch transaction is enabled.
 - [x] Obtain and record the green indexer CI run.
 - [x] Deploy the read-only indexer with no factory configuration.
 - [x] Deploy the public website after production API validation.
-- [ ] Fill the read-only indexer with the verified factory address and deployment
-  block, then validate its public API against direct contract reads.
+- [x] Fill the read-only indexer with the verified factory address and deployment
+  block, then validate its public API against direct contract reads. Confirmed
+  2026-08-01: the public API reports the correct factory, `blocks_behind: 0`,
+  `confidence: high`, `factory_paused: true`, and zero launches, matching direct
+  contract reads taken the same day.
+- [ ] Move the indexer and keeper start block from the factory deployment block
+  25105648 to the first deployment 25082132, so `PositionLocker.RegistrarBound`
+  at block 25102641 stops falling outside the scan range. Requires a Railway
+  environment change.
 
 ## Stage 4 — independent review and deployment preparation
 
