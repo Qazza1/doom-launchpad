@@ -10,7 +10,16 @@ import {
   decodeBool,
   decodeUint,
   expectedState,
+  rpcRetryDelayMs,
 } from "../verify-deployment.mjs";
+
+test("RPC retry delay honours Retry-After and otherwise backs off with a cap", () => {
+  assert.equal(rpcRetryDelayMs(0), 500);
+  assert.equal(rpcRetryDelayMs(3), 4000);
+  assert.equal(rpcRetryDelayMs(8), 8000);
+  assert.equal(rpcRetryDelayMs(0, "2"), 2000);
+  assert.equal(rpcRetryDelayMs(0, "30"), 15000);
+});
 import { resolveDeploymentInputs } from "../verification-bundle.mjs";
 
 const manifest = JSON.parse(

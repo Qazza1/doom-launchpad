@@ -16,6 +16,18 @@ const directory = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(directory, "../..");
 const outputRoot = resolve(directory, "output/verification");
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
+const RPC_RETRY_ATTEMPTS = 6;
+const RPC_PACING_MS = 100;
+
+const sleep = milliseconds => new Promise(resolvePromise => setTimeout(resolvePromise, milliseconds));
+
+export function rpcRetryDelayMs(attempt, retryAfter = null) {
+  const retryAfterSeconds = Number.parseFloat(retryAfter || "");
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0) {
+    return Math.min(Math.ceil(retryAfterSeconds * 1_000), 15_000);
+  }
+  return Math.min(500 * (2 ** attempt), 8_000);
+}
 
 export const decodeAddress = word => `0x${String(word).slice(-40)}`;
 export const decodeUint = word => BigInt(word).toString();
@@ -137,17 +149,31 @@ export function assertAddressesComplete(addresses) {
   return errors;
 }
 
-async function rpc(url, method, params = []) {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!response.ok) throw new Error(`${method} returned HTTP ${response.status}`);
-  const body = await response.json();
-  if (body.error) throw new Error(`${method}: ${body.error.message || "RPC error"}`);
-  return body.result;
+async function rpc(url, method, params = [], label = "provider") {
+  for (let attempt = 0; attempt < RPC_RETRY_ATTEMPTS; attempt += 1) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (response.status === 429 && attempt + 1 < RPC_RETRY_ATTEMPTS) {
+      await sleep(rpcRetryDelayMs(attempt, response.headers.get("retry-after")));
+      continue;
+    }
+    if (!response.ok) throw new Error(`${label} ${method} returned HTTP ${response.status}`);
+    const body = await response.json();
+    const rateLimited = body.error
+      && (body.error.code === 429 || /rate.?limit|too many requests/i.test(body.error.message || ""));
+    if (rateLimited && attempt + 1 < RPC_RETRY_ATTEMPTS) {
+      await sleep(rpcRetryDelayMs(attempt));
+      continue;
+    }
+    if (body.error) throw new Error(`${label} ${method}: ${body.error.message || "RPC error"}`);
+    await sleep(RPC_PACING_MS);
+    return body.result;
+  }
+  throw new Error(`${label} ${method} remained rate-limited after ${RPC_RETRY_ATTEMPTS} attempts`);
 }
 
 async function readArtifact(name) {
@@ -155,12 +181,12 @@ async function readArtifact(name) {
 }
 
 async function observeProvider(label, url, addresses, expected, artifacts) {
-  const chainId = Number(await rpc(url, "eth_chainId"));
+  const chainId = Number(await rpc(url, "eth_chainId", [], label));
   if (chainId !== CHAIN_ID) throw new Error(`${label} returned chain ID ${chainId}`);
 
   const observed = {};
   for (const name of CONTRACT_NAMES) {
-    const code = await rpc(url, "eth_getCode", [addresses[name], "latest"]);
+    const code = await rpc(url, "eth_getCode", [addresses[name], "latest"], label);
     const calls = {};
     for (const [signature, [kind]] of Object.entries(expected[name])) {
       const identifier = artifacts[name].methodIdentifiers?.[signature];
@@ -168,7 +194,7 @@ async function observeProvider(label, url, addresses, expected, artifacts) {
       const word = await rpc(url, "eth_call", [
         { to: addresses[name], data: `0x${identifier}` },
         "latest",
-      ]);
+      ], label);
       calls[signature] = kind === "address"
         ? decodeAddress(word)
         : kind === "bool"
