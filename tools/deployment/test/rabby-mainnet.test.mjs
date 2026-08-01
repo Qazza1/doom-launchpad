@@ -3,10 +3,30 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
+  buildWalletFeePolicy,
   compareMinedProviders,
   validateMainnetApproval,
   validateReceiptLedger,
 } from "../rabby-mainnet-server.mjs";
+
+test("wallet fee policy locks the rehearsed gas limit and live fee ceiling", () => {
+  assert.deepEqual(
+    buildWalletFeePolicy(
+      { localGasLimit: "2163337" },
+      { feeCeilingWei: "40528000", maxPriorityFeeWei: "1000000" },
+    ),
+    {
+      gasLimit: "2163337",
+      maxFeePerGasWei: "40528000",
+      maxPriorityFeePerGasWei: "1000000",
+      maximumNetworkFeeWei: "87675721936000",
+    },
+  );
+  assert.throws(
+    () => buildWalletFeePolicy({ localGasLimit: "0" }, { feeCeilingWei: "1", maxPriorityFeeWei: "0" }),
+    /gas limit/,
+  );
+});
 
 const deployer = "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F";
 const txHash = `0x${"ab".repeat(32)}`;
@@ -113,4 +133,6 @@ test("the mainnet client is module-scoped so injected wallets cannot redeclare i
   assert.match(html, /<script type="module" src="\/rabby-mainnet\.js"><\/script>/);
   assert.doesNotMatch(javascript, /function rabby\s*\(/);
   assert.match(javascript, /function getDoomRabbyProvider\s*\(/);
+  assert.match(javascript, /maxFeePerGas:/);
+  assert.match(javascript, /maxPriorityFeePerGas:/);
 });

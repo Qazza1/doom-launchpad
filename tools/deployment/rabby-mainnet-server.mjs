@@ -40,6 +40,23 @@ const sha256 = value => createHash("sha256").update(value).digest("hex");
 const lower = value => (typeof value === "string" ? value.toLowerCase() : value);
 const quantity = value => Number(BigInt(value));
 
+export function buildWalletFeePolicy(previewTransaction, state) {
+  const gasLimit = BigInt(previewTransaction?.localGasLimit || 0);
+  const maxFeePerGasWei = BigInt(state?.feeCeilingWei || 0);
+  const maxPriorityFeePerGasWei = BigInt(state?.maxPriorityFeeWei || 0);
+  if (gasLimit <= 0n) throw new Error("the rehearsed gas limit is missing");
+  if (maxFeePerGasWei <= 0n) throw new Error("the live fee ceiling is missing");
+  if (maxPriorityFeePerGasWei < 0n || maxPriorityFeePerGasWei > maxFeePerGasWei) {
+    throw new Error("the live priority fee is invalid");
+  }
+  return {
+    gasLimit: gasLimit.toString(),
+    maxFeePerGasWei: maxFeePerGasWei.toString(),
+    maxPriorityFeePerGasWei: maxPriorityFeePerGasWei.toString(),
+    maximumNetworkFeeWei: (gasLimit * maxFeePerGasWei).toString(),
+  };
+}
+
 export function validateMainnetApproval(approval, plan, planBody) {
   const errors = [];
   const require = (condition, message) => {
@@ -246,6 +263,9 @@ async function preflight(primary, fallback, plan, step, preview, approval, planS
     .slice(step)
     .reduce((sum, transaction) => sum + BigInt(transaction.localGasLimit), 0n);
   const feeCeilingWei = BigInt(combineFeeCeilings(primaryFees.feeCeilingWei, fallbackFees.feeCeilingWei));
+  const maxPriorityFeeWei = [primaryFees.maxPriorityFeeWei, fallbackFees.maxPriorityFeeWei]
+    .map(value => BigInt(value))
+    .reduce((highest, value) => value > highest ? value : highest, 0n);
   const requiredBalanceWei = (remainingGas * feeCeilingWei * 12_500n + 9_999n) / 10_000n;
   const balanceWei = BigInt(primaryReport.deployerBalanceWei);
   if (balanceWei < requiredBalanceWei) {
@@ -264,6 +284,7 @@ async function preflight(primary, fallback, plan, step, preview, approval, planS
     balanceWei: balanceWei.toString(),
     remainingRequiredBalanceWei: requiredBalanceWei.toString(),
     feeCeilingWei: feeCeilingWei.toString(),
+    maxPriorityFeeWei: maxPriorityFeeWei.toString(),
     primaryBlock: primaryReport.blockNumber,
     fallbackBlock: fallbackReport.blockNumber,
   };
@@ -324,6 +345,15 @@ export async function main(argv = process.argv.slice(2)) {
   if (ledgerErrors.length) throw new Error(ledgerErrors.join("; "));
   const state = await preflight(primary, fallback, plan, step, preview, approval, planSha256);
   const transaction = plan.transactions[step];
+  const previewTransaction = preview.transactions[step];
+  if (
+    previewTransaction?.order !== transaction.order
+    || previewTransaction?.nonce !== transaction.nonce
+    || previewTransaction?.label !== transaction.label
+  ) {
+    throw new Error("the rehearsed transaction does not match the locked plan step");
+  }
+  const walletFeePolicy = buildWalletFeePolicy(previewTransaction, state);
   let submittedHash = null;
 
   const server = createServer(async (request, response) => {
@@ -354,6 +384,7 @@ export async function main(argv = process.argv.slice(2)) {
           step,
           transaction,
           state,
+          walletFeePolicy,
           completed: ledger.receipts.length,
           warning: "Robinhood Mainnet. This page can submit only this single approved transaction.",
         });

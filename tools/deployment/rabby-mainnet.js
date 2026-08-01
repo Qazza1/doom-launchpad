@@ -39,6 +39,9 @@ function render() {
     <p><strong>Nonce:</strong> ${tx.nonce} · <strong>Value:</strong> 0 ETH</p>
     ${tx.predictedAddress ? `<p><strong>Predicted contract:</strong> <code>${tx.predictedAddress}</code></p>` : ""}
     <p><strong>Calldata SHA-256:</strong> <code>${tx.dataSha256}</code></p>
+    <p><strong>Locked gas limit:</strong> <code>${locked.walletFeePolicy.gasLimit}</code></p>
+    <p><strong>Locked max fee per gas:</strong> <code>${locked.walletFeePolicy.maxFeePerGasWei} wei</code></p>
+    <p><strong>Maximum network fee:</strong> <code>${locked.walletFeePolicy.maximumNetworkFeeWei} wei</code></p>
     <p><strong>Required confirmation:</strong> <code>${phrase}</code></p>
     <details><summary>Raw transaction data</summary><pre>${tx.data}</pre></details>`;
   confirmation.dataset.phrase = phrase;
@@ -60,6 +63,9 @@ async function submitStep() {
       value: tx.value,
       nonce: `0x${tx.nonce.toString(16)}`,
       data: tx.data,
+      gas: `0x${BigInt(locked.walletFeePolicy.gasLimit).toString(16)}`,
+      maxFeePerGas: `0x${BigInt(locked.walletFeePolicy.maxFeePerGasWei).toString(16)}`,
+      maxPriorityFeePerGas: `0x${BigInt(locked.walletFeePolicy.maxPriorityFeePerGasWei).toString(16)}`,
     };
     if (tx.to) request.to = tx.to;
     setStatus(`Review MAINNET step ${locked.step + 1} in Rabby. Confirm zero value and nonce ${tx.nonce}.`);
