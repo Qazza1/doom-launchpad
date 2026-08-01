@@ -13,7 +13,19 @@ import {
   planConstructorArguments,
   resolveDeploymentInputs,
   validateStandardJsonInput,
+  verificationBundlePosture,
 } from "../verification-bundle.mjs";
+
+test("final-address verification bundles are ready but never claim explorer submission", () => {
+  const finalPosture = verificationBundlePosture(true);
+  assert.equal(finalPosture.status, "verification_bundle_ready_for_manual_submission");
+  assert.match(finalPosture.warning, /Nothing was submitted/);
+  assert.match(finalPosture.warning, /does not authorize resuming/);
+
+  const rehearsal = verificationBundlePosture(false);
+  assert.equal(rehearsal.status, "verification_bundle_rehearsal");
+  assert.match(rehearsal.warning, /real deployed addresses/);
+});
 
 const manifest = JSON.parse(
   await readFile(new URL("../../../config/stage4-deployment-manifest.json", import.meta.url), "utf8"),

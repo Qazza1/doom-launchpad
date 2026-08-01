@@ -281,6 +281,22 @@ export function compareRuntimeBytecode(onchainCode, artifactCode, immutableRefer
   return { matches: true, reason: "runtime bytecode matches once immutables are masked" };
 }
 
+export function verificationBundlePosture(addressesAreFinal) {
+  return addressesAreFinal
+    ? {
+        status: "verification_bundle_ready_for_manual_submission",
+        warning:
+          "Final-address bundle only. Nothing was submitted to the explorer; source verification "
+          + "does not authorize resuming the factory or launching a token.",
+      }
+    : {
+        status: "verification_bundle_rehearsal",
+        warning:
+          "Rehearsal bundle. Regenerate from the final reviewed commit with the real deployed "
+          + "addresses before verifying anything on the explorer.",
+      };
+}
+
 async function readJson(path) {
   return JSON.parse(await readFile(path, "utf8"));
 }
@@ -416,7 +432,7 @@ export async function main(argv = process.argv.slice(2)) {
       artifactRuntimeSha256: sha256(runtime.toLowerCase()),
       immutableRangeCount: Object.values(immutableReferences).flat().length,
       immutableReferences,
-      deployedAddress: null,
+      deployedAddress: addressesAreFinal ? deployed[contract.name] : null,
       runtimeBytecodeCompared: false,
       submittedToExplorer: false,
       verifiedOnExplorer: false,
@@ -444,9 +460,10 @@ export async function main(argv = process.argv.slice(2)) {
     };
   }
 
+  const posture = verificationBundlePosture(addressesAreFinal);
   const bundle = {
     schemaVersion: 1,
-    status: "verification_bundle_rehearsal",
+    status: posture.status,
     generatedAt,
     safety: {
       networkWrites: false,
@@ -459,8 +476,7 @@ export async function main(argv = process.argv.slice(2)) {
     chainId: CHAIN_ID,
     explorer,
     contracts,
-    warning:
-      "Rehearsal bundle. Regenerate from the final reviewed commit with the real deployed addresses before verifying anything on the explorer.",
+    warning: posture.warning,
   };
   const bundlePath = resolve(outputRoot, "bundle-manifest.json");
   await writeFile(bundlePath, `${JSON.stringify(bundle, null, 2)}\n`, "utf8");
