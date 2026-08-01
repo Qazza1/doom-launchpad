@@ -11,7 +11,7 @@ Nothing here authorizes anything. No stage adds a send path.
 |---|---|---|
 | A | Plan generator, binding fields, deterministic plan hash | **done** — `tools/canary/launch-plan.mjs`, 8 tests |
 | B | Guards: stale plan, changed field, wrong chain/account/nonce/value | **done** — `tools/canary/plan-guards.mjs`, 10 tests |
-| C | Read-only dual-provider preflight | not started |
+| C | Read-only dual-provider preflight | **done** — `tools/canary/preflight.mjs`, 8 tests |
 | D | Localhost fork rehearsal of resume and launch, separately | not started |
 | E | Wallet comparison harness, no send path | not started |
 | F | Owner runbook with STOP checkpoints | not started |
