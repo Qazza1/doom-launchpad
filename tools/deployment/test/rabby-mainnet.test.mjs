@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   compareMinedProviders,
@@ -104,4 +105,12 @@ test("provider receipt comparison catches transaction and receipt disagreement",
   const errors = compareMinedProviders(transaction, changedTransaction, receipt, changedReceipt);
   assert.ok(errors.some(error => error.includes("transaction input")));
   assert.ok(errors.some(error => error.includes("receipt status")));
+});
+
+test("the mainnet client is module-scoped so injected wallets cannot redeclare its helpers", async () => {
+  const html = await readFile(new URL("../rabby-mainnet.html", import.meta.url), "utf8");
+  const javascript = await readFile(new URL("../rabby-mainnet.js", import.meta.url), "utf8");
+  assert.match(html, /<script type="module" src="\/rabby-mainnet\.js"><\/script>/);
+  assert.doesNotMatch(javascript, /function rabby\s*\(/);
+  assert.match(javascript, /function getDoomRabbyProvider\s*\(/);
 });

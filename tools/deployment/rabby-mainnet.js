@@ -11,7 +11,7 @@ const setStatus = (message, kind = "muted") => {
   statusLine.textContent = message;
 };
 
-async function rabby() {
+async function getDoomRabbyProvider() {
   if (window.ethereum?.isRabby) return window.ethereum;
   throw new Error("Rabby was not detected. Unlock the official Rabby browser extension.");
 }
@@ -52,7 +52,7 @@ function render() {
 async function submitStep() {
   submit.disabled = true;
   try {
-    const provider = await rabby();
+    const provider = await getDoomRabbyProvider();
     await assertWallet(provider);
     const tx = locked.transaction;
     const request = {
