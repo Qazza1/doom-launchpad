@@ -134,6 +134,33 @@
       "activeAlerts": 0,
       "priorCollectionFailureResolved": true,
       "factoryExpectedPaused": true
+    },
+    "indexer": {
+      "status": "live_current_history_backfilling",
+      "verifiedAt": "2026-08-01T17:15:28Z",
+      "sourceCommit": "7fbe325",
+      "railwayService": "OnchainDiligence-indexer",
+      "readOnly": true,
+      "observedChainId": 4663,
+      "observedHead": 25242593,
+      "observedCursor": 25242593,
+      "blocksBehind": 0,
+      "liveConfidence": "high",
+      "recentFailedRanges": 0,
+      "historyComplete": false,
+      "historyGapFrom": 15404169,
+      "historyGapTo": 25226401,
+      "historyBackfillCursor": 15423668,
+      "historyBackfillProgressPct": 0.1985,
+      "publicApiVerifiedAt": "2026-08-01T17:19:02Z",
+      "publicApiStatus": "ok",
+      "publicApiConfidence": "high",
+      "publicApiLastError": null,
+      "confirmationDepth": 12,
+      "chainLaunchCount": 0,
+      "indexedLaunchCount": 0,
+      "deathWatchEntryCount": 0,
+      "factoryExpectedPaused": true
     }
   },
   "authorization": {

@@ -72,6 +72,41 @@ commit `85b3b8b9c81e8813d1235b48a05cccef7c3475e0`:
 Telegram delivery and primary/fallback RPC operation are therefore proven from
 the production host. This does not authorize resuming the factory.
 
+## Production indexer
+
+The Railway `OnchainDiligence-indexer` reached Robinhood mainnet head on
+2026-08-01 at `17:15:28Z` using indexer commit `7fbe325`:
+
+- live cursor and chain head both reported block `25242593`;
+- `blocks_behind` was `0`, `live_confidence` was `high`, and `stalled` was
+  `false`;
+- there were zero recent failed ranges and no current error;
+- the previously blocking historical interval was preserved as the explicit
+  gap `15404169-25226401` rather than silently discarded;
+- the throttled, resumable history cursor reached block `15423668` and was
+  actively advancing without delaying live ingestion;
+- the legacy failed-range count was falling while live failed ranges remained
+  zero.
+
+The overall confidence remains intentionally `medium` until historical coverage
+is complete. This is an analytics completeness signal, not a live-feed failure,
+and it does not authorize resuming the factory.
+
+The public launchpad API was then compared with the deployed chain state on
+2026-08-01 at `17:19:02Z`:
+
+- `/launchpad/health` reported `status: ok`, `confidence: high`, chain `4663`,
+  the expected factory, confirmation depth `12`, and `blocks_behind: 0`;
+- `factory_paused` was `true` and both the chain and indexed launch counts were
+  zero;
+- `/launchpad/launches` returned an empty launch list;
+- `/launchpad/death-watch` returned zero entries and zero tokens at risk;
+- a transient provider timeout observed during the first comparison cleared on
+  the next successful scan; the final health response reported
+  `last_error: null` at confirmed block `25244766`.
+
+The public API therefore agrees with the expected pre-launch, paused state.
+
 ## Explorer verification
 
 Blockscout independently reports all four contracts as fully verified, not
@@ -85,7 +120,7 @@ explorer metadata only; its full source and bytecode verification succeeded.
 ## Required paused state
 
 The factory is deliberately unusable while paused. No authorization has been
-given to call the resume function or execute the first canary launch. The next
-safe work is read-only indexer and keeper configuration, followed by confirmation
-depth and public-API comparison. Factory resume requires a new, explicit owner
-approval after that operational validation.
+given to call the resume function or execute the first canary launch. Read-only
+indexer and keeper configuration, confirmation-depth validation, and the public
+API comparison are complete. Factory resume requires a new, explicit owner
+approval after a separate Stage 5 canary-readiness review.
