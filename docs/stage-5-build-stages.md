@@ -10,7 +10,7 @@ Nothing here authorizes anything. No stage adds a send path.
 | Stage | Deliverable | Status |
 |---|---|---|
 | A | Plan generator, binding fields, deterministic plan hash | **done** — `tools/canary/launch-plan.mjs`, 8 tests |
-| B | Guards: stale plan, changed field, wrong chain/account/nonce/value | not started |
+| B | Guards: stale plan, changed field, wrong chain/account/nonce/value | **done** — `tools/canary/plan-guards.mjs`, 10 tests |
 | C | Read-only dual-provider preflight | not started |
 | D | Localhost fork rehearsal of resume and launch, separately | not started |
 | E | Wallet comparison harness, no send path | not started |
@@ -105,8 +105,8 @@ docs/stage-5-build-stages.md. Update that table in the same commit as the work.
 Run powershell -ExecutionPolicy Bypass -File .\tools\verify-local.ps1 before
 committing, and report files changed, test results, and remaining blockers.
 
-Still needed from the owner before the final launch plan can be built: token
-name, token symbol, and total whole-token supply between 1,000,000 and
-1,000,000,000,000,000. Ask for nothing else; every other value is frozen in the
-deployed factory.
+Token inputs are chosen and recorded in config/canary-token-inputs.json:
+DoomStreak Canary Test 1/2/3, symbols DCT1/DCT2/DCT3, one billion whole tokens
+each. Do not ask the owner for any other launch value; everything else is frozen
+in the deployed factory.
 ```

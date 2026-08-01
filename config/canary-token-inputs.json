@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "status": "owner_selected_pending_launch_approval",
+  "recordedAt": "2026-08-01",
+  "note": "The only three values not frozen in the deployed factory. Recording them does not authorize a launch; the first launch still requires its own explicit owner approval given immediately before the action, separate from the factory resume approval.",
+  "namingPolicy": "Canary tokens are real, tradeable, and permanently liquid on a 0.01 ETH pool. They are named unmistakably as tests so nobody confuses one for a product launch. Do not promote them.",
+  "launches": [
+    { "order": 1, "name": "DoomStreak Canary Test 1", "symbol": "DCT1", "wholeSupply": "1000000000" },
+    { "order": 2, "name": "DoomStreak Canary Test 2", "symbol": "DCT2", "wholeSupply": "1000000000" },
+    { "order": 3, "name": "DoomStreak Canary Test 3", "symbol": "DCT3", "wholeSupply": "1000000000" }
+  ],
+  "derivedAllocationPerLaunch": {
+    "creatorAtLaunch": "0",
+    "permanentLiquidity": "400000000",
+    "gmEscrow": "600000000",
+    "releasedPerCheckIn": "200000000"
+  },
+  "frozenByContract": {
+    "nativeLiquidityWei": "10000000000000000",
+    "maxValueWei": "10100000000000000",
+    "requiredCheckIns": 3,
+    "maxLaunches": 3
+  }
+}
