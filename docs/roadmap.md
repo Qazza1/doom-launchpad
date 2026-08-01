@@ -165,8 +165,11 @@ time, independently verified, and left paused. Evidence:
 
 ## Stage 5 — capped mainnet canary
 
-Status: deployed and paused; operational integration is next. Factory resume and
-the first canary launch remain separately blocked pending explicit owner approval.
+Status: deployed, verified, operationally integrated, and paused. The production
+keeper is healthy, the live index is current while historical backfill proceeds,
+and the public launchpad API agrees with the zero-launch on-chain state. Factory
+resume and the first canary launch remain separately blocked pending explicit
+owner approval.
 
 - [x] Deploy contracts while the factory remains paused.
 - [x] Read-only post-deployment verifier for bytecode, constructor values, roles,
@@ -176,6 +179,15 @@ the first canary launch remain separately blocked pending explicit owner approva
   fee routing, canary caps, GM commitment, and escrow custody:
   `docs/stage-5-canary-observation.md`.
 - [x] Verify source and constructor arguments on the explorer after deployment.
+- [x] Run the production read-only keeper with two RPC providers and verified
+  deployed addresses; confirm Telegram delivery and zero active alerts.
+- [x] Bring the production launchpad index to confirmed head and compare the
+  public health, launches, and Death Watch endpoints with the paused on-chain
+  state. The older analytics history gap remains explicit and is backfilling
+  without delaying live ingestion.
+- [x] Re-run the complete local safety suite after operational integration:
+  frozen review identity, deployment tooling, canary observer, Death Watch,
+  contracts, integration events, rewards operations, and keeper tests.
 - Separately approve factory resume.
 - Execute at most three 0.01 ETH launches from the approved creator.
 - Review each launch with the observer before permitting the next one.
