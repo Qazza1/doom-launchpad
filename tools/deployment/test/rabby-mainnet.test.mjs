@@ -28,6 +28,13 @@ test("wallet fee policy locks the rehearsed gas limit and live fee ceiling", () 
   );
 });
 
+test("rehearsal and plan labels may differ without weakening transaction identity", async () => {
+  const javascript = await readFile(new URL("../rabby-mainnet-server.mjs", import.meta.url), "utf8");
+  assert.doesNotMatch(javascript, /previewTransaction\?\.label\s*!==\s*transaction\.label/);
+  assert.match(javascript, /previewTransaction\?\.type\s*!==\s*transaction\.kind/);
+  assert.match(javascript, /previewTransaction\?\.contract\s*!==\s*transaction\.contract/);
+});
+
 const deployer = "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F";
 const txHash = `0x${"ab".repeat(32)}`;
 const plan = () => ({

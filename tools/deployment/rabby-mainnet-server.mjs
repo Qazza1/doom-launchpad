@@ -349,7 +349,8 @@ export async function main(argv = process.argv.slice(2)) {
   if (
     previewTransaction?.order !== transaction.order
     || previewTransaction?.nonce !== transaction.nonce
-    || previewTransaction?.label !== transaction.label
+    || previewTransaction?.type !== transaction.kind
+    || previewTransaction?.contract !== transaction.contract
   ) {
     throw new Error("the rehearsed transaction does not match the locked plan step");
   }
