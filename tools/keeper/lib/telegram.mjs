@@ -25,7 +25,17 @@ export async function telegramRequest(tokenInput, method, body = {}, fetchImpl =
       signal: AbortSignal.timeout(10_000),
     });
   } catch (error) {
-    throw new Error(`Telegram ${method} request failed: ${error instanceof Error ? error.message : "network error"}`);
+    const cause = error && typeof error === "object" ? error.cause : null;
+    const code = cause && typeof cause === "object" && typeof cause.code === "string"
+      ? ` [${cause.code}]`
+      : "";
+    const causeMessage = cause instanceof Error && cause.message !== error?.message
+      ? `: ${cause.message}`
+      : "";
+    throw new Error(
+      `Telegram ${method} request failed: ${error instanceof Error ? error.message : "network error"}${code}${causeMessage}`,
+      { cause: error },
+    );
   }
   let payload;
   try {

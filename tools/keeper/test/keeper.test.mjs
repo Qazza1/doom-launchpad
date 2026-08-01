@@ -250,6 +250,14 @@ test("Telegram requests use POST and validate API success", async () => {
     })),
     /Unauthorized/,
   );
+
+  const networkFailure = new TypeError("fetch failed", {
+    cause: Object.assign(new Error("connection timed out"), { code: "ETIMEDOUT" }),
+  });
+  await assert.rejects(
+    telegramRequest(token, "getMe", {}, async () => { throw networkFailure; }),
+    /\[ETIMEDOUT\].*connection timed out/,
+  );
 });
 
 test("collector reconstructs one launch through read-only contract calls", async () => {
