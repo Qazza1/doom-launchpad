@@ -32,7 +32,12 @@ export function parseArguments(argv) {
   if (!Number.isInteger(ttl) || ttl <= 0 || ttl > 3600) {
     errors.push("--ttl must be between 1 and 3600 seconds");
   }
-  const gasHeadroomWei = read("--gas-headroom") ?? "2000000000000000";
+  // Headroom is proportional to the operation. A resume is one storage write and an event, on the
+  // order of 30,000 gas; a launch deploys two contracts, creates a pool, and mints a position. A
+  // flat default large enough for a launch blocks a resume the balance covers many times over, and
+  // a guard that fails on the normal path is one the operator learns to ignore.
+  const defaultHeadroom = kind === PLAN_KIND.launch ? "3000000000000000" : "100000000000000";
+  const gasHeadroomWei = read("--gas-headroom") ?? defaultHeadroom;
   return { errors, kind, index, ttl, gasHeadroomWei };
 }
 

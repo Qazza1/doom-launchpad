@@ -14,6 +14,17 @@ test("arguments are validated before anything reads the chain", () => {
   assert.ok(parseArguments(["--kind", "launch", "--launch", "0"]).errors.some(item => item.includes("--launch")));
 });
 
+test("gas headroom is proportional to the operation, not a flat worst case", () => {
+  // A resume is one storage write; a launch deploys two contracts, creates a pool, and mints.
+  // A flat launch-sized default would block a resume the balance covers many times over.
+  const resume = BigInt(parseArguments(["--kind", "resume"]).gasHeadroomWei);
+  const launch = BigInt(parseArguments(["--kind", "launch"]).gasHeadroomWei);
+  assert.ok(resume < launch, "a resume must not demand launch-sized headroom");
+  assert.ok(resume > 0n && launch > 0n);
+  // An explicit value always wins over the default.
+  assert.equal(parseArguments(["--kind", "resume", "--gas-headroom", "5"]).gasHeadroomWei, "5");
+});
+
 test("plan lifetime is bounded so a stale plan cannot be kept around", () => {
   assert.equal(parseArguments(["--kind", "resume"]).ttl, 900);
   assert.equal(parseArguments(["--kind", "resume", "--ttl", "300"]).ttl, 300);
