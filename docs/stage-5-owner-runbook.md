@@ -28,6 +28,19 @@ deliberate. Do not run them back to back because it feels efficient.
 
 **STOP.** If any box is unchecked, fix it first. None of them are formalities.
 
+## Running the preparation tool
+
+Use the wrapper, which reads both endpoints through hidden prompts and clears
+them afterwards. Alchemy and QuickNode are an appropriate independent pair.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\canary\prepare.ps1 -Kind resume
+powershell -ExecutionPolicy Bypass -File .\tools\canary\prepare.ps1 -Kind launch -Launch 1
+```
+
+Never paste an RPC URL into a chat, a commit, or a source file. They carry API
+keys.
+
 ## Decision A — resume the factory
 
 1. Run the preflight. Both providers must agree, and the factory must read
