@@ -60,7 +60,10 @@ test("a launch plan binds every field the requirements list", () => {
   assert.equal(plan.wholeSupply, "1000000000");
   assert.equal(plan.supplyWei, (1_000_000_000n * 10n ** 18n).toString());
   assert.equal(plan.nativeLiquidityWei, NATIVE_LIQUIDITY_WEI.toString());
-  assert.equal(plan.valueWei, NATIVE_LIQUIDITY_WEI.toString());
+  // Value must cover liquidity plus the max creation fee, or the factory reverts with
+  // InsufficientNativeValue. The excess is refunded.
+  assert.equal(plan.valueWei, MAX_VALUE_WEI.toString());
+  assert.equal(BigInt(plan.valueWei) - BigInt(plan.nativeLiquidityWei), 100000000000000n);
   assert.equal(plan.maxValueWei, MAX_VALUE_WEI.toString());
   assert.equal(plan.expectedLaunchCount, "0");
   assert.equal(plan.expectedTotalNativeLiquidity, "0");

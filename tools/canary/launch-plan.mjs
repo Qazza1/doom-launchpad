@@ -146,7 +146,9 @@ export function buildLaunchPlan({
     wholeSupply: String(wholeSupply),
     supplyWei: supplyWei.toString(),
     nativeLiquidityWei: NATIVE_LIQUIDITY_WEI.toString(),
-    valueWei: NATIVE_LIQUIDITY_WEI.toString(),
+    // The factory requires liquidity plus the maximum creation fee up front and refunds the
+    // unused remainder, so the value sent is the ceiling, not the liquidity alone.
+    valueWei: MAX_VALUE_WEI.toString(),
     maxValueWei: MAX_VALUE_WEI.toString(),
     data,
     calldataHash: `0x${createHash("sha256").update(data).digest("hex")}`,
