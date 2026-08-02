@@ -183,11 +183,12 @@ time, independently verified, and left paused. Evidence:
 
 ## Stage 5 — capped mainnet canary
 
-Status: deployed, verified, operationally integrated, and paused. The production
-keeper is healthy, the live index is current while historical backfill proceeds,
-and the public launchpad API agrees with the zero-launch on-chain state. Factory
-resume and the first canary launch remain separately blocked pending explicit
-owner approval.
+Status: **in progress.** The factory was resumed on 2026-08-01 and canary launch 1
+minted DCT1; every on-chain invariant holds and the keeper is healthy. The
+indexer stalled at the same time and has never seen the launch, so the derived
+layer disagrees with the chain. Two launches remain under the contract cap, each
+needing its own owner approval. Review and open blockers:
+`docs/stage-5-launch-1-review.md`.
 
 - [x] Deploy contracts while the factory remains paused.
 - [x] Read-only post-deployment verifier for bytecode, constructor values, roles,
@@ -206,10 +207,22 @@ owner approval.
 - [x] Re-run the complete local safety suite after operational integration:
   frozen review identity, deployment tooling, canary observer, Death Watch,
   contracts, integration events, rewards operations, and keeper tests.
-- Separately approve factory resume.
-- Execute at most three 0.01 ETH launches from the approved creator.
-- Review each launch with the observer before permitting the next one.
-- Compare indexer ingestion and the public API against direct contract reads.
+- [x] Separately approve factory resume. Done 2026-08-01.
+- [x] Localhost fork rehearsal of a prepared plan, judged by the observer:
+  `tools/canary/fork-rehearsal.mjs`. Built after launch 1, because a plan-value
+  bug reached a real wallet without it.
+- [x] Chain-isolated wallet comparison harness for a canary plan:
+  `tools/canary/wallet-compare.mjs`. The interactive wallet run is still owed.
+- [ ] Execute at most three 0.01 ETH launches from the approved creator. One
+  done; launches 2 and 3 each need their own approval.
+- [ ] Complete the GM commitment for launch 1, or let it default deliberately.
+  Three check-ins, one per day, each inside a 12-hour grace window.
+- [x] Review launch 1 with the observer before permitting the next one:
+  `docs/stage-5-launch-1-review.md`.
+- [ ] Compare indexer ingestion and the public API against direct contract reads.
+  Cannot be performed while the indexer is stalled.
+- [ ] Confirm Telegram delivery of a real production alert, not only the setup
+  test.
 
 ## Stage 6 — launcher-first product release
 
