@@ -99,6 +99,65 @@ Three things, each fine alone:
    minutes from the outside. The keeper already has an alerting path; a stalled
    indexer deserves one.
 
+## The exact change, written and tested 2026-08-02
+
+**Not applied.** The indexer repository is paused mid-rebase (`main` onto
+`9230ca1`, stopped on "Add critical indexes… response cache, retry cap", with
+`api.js` and `db.js` unresolved). Editing files in that state risks the changes
+being swept into somebody else's conflict resolution, so they were backed out and
+the working tree restored to exactly how it was found. Apply them after the
+rebase is finished or aborted.
+
+Note that the paused commit mentions a **retry cap**, which may overlap with
+change 2 below. Read it before applying.
+
+### 1. `config.js` — let production use a private endpoint
+
+```js
+// before
+RPC_URL: "https://rpc.mainnet.chain.robinhood.com",
+
+// after
+RPC_URL: process.env.RPC_URL || "https://rpc.mainnet.chain.robinhood.com",
+```
+
+Then set `RPC_URL` on the Railway service to the same private endpoint the keeper
+uses. Every other tunable in that file already reads from the environment; this
+one was the exception.
+
+### 2. `doom-launchpad-indexer.js` — stop the retry storm
+
+`getLogs` currently splits the block range on *any* error and recurses without a
+depth limit. Splitting fixes "range too large". It does not fix a timeout or a
+429: each split doubles the request count against a provider already refusing, so
+a 1,000-block batch can fan out to a thousand calls. Classify the error, back off
+on the retryable ones, and only split for the ones splitting can fix:
+
+```js
+const SPLITTABLE = /too many|too large|range|limit exceeded|exceeds|response size|query returned more/i;
+const RETRYABLE = /timeout|timed out|rate ?limit|429|503|ETIMEDOUT|ECONNRESET|socket hang up/i;
+const MAX_SPLIT_DEPTH = 4;
+```
+
+Three attempts at 1s, 2s, 4s, then give up. Giving up costs one poll; the next
+starts from the same cursor.
+
+### 3. `api.js` — stop understating the gap
+
+`head` is only written on a successful scan, so `blocks_behind` freezes with it
+and shrinks in apparent size the longer an outage lasts. When
+`last_scan_age_s` exceeds the stall threshold, report `blocks_behind` as `null`
+and keep the frozen figure as `blocks_behind_at_last_scan`. A stalled indexer does
+not know how far behind it is.
+
+### Verified
+
+The first two changes were run against a throwaway database over a 2,500-block
+range at the live head: the cursor advanced to the confirmed head, `last_error`
+was empty, and the process stayed healthy. The production database was never
+opened. Changed copies are kept outside both repositories until the rebase is
+resolved.
+
 ## For launch 2
 
 Blocker 1 is cleared when `/launchpad/health` reports `status: ok`,
