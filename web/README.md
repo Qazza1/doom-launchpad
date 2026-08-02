@@ -85,8 +85,21 @@ Two details worth keeping if this is rewritten:
   of control characters and inserted with `textContent`, never as markup, and a
   test enforces both.
 
+## Images
+
+Chosen images are scaled to a 512-pixel long edge and compressed to about 200 KB
+in the browser, before anything leaves the machine. The creator is told what
+happened to their file — "1.6 MB → 198 KB, 88% smaller" — rather than having it
+quietly replaced.
+
+This is sized to the Filebase free plan: 5 GB of space, 500 pins, and 5 GB of
+bandwidth a month. Bandwidth runs out first, so images must eventually be served
+through the site's own hosting with Filebase as the permanent record, not fetched
+from the IPFS gateway on every page view. SVG is stored untouched, since
+rasterising a vector to hit a byte budget makes it worse at every size.
+
 ## Not built yet
 
-- Image upload and pinning. The image stays in the browser for now.
+- The upload itself. Images are prepared but never leave the browser.
 - A launch list or discovery page. The detail page takes `?launch=<id>` for now.
 - Anything that depends on the public factory, which does not exist.

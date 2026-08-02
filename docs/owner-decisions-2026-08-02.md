@@ -87,7 +87,39 @@ Watch during the canary: how far the DCT1 price moves on real buys, whether
 anyone trades it at all, and whether 0.01 ETH looks like a working market or a
 broken one.
 
-## 5. Stage 6 begins after the canary
+## 5. Image storage: Filebase free plan, with images shrunk in the browser
+
+Token images go to the owner's existing Filebase account. The free plan gives 5 GB
+of storage, 500 IPFS pins, and 5 GB of bandwidth a month, and **3.83 GB of the
+storage is already in use by something else**.
+
+The binding limits, in order of which bites first:
+
+1. **Bandwidth, 5 GB a month.** A discovery page full of logos costs megabytes per
+   visit. Images must be served through the site's own hosting, with Filebase as
+   the permanent record, not fetched from the IPFS gateway on every page view.
+2. **500 pins**, which caps the launchpad at 500 tokens before a paid plan.
+3. **Storage**, which is the least pressing: at 200 KB an image, 500 tokens need
+   about 100 MB against the 1.17 GB still free.
+
+Images are therefore scaled to a 512-pixel long edge and compressed to roughly
+200 KB in the creator's browser before anything is uploaded, which stretches the
+same bandwidth allowance about ten times further. Measured on a worst-case test
+image of pure noise: 1.6 MB became 198 KB. SVG is stored untouched, because
+rasterising a vector to fit a byte budget makes it worse at every size.
+
+Still worth checking: what is using the other 3.83 GB.
+
+## 6. The prototype pages stay local until the canary ends
+
+They live in this repository and are served by `node web/serve.mjs` on the
+owner's machine. They are not deployed anywhere and the public site is untouched.
+
+The reason is not caution about the code: the pages describe a factory that
+cannot serve the public, so a public copy would show a launch flow nobody can
+use. Revisit once factory #2 exists.
+
+## 7. Stage 6 begins after the canary
 
 The launcher-first product release starts once the canary is complete and the
 blockers in `docs/stage-5-launch-1-review.md` are cleared. Preparatory work that

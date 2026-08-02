@@ -6,6 +6,12 @@ import {
   splitSupply,
   validateTokenInputs,
 } from "./economics.mjs";
+import {
+  MAX_STORED_BYTES,
+  describeBytes,
+  describeSaving,
+  planResize,
+} from "../lib/image-resize.mjs";
 import { SELECTORS } from "./selectors.mjs";
 
 /// Stage 6 guided launch flow, prototype.
@@ -33,6 +39,7 @@ const state = {
   nativeLiquidityWei: 10_000_000_000_000_000n,
   chain: null,
   inputs: { name: "", symbol: "", wholeSupply: "1000000000" },
+  image: null,
 };
 
 const number = value => Number(value).toLocaleString("en-US");
@@ -207,23 +214,87 @@ function showState(name) {
   panel.querySelector("p").textContent = description.detail;
 }
 
+/// Draws the image at the planned size and steps the quality down until it fits. Everything happens
+/// in the browser: the creator's original never leaves their machine, and what would be stored is a
+/// fraction of the size.
+async function shrink(file, plan) {
+  const bitmap = await createImageBitmap(file);
+  const canvas = document.createElement("canvas");
+  canvas.width = plan.targetWidth;
+  canvas.height = plan.targetHeight;
+  const context = canvas.getContext("2d");
+  context.drawImage(bitmap, 0, 0, plan.targetWidth, plan.targetHeight);
+  bitmap.close?.();
+
+  // JPEG unless the image might rely on transparency, because PNG ignores the quality argument.
+  const type = file.type === "image/png" ? "image/webp" : "image/jpeg";
+  let smallest = null;
+  for (const quality of plan.qualities) {
+    const blob = await new Promise(done => canvas.toBlob(done, type, quality));
+    if (!blob) continue;
+    if (!smallest || blob.size < smallest.size) smallest = blob;
+    if (blob.size <= MAX_STORED_BYTES) return blob;
+  }
+  // Nothing on the ladder fit. Keep the smallest attempt and let the page say so.
+  return smallest;
+}
+
 function wireImage() {
   const input = $("#image");
   $("#drop").addEventListener("click", () => input.click());
-  input.addEventListener("change", () => {
+  input.addEventListener("change", async () => {
     const file = input.files?.[0];
     const error = $("#imageError");
     const preview = $("#preview");
     error.textContent = "";
     if (!file) return;
     if (file.size > MAX_IMAGE_BYTES) {
-      error.textContent = `That file is ${(file.size / 1024 / 1024).toFixed(1)} MB. The limit is 2 MB.`;
+      error.textContent = `That file is ${describeBytes(file.size)}. The limit is 2 MB.`;
       input.value = "";
       return;
     }
+
     preview.src = URL.createObjectURL(file);
     preview.hidden = false;
-    $("#dropText").textContent = `${file.name} — stays in your browser.`;
+    $("#dropText").textContent = `${file.name} — checking size…`;
+
+    try {
+      const bitmap = await createImageBitmap(file);
+      const plan = planResize({
+        width: bitmap.width,
+        height: bitmap.height,
+        bytes: file.size,
+        type: file.type,
+      });
+      bitmap.close?.();
+
+      if (plan.action === "reject") {
+        error.textContent = plan.reason;
+        input.value = "";
+        preview.hidden = true;
+        $("#dropText").textContent = "Click to choose a PNG, JPG, or SVG. 2 MB maximum.";
+        return;
+      }
+      if (plan.action === "keep") {
+        state.image = { blob: file, bytes: file.size };
+        $("#dropText").textContent = `${file.name} — ${describeBytes(file.size)}, stored as is.`;
+        return;
+      }
+
+      const blob = await shrink(file, plan);
+      state.image = { blob, bytes: blob.size };
+      preview.src = URL.createObjectURL(blob);
+      const note = blob.size > MAX_STORED_BYTES
+        ? ` Still above ${describeBytes(MAX_STORED_BYTES)}; this is as small as it goes without visible damage.`
+        : "";
+      $("#dropText").textContent =
+        `${file.name} — ${describeSaving({ before: file.size, after: blob.size })}${note}`;
+    } catch {
+      // A file the browser cannot decode is not a resizing problem, it is a bad file.
+      error.textContent = "That file could not be read as an image.";
+      input.value = "";
+      preview.hidden = true;
+    }
   });
 }
 
