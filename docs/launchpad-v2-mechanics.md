@@ -207,6 +207,21 @@ factory holding other people's liquidity permanently.
 
 ### Three verification gates before any work starts
 
+**Answered 2026-08-02 — all three pass. Full evidence in
+`docs/v4-venue-gates-2026-08-02.md`.** In short: the PoolManager is at
+`0x8366a39cc670b4001a1121b8f6a443a643e40951` and every v4 address on chain 4663
+was confirmed to hold code; v4 carries roughly a fifth of v3's swap count on the
+same chain, so it is active rather than empty; and v4-core is BUSL-1.1 until
+2027-06-15, after which it becomes MIT, with v4-periphery under copyleft GPL-2.0.
+
+The owner nonetheless chose v3 for factory #2 on the same day
+(`docs/owner-decisions-2026-08-02.md`), which these answers support: the option
+stays open, and the licence question largely dissolves by mid-2027. Re-run all
+three before v4 work actually begins — gate 1 is a chain read, gate 2 is a log
+count, and gate 3 has a date on it.
+
+The original gates, kept because they are the right questions to ask again:
+
 1. **Does a v4 `PoolManager` exist on chain 4663, and at what address?** From
    Uniswap's official deployment list or the chain's own documentation — the same
    standard applied to the v3 addresses. Never guess. If v4 is not on the chain,

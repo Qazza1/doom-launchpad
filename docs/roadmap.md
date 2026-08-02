@@ -143,6 +143,10 @@ time, independently verified, and left paused. Evidence:
   fails if reviewed contract sources drift:
   `docs/independent-review-package.md`.
 - [ ] Independent smart-contract audit/review against one tagged commit.
+  **Deferred by owner decision on 2026-08-02**, extending the canary waiver to the
+  public factory. See `docs/owner-decisions-2026-08-02.md`, including what makes
+  this materially different from the canary waiver and the trigger the owner still
+  owes: audit at a TVL threshold, a launch count, or a date.
 - [ ] Remediation and focused re-review of every contract change.
 - [x] Record the owner's explicit 2026-07-29 risk acceptance to proceed without
   independent third-party review for the capped three-launch canary only.
@@ -264,6 +268,12 @@ Status: designed, not committed. Full detail and open questions in
 Factory #1 can only ever perform three launches of exactly 0.01 ETH, because the
 canary caps are contract constants enforced by the constructor. A second factory
 is therefore required for public launching regardless of these mechanics.
+
+**Venue decided 2026-08-02: factory #2 targets Uniswap v3.** v4 is evaluated
+again once the v3 launchpad works. The three v4 gates were answered the same day
+and all pass — `docs/v4-venue-gates-2026-08-02.md` — so this is a deferral, not a
+rejection. The bonding-curve item below depends on that later work and is
+deferred with it.
 
 - [x] Death Watch engine and Telegram broadcast, reading the chain directly with
   no indexer dependency: `docs/death-watch.md`.
