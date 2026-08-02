@@ -6,7 +6,7 @@
   "explorerUrl": "https://robinhoodchain.blockscout.com",
   "rpcUrlEnvironmentVariable": "ROBINHOOD_RPC_URL",
   "fallbackRpcUrlEnvironmentVariable": "ROBINHOOD_FALLBACK_RPC_URL",
-  "factoryDeploymentBlock": "25105648",
+  "factoryDeploymentBlock": "25082132",
   "contracts": {
     "factory": "0xDC0DF0Ba9e519D1E082F8B45307450F418eED9dE",
     "positionLocker": "0xdaE01c32131fF283f403b4C1fD71018Fa31cfAC0",
@@ -28,7 +28,7 @@
     "treasury": "0x9038C3AB7caE02a8aae730E705fdF7a15945eb7E",
     "campaignManager": "0x4F81E3939232815e3C98B124A17BaC75304C82D8"
   },
-  "expectedFactoryPaused": true,
+  "expectedFactoryPaused": false,
   "thresholds": {
     "rpcStaleSeconds": 180,
     "rpcFutureToleranceSeconds": 60,

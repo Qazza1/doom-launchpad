@@ -32,18 +32,33 @@ First:
 5. Do not deploy, fund an address, sign, or broadcast any transaction. The
    contracts are already live; see the mainnet state section immediately below.
 
-READ THIS FIRST. THE CONTRACTS ARE LIVE ON MAINNET.
+READ THIS FIRST. THE CONTRACTS ARE LIVE ON MAINNET AND THE CANARY IS RUNNING.
 
-All four contracts are deployed on Robinhood Chain (4663) and the factory is
-deliberately PAUSED. Stages 3.1 to 3.4 and Stage 4 are complete. Stage 5 is
-deployed, verified, operationally integrated, and waiting.
+All four contracts are deployed on Robinhood Chain (4663). The factory was
+RESUMED on 2026-08-01 and is open now. Canary launch 1 is done and every observer
+invariant holds; two launches remain within the contract cap of three. Stages 3.1
+to 3.4 and Stage 4 are complete.
 
-You are NOT authorized to: resume the factory, execute a canary launch, sign or
-broadcast any transaction, request or load a private key, deploy replacements,
-withdraw fees, or create reward campaigns. Factory resume and the first canary
-launch each require a separate, explicit owner approval given immediately before
-that action. This document is not that approval, and neither is any earlier
-message in a conversation.
+Launch 1 state, for orientation only:
+
+- Token DCT1 `0xbebf865056a3fe9914e9edeaddd6ed763309ddb6`
+- Pool `0x515b8e7271b81a20c9f5e1a69f96565a22db945d`, position 548289 held by the
+  PositionLocker
+- Escrow `0x19b0780f01567c1c05349a1d8a113042c4cd07ed` holding 600,000,000 DCT1,
+  GM streak open at 0/3
+- Launch transaction
+  `0xf46332c0645743a1c8b0baec50ab5bc72efa08e62f25bdaa52821772b747044c`, block
+  25352820
+
+Read `docs/stage-5-launch-1-review.md` before anything touching launch 2. It
+records the evidence and the blockers that are still open.
+
+You are NOT authorized to: execute a canary launch, pause or resume the factory,
+sign or broadcast any transaction, request or load a private key, deploy
+replacements, withdraw fees, or create reward campaigns. Launches 2 and 3 each
+require a separate, explicit owner approval given immediately before that action.
+This document is not that approval, and neither is any earlier message in a
+conversation.
 
 All work is read-only, non-broadcast, fail-closed, and test-first.
 
@@ -84,15 +99,18 @@ Maintain these hard boundaries:
 - Never ask for, store, print, or commit seed phrases, private keys, RPC URLs,
   Telegram tokens, API keys, or other secrets.
 - Never import the SafePal seed/private key into Rabby.
-- The factory must remain paused after deployment.
+- The factory is open for the capped canary. Do not pause or resume it without an
+  explicit owner instruction; both directions are owner decisions, and the keeper
+  manifest must be updated in the same sitting.
 - The two one-time bindings are irreversible. Preserve the exact deployment
   order and stop on any receipt or postcondition mismatch.
 - Never guess Robinhood Chain or Uniswap V3-compatible addresses.
 - Do not populate final nonce, predicted contract addresses, gas, or required
   funding in the canonical manifest from the current snapshot. Those values
   become stale when the deployer nonce, block, gas, or code changes.
-- Do not merge this branch to main, fund the Rabby deployer, unpause the
-  factory, or begin the three-launch canary without explicit owner approval.
+- Do not merge this branch to main, fund the Rabby deployer, change the factory's
+  pause state, or execute canary launch 2 or 3 without explicit owner approval
+  given immediately before the action.
 - Any contract source change invalidates the frozen review artifact. Re-freeze
   `config/review-artifact.json` in the same commit; after an independent review
   it also requires focused re-review.
@@ -456,39 +474,45 @@ Do not set deployment approval or broadcast flags during engineering work.
 
 ## What is being worked on now
 
-Everything is deployed, verified, and paused. Operations are live and read-only.
+Everything is deployed and verified, the factory is resumed, and the capped
+canary is in progress with one launch done. Operations are live and read-only.
 
 Running in production:
 
 - **Keeper** on Railway (`doom-launchpad-keeper`), read-only, no signing key, two
-  RPC providers, persistent alert state, Telegram delivery verified, zero active
-  alerts. See `docs/keeper-operations.md`.
-- **Indexer** on Railway (`OnchainDiligence-indexer`), read-only, live cursor at
-  confirmed head with zero blocks behind. Older analytics history is still
-  backfilling and that gap is reported explicitly rather than hidden.
+  RPC providers, persistent alert state. It sees launch 1, its permanent-lock
+  check passes, and a local dry run against the reconciled config reports zero
+  active alerts. See `docs/keeper-operations.md`.
+- **Indexer** on Railway (`OnchainDiligence-indexer`), read-only — **currently
+  stalled**. It stopped at block 25352711, 109 blocks before launch 1 was mined,
+  reports `status: stalled` with a request timeout, and has never indexed the
+  launch. This is the largest open item.
 - **Public site** with the Death Watch survival feed, creator Doom Record, and
-  persistent watchlist alerts, all agreeing with the zero-launch chain state.
+  persistent watchlist alerts. Death Watch reads the chain directly and is
+  correct; anything the site derives from the indexer is not.
 
-Both services independently confirm the factory is paused and launch count is
-zero.
+Direct reads, the observer, and Death Watch agree on the factory being resumed
+with launch count 1. The indexer does not.
 
-Immediately before any canary launch, in order:
+Before launch 2, in order:
 
-1. Owner grants explicit approval to resume the factory. Only then call
-   `resumeLaunches()` from the operator account.
-2. Owner grants a second, separate approval for the first launch.
-3. Launch exactly 0.01 ETH from the approved creator.
-4. Run `tools/canary/observe.mjs` against that launch and review every invariant
-   before the next launch is even considered. Three launches is the hard cap.
-5. Compare indexer and public API output against direct contract reads.
+1. Clear the blockers in `docs/stage-5-launch-1-review.md`: the stalled indexer,
+   the unfunded creator account, unconfirmed Telegram delivery, and the open GM
+   streak.
+2. Owner grants explicit approval for launch 2, immediately before the action.
+   Approval for launch 1 does not carry.
+3. Prepare the plan with `tools/canary/prepare.ps1 -Kind launch -Launch 2` and
+   rehearse it with `tools/canary/fork-rehearsal.ps1 -Kind launch`.
+4. Launch exactly 0.01 ETH of liquidity — 0.0101 ETH of value — from the approved
+   creator.
+5. Run `tools/canary/observe.mjs` against that launch and review every invariant
+   before launch 3 is even considered. Three launches is the hard cap.
+6. Compare indexer and public API output against direct contract reads.
 
-Known open item, low impact, worth fixing before launch:
-`PositionLocker.bindRegistrar` was mined at block 25102641, which is earlier than
-the recorded factory deployment block 25105648 used as the indexer and keeper
-start block. The `RegistrarBound` event therefore falls outside the scan range
-and will never be indexed. The binding itself is correct and verifiable through
-`authorizedRegistrar()`. Setting the start block to 25082132, the first
-deployment, closes the gap.
+Closed on 2026-08-02: `PositionLocker.bindRegistrar` at block 25102641 fell
+outside the scan range that started at the factory deployment block 25105648.
+Both the indexer and `config/keeper.mainnet.json` now start at 25082132, the
+first deployment, so `RegistrarBound` is inside the range.
 
 Two structural facts to carry forward:
 
@@ -533,12 +557,12 @@ Remaining gates include:
 9. Confirm the factory is paused and both one-time bindings are correct.
 10. Revoke or remove unnecessary hot-wallet funds after the procedure.
 
-### Stage 5 — capped mainnet canary
+### Stage 5 — capped mainnet canary, in progress
 
 This is separate from deployment:
 
-- Owner explicitly approves resuming the factory.
-- Launch no more than three canary tokens.
+- Owner explicitly approves resuming the factory. **Done 2026-08-01.**
+- Launch no more than three canary tokens. **One done; two remain.**
 - Each uses exactly 0.01 ETH of native liquidity.
 - Aggregate canary liquidity cannot exceed 0.03 ETH.
 - Observe and review each launch before proceeding to the next.

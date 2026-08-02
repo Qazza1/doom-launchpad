@@ -4,8 +4,16 @@ Recorded 2026-08-01. **Nothing in this document authorizes anything.** It
 specifies a workflow to be built; the workflow itself will contain no send path
 until the owner separately approves adding one.
 
-The contracts are live and the factory is paused. Resume and the first launch are
-two distinct owner decisions, each granted immediately before the action.
+**Superseded in part, 2026-08-02.** The resume and the first launch both
+happened. The factory is open, launch count is 1, and the binding fields below
+that reference "launch count expected 0" and "total native liquidity expected 0"
+were correct for launch 1 only — a plan is bound to the state observed when it is
+generated, which `tools/canary/prepare.mjs` reads from chain rather than
+assuming. Everything else here still holds. Current state and open blockers are
+in `docs/stage-5-launch-1-review.md`; build progress is in
+`docs/stage-5-build-stages.md`.
+
+Every launch is a distinct owner decision, granted immediately before the action.
 
 ## The separation that defines this workflow
 
@@ -102,11 +110,11 @@ because everything else is frozen in the deployed factory:
 Do not ask for allocation, treasury, streak duration, liquidity amount, or fee.
 Those are contract constants and cannot be varied.
 
-## Open operational item
+## Open operational item — closed 2026-08-02
 
 `PositionLocker.bindRegistrar` was mined at block 25102641, before the recorded
-factory deployment block 25105648 that the keeper and indexer use as their start
-block. `RegistrarBound` therefore falls outside the scan range permanently. The
-binding is correct and verifiable through `authorizedRegistrar()`; the fix is to
-set the start block to 25082132, the first deployment. Low impact, worth closing
-before the canary so the indexed history is complete from the beginning.
+factory deployment block 25105648 that the keeper and indexer used as their start
+block, so `RegistrarBound` fell outside the scan range permanently. Both now
+start at 25082132, the first deployment: the indexer reports
+`deployment_block: 25082132` and `config/keeper.mainnet.json` matches, with a
+test pinning it at or below the binding's block.

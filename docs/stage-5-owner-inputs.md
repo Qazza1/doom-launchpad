@@ -50,9 +50,15 @@ Three launches, numbered, is the sensible pattern: the second and third are
 separate approvals anyway, and distinct names make the observer output and the
 Death Watch feed unambiguous.
 
-## 2. The indexer and keeper start block
+## 2. The indexer and keeper start block — done 2026-08-02
 
-### What is wrong
+Both were changed to `25082132`, without resetting the cursor, exactly as
+recommended below. `GET /launchpad/health` reports `deployment_block: 25082132`
+and `config/keeper.mainnet.json` matches; the keeper service still needs a
+redeploy to pick the file up. The rest of this section is kept as the record of
+the decision.
+
+### What was wrong
 
 `PositionLocker.bindRegistrar` was mined at block **25102641**. The indexer and
 keeper both start scanning at the factory deployment block **25105648**, which is
@@ -93,7 +99,9 @@ on demand.
    `25082132`.
 3. Save. Railway redeploys automatically.
 4. Confirm with `GET /launchpad/health` that `deployment_block` reads
-   `25082132`, `blocks_behind` is `0`, and `factory_paused` is still `true`.
+   `25082132`, `blocks_behind` is `0`, and `factory_paused` matches the state you
+   believe the factory is in — `true` before the resume, `false` while the canary
+   runs.
 
 **Keeper.** `config/keeper.mainnet.json` holds `factoryDeploymentBlock` in the
 repository. Change it to `25082132`, commit, and redeploy the

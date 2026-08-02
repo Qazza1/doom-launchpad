@@ -120,10 +120,16 @@ fail-closed before contract deployment. No launch transaction is enabled.
   2026-08-01: the public API reports the correct factory, `blocks_behind: 0`,
   `confidence: high`, `factory_paused: true`, and zero launches, matching direct
   contract reads taken the same day.
-- [ ] Move the indexer and keeper start block from the factory deployment block
+- [x] Move the indexer and keeper start block from the factory deployment block
   25105648 to the first deployment 25082132, so `PositionLocker.RegistrarBound`
-  at block 25102641 stops falling outside the scan range. Requires a Railway
-  environment change.
+  at block 25102641 stops falling outside the scan range. Done 2026-08-02: the
+  indexer reports `deployment_block: 25082132` and `config/keeper.mainnet.json`
+  matches. The cursor was not reset, so that one event stays unindexed and
+  remains checkable through `authorizedRegistrar()`, as planned.
+- [ ] Restore the indexer. As of 2026-08-02 it is stalled at block 25352711 with
+  a request timeout, 109 blocks before canary launch 1, and has never indexed the
+  launch. Direct reads and Death Watch are correct; the derived layer is empty.
+  This blocks launch 2. See `docs/stage-5-launch-1-review.md`.
 
 ## Stage 4 — independent review and deployment preparation
 

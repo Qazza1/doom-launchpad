@@ -29,7 +29,13 @@ placeholders. After the tagged Stage 4 deployment:
 2. fill the deployed factory, liquidity manager, locker, rewards vault, and
    deployment block;
 3. independently verify every address and immutable;
-4. retain `expectedFactoryPaused: true` until the separate resume approval;
+4. keep `expectedFactoryPaused` equal to the state that is actually meant to be
+   true right now — `true` before the resume approval, `false` while the canary
+   runs, `true` again the moment the factory is paused. It is a statement about
+   the world, not a preference. It was left at `true` for about twelve hours
+   after the 2026-08-01 resume and the keeper spent that time sending a critical
+   alert every five minutes that meant nothing, which is how a real alert gets
+   missed. Change it in the same sitting as the pause or resume, and redeploy;
 5. configure independent primary and fallback RPCs;
 6. run a dry check before allowing Telegram state to persist.
 
