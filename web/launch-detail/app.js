@@ -4,7 +4,7 @@ import {
   describeFreshness,
   describePermanence,
   reconcileAllocation,
-} from "./status.mjs";
+} from "../lib/status.mjs";
 import { DETAIL_SELECTORS } from "./selectors.mjs";
 
 /// The public page for one launch.

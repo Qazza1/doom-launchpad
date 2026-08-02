@@ -62,6 +62,29 @@ Three distinctions it keeps carefully:
 If a read fails, the page shows why and hides everything else. Partial figures
 about locked money are worse than no figures.
 
+`discovery/` — the list every launch is found from, at
+<http://127.0.0.1:4181/web/discovery/>.
+
+Launches are enumerated from the factory's own `launchCount` and read one by one
+at a single pinned block, so the list works when the indexer does not. That is one
+round trip per launch, which is fine for a three-launch cap; a public factory would
+read the list from the indexer and keep this as the fallback.
+
+The categories are the ones this launchpad can actually compute: deadline missed,
+check-in due now, streak alive, survived, dead. There is deliberately no
+"Trending" — that needs trade volume nobody here measures — and no "Graduating",
+which belongs to the bonding curve deferred with the v4 work. Rows are ordered by
+how close a creator is to losing their allocation, because that countdown is the
+thing this product has and others do not.
+
+Two details worth keeping if this is rewritten:
+
+- The page opens on "Needs a check-in" only when something is actually there.
+  Landing on an empty tab makes a healthy launchpad look broken.
+- Token names and symbols come from contracts anyone can deploy. They are stripped
+  of control characters and inserted with `textContent`, never as markup, and a
+  test enforces both.
+
 ## Not built yet
 
 - Image upload and pinning. The image stays in the browser for now.

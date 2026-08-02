@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DoomStreak — Launches</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --cyan: #15dff2; --lime: #9cff00; --yellow: #ffe600; --pink: #ff2d96;
+      --ink: #f8f5ff; --dim: #8d7ba9; --soft: #c9bce2;
+      --panel: #16072a; --deep: #0b0414; --line: #4e3869;
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 28px 0 80px; color: var(--ink);
+      background:
+        radial-gradient(circle at 82% 12%, #55103f 0, transparent 32%),
+        radial-gradient(circle at 12% 88%, #062b48 0, transparent 34%), #090415;
+    }
+    .wrap { width: min(940px, calc(100% - 32px)); margin: 0 auto; }
+    .eyebrow { color: var(--cyan); letter-spacing: .14em; font-weight: 800; font-size: 12px; }
+    h1 { margin: 8px 0 6px; font-size: clamp(30px, 6vw, 46px); line-height: .98; }
+    h1 span { color: var(--pink); }
+    .lede { margin: 0 0 20px; color: var(--soft); line-height: 1.6; max-width: 62ch; }
+
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+    .tabs button {
+      padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--deep);
+      color: var(--dim); font: inherit; font-size: 12px; font-weight: 800; letter-spacing: .05em; cursor: pointer;
+    }
+    .tabs button[aria-selected="true"] { color: var(--cyan); border-color: var(--cyan); }
+    .tabs button .n { color: var(--soft); font-weight: 600; }
+
+    ul#feed { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+    li.row {
+      display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;
+      padding: 18px 20px; background: var(--panel); border: 2px solid var(--line);
+      border-radius: 14px; box-shadow: 5px 5px 0 #000;
+    }
+    li.row[data-tone="error"] { border-color: var(--pink); }
+    li.row[data-tone="pending"] { border-color: var(--yellow); }
+    li.row[data-tone="success"] { border-color: var(--lime); }
+    .name { margin: 0; font-size: 17px; font-weight: 800; }
+    .name a { color: var(--ink); text-decoration: none; }
+    .name a:hover { color: var(--cyan); }
+    .meta { margin: 5px 0 0; color: var(--dim); font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .right { text-align: right; }
+    .badge {
+      display: inline-block; padding: 5px 11px; border-radius: 999px; font-size: 11px;
+      font-weight: 800; letter-spacing: .05em; border: 1px solid var(--line); background: var(--deep); color: var(--dim);
+    }
+    .badge[data-tone="error"] { color: var(--pink); border-color: var(--pink); }
+    .badge[data-tone="pending"] { color: var(--yellow); border-color: var(--yellow); }
+    .badge[data-tone="success"] { color: var(--lime); border-color: var(--lime); }
+    .new { margin-left: 6px; color: var(--cyan); border-color: var(--cyan); }
+    .count { margin: 6px 0 0; font-size: 13px; color: var(--soft); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .progress { margin: 4px 0 0; font-size: 12px; color: var(--dim); }
+
+    .empty, .fresh {
+      padding: 18px; border-radius: 12px; background: var(--deep); border: 1px dashed var(--line);
+      color: var(--soft); line-height: 1.65; font-size: 13px;
+    }
+    .fresh { margin-top: 18px; border-style: solid; }
+    .fresh b { color: var(--cyan); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">DOOMSTREAK LAUNCHPAD · LAUNCHES</div>
+  <h1>THE <span>DEATH</span> WATCH</h1>
+  <p class="lede">
+    Every coin here has a clock on it. The creator got nothing at launch and has to
+    check in three days running to earn their allocation. This list is ordered by who
+    is closest to losing it.
+  </p>
+
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <ul id="feed"></ul>
+  <div class="empty" id="empty" hidden></div>
+  <div class="fresh" id="fresh"></div>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
