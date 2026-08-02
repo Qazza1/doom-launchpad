@@ -22,7 +22,9 @@ import { loadDecisions, observeLaunch } from "./observe.mjs";
 /// transaction is sent by an impersonated account on a local Anvil that holds a sentinel balance no
 /// real account could have.
 
-export const LOCAL_PORT = 18546;
+/// 18545 is the Stage 4 localhost preview and 18546 is its Rabby preview fork. A third port keeps
+/// the three from colliding when more than one is open.
+export const LOCAL_PORT = 18547;
 export const LOCAL_URL = `http://127.0.0.1:${LOCAL_PORT}`;
 /// Distinct from the Stage 4 deployment preview's sentinel so a report can never be confused for the
 /// other tool's, and impossible on mainnet.

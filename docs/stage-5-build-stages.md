@@ -19,7 +19,7 @@ checklist here for launch 2; it lists blockers that are still open.
 | B | Guards: stale plan, changed field, wrong chain/account/nonce/value | **done** — `tools/canary/plan-guards.mjs`, 10 tests |
 | C | Read-only dual-provider preflight | **done** — `tools/canary/preflight.mjs`, 8 tests |
 | D | Localhost fork rehearsal of resume and launch, separately | **done** — `tools/canary/fork-rehearsal.mjs`, 13 tests, exercised against a live fork |
-| E | Wallet comparison harness, no send path | not started — needs a live RPC and a wallet, best done interactively |
+| E | Wallet comparison harness, no send path | **done** — `tools/canary/wallet-compare.mjs`, 12 tests; the wallet leg is an interactive owner run |
 | F | Owner runbook with STOP checkpoints | **done** — `docs/stage-5-owner-runbook.md` |
 | G | Non-broadcast preparation CLI tying A-C together | **done** — `tools/canary/prepare.mjs`, 3 tests |
 
@@ -105,12 +105,45 @@ plan hash, while the call itself is unchanged.
 
 ## Stage E — wallet comparison harness
 
-Chain-isolated, mirroring `tools/deployment/rabby-preview-server.mjs`: verify the
-**mined** transaction rather than the payload the page sent, two independent
-guards before every prompt, and a preview chain ID that is not 4663.
+`tools/canary/wallet-compare.mjs`, page `wallet-compare.html` / `.js`, wrapper
+`tools/canary/wallet-compare.ps1`.
 
-Exit criteria: harness refuses to run on 4663; tests prove no private key is ever
-loaded and no send path to mainnet exists.
+Stage D proves the plan executes; Stage E proves the *wallet* signs that plan and
+not something else. They are different failures: a correct plan can still be
+mis-rendered, re-nonced, or have its value quietly changed between the page and
+the signature.
+
+Chain-isolated, extending `tools/deployment/rabby-preview-server.mjs` and
+importing its chain constants rather than restating them. The fork runs on
+`PREVIEW_CHAIN_ID`, so EIP-155 makes every signature invalid on Robinhood
+mainnet. The harness refuses to start on 4663 or on 46630, which is a real
+network. It reads the **mined** transaction back and compares sender, recipient,
+value, and calldata field by field; the payload the page sent is not evidence.
+
+Value is compared as an exact equality rather than "must be zero". A canary
+launch carries 0.0101 ETH, and a wallet that rounds, truncates, or drops it is
+precisely what this stage is looking for.
+
+Two independent guards run before every prompt, in the page and again on the
+server against the live fork: the isolated chain ID, and a sentinel balance the
+real creator account could not hold. Neither stands in for the other.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\canary\wallet-compare.ps1 -Kind launch
+```
+
+Exit criteria met: 12 tests, including that the harness refuses chain 4663, that
+each substituted field is caught, that no private key is loaded, and that the
+only upstream call in the whole module is a single read of the pending nonce.
+
+The wallet leg itself is an interactive owner run and has not been performed. Use
+your own Alchemy or QuickNode endpoint: the public
+`rpc.mainnet.chain.robinhood.com` rate-limits into a Cloudflare challenge under
+the read volume a fork produces, which surfaces as a 403 inside an
+`anvil_setBalance` error.
+
+Ports, so three forks can coexist: 18545 Stage 4 localhost preview, 18546 Stage 4
+Rabby preview, 18547 Stage D rehearsal, 18548 Stage E comparison.
 
 ## Stage F — owner runbook
 

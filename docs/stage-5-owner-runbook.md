@@ -111,11 +111,24 @@ Pass `-Launch 2` or `-Launch 3` to select the right one.
    If it fails, the plan is wrong; do not submit it. Compare the **calldata
    hash** between the rehearsal report and the plan you submit — the plan hash
    changes with the nonce and expiry, the call does not.
-4. Compare the plan hash with what you approve. If they differ, stop.
-5. **STOP.** This spends real money and creates permanently locked liquidity that
+4. **Check what your wallet does with it**, on an isolated chain where a
+   signature is worth nothing:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\tools\canary\wallet-compare.ps1 -Kind launch
+   ```
+
+   Add the preview network it prints, connect, and sign once. It reads the mined
+   transaction back and compares sender, recipient, value, and calldata against
+   the plan. This is the step that catches a wallet dropping or rounding the
+   0.0101 ETH. Step 3 rehearses the plan; this rehearses *you and your wallet*.
+   Use your own Alchemy or QuickNode endpoint — the public RPC rate-limits under
+   the load a fork produces.
+5. Compare the plan hash with what you approve. If they differ, stop.
+6. **STOP.** This spends real money and creates permanently locked liquidity that
    nobody — including you — can ever withdraw. The token will be real, tradeable,
    and buyable by strangers on a 0.01 ETH pool.
-6. Submit from the approved creator, comparing the wallet's calldata and value
+7. Submit from the approved creator, comparing the wallet's calldata and value
    against the plan before confirming.
 
 ## After the launch, in this order
