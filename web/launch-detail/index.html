@@ -59,7 +59,15 @@
     .steps3 div[data-done="yes"] { color: var(--lime); border-color: var(--lime); }
     .steps3 div[data-now="yes"] { color: var(--yellow); border-color: var(--yellow); }
 
-    footer.note { margin-top: 20px; color: var(--dim); font-size: 12px; line-height: 1.6; }
+    footer.note {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      margin-top: 18px; color: var(--dim); font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    footer.note .warn {
+      padding: 3px 9px; border-radius: 999px; border: 1px solid var(--yellow);
+      color: var(--yellow); cursor: help;
+    }
     #error { display: none; padding: 16px; border-radius: 10px; background: #2a0616; border-left: 4px solid var(--pink); color: #ffd7e6; line-height: 1.6; }
   </style>
 </head>
@@ -103,17 +111,9 @@
       <table id="addressTable"></table>
     </section>
 
-    <section class="wide">
-      <h2>WHERE THESE NUMBERS CAME FROM</h2>
-      <span class="badge" id="freshBadge" data-tone="muted">—</span>
-      <p class="say" id="freshDetail"></p>
-    </section>
   </div>
 
-  <footer class="note">
-    Prototype. Every figure is read straight from the chain, so this page keeps working when the
-    indexer does not. It has no way to send a transaction.
-  </footer>
+  <footer class="note" id="freshLine"></footer>
 </div>
 <script type="module" src="./app.js"></script>
 </body>

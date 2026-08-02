@@ -27,7 +27,7 @@ export function describeCommitment({ status, completedCheckIns, requiredCheckIns
       label: "Survived",
       tone: "success",
       progress,
-      detail: `All ${required} check-ins were made. The full allocation was released to the creator.`,
+      detail: `All ${required} check-ins made. Full allocation released to the creator.`,
       deadline: null,
     };
   }
@@ -38,8 +38,8 @@ export function describeCommitment({ status, completedCheckIns, requiredCheckIns
       tone: "error",
       progress,
       detail:
-        `The streak ended after ${done} of ${required} check-ins. Everything not already released `
-        + "went to the rewards vault permanently. Check-ins already made were not taken back.",
+        `Ended after ${done} of ${required} check-ins. Everything unreleased went to the rewards `
+        + "vault permanently. Check-ins already made were not taken back.",
       deadline: null,
     };
   }
@@ -55,9 +55,8 @@ export function describeCommitment({ status, completedCheckIns, requiredCheckIns
       tone: "error",
       progress,
       detail:
-        `The window closed ${describeGap(now - closes)} ago. Anyone can now finalise the default, `
-        + "which sends everything unreleased to the rewards vault. Until someone does, nothing has "
-        + "moved and the creator can still not check in.",
+        `Window closed ${describeGap(now - closes)} ago. Anyone can now finalise the default. `
+        + "Until someone does, nothing has moved.",
       deadline: closes,
     };
   }
@@ -67,7 +66,7 @@ export function describeCommitment({ status, completedCheckIns, requiredCheckIns
       label: "Check-in window open",
       tone: "pending",
       progress,
-      detail: `The creator has ${describeGap(closes - now)} left to check in.`,
+      detail: `${describeGap(closes - now)} left to check in.`,
       deadline: closes,
     };
   }
@@ -76,9 +75,7 @@ export function describeCommitment({ status, completedCheckIns, requiredCheckIns
     label: "Waiting for the next window",
     tone: "muted",
     progress,
-    detail:
-      `The next window opens in ${describeGap(opens - now)} and closes `
-      + `${describeGap(closes - opens)} after that.`,
+    detail: `Next window opens in ${describeGap(opens - now)}, closes ${describeGap(closes - opens)} later.`,
     deadline: closes,
   };
 }
@@ -108,8 +105,7 @@ export function describePermanence({ recordSaysPermanent, positionId, positionOw
       tone: "success",
       label: "Permanently locked",
       detail:
-        `Position ${positionId} is held by the locker contract, confirmed by reading the position `
-        + `manager at block ${verifiedAtBlock}. There is no function that can release it.`,
+        `Held by the locker, verified at block ${verifiedAtBlock}. No release function exists.`,
     };
   }
   if (recordSaysPermanent && !ownedByLocker) {
@@ -118,15 +114,15 @@ export function describePermanence({ recordSaysPermanent, positionId, positionOw
       tone: "error",
       label: "Claim not verified",
       detail:
-        `The launch record says the liquidity is permanent, but the position manager reports the `
-        + `owner as ${positionOwner}, not the locker. Do not treat this liquidity as locked.`,
+        `The record says permanent, but the position manager reports the owner as ${positionOwner}. `
+        + "Do not treat this liquidity as locked.",
     };
   }
   return {
     proven: false,
     tone: "error",
     label: "Not permanent",
-    detail: "This launch is not recorded as permanently locked liquidity.",
+    detail: "Not recorded as permanently locked liquidity.",
   };
 }
 

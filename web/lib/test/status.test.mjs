@@ -86,8 +86,10 @@ test("permanent liquidity is claimed only when both proofs agree", () => {
     verifiedAtBlock: 25794258,
   });
   assert.equal(proven.proven, true);
-  assert.match(proven.detail, /548289/);
+  // The block it was verified at stays in the sentence; the position ID lives in the table beside
+  // it, so repeating it here was noise.
   assert.match(proven.detail, /25794258/);
+  assert.match(proven.detail, /No release function exists/);
 });
 
 test("a record claiming permanence is not believed when the owner disagrees", () => {

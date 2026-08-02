@@ -208,15 +208,26 @@ function render(data) {
     ["Locker", explorerLink(POSITION_LOCKER)],
   ]);
 
+  // One quiet line, and a warning chip only when there is something to warn about.
   const freshness = describeFreshness({
     blockNumber: data.blockNumber,
     blockTime: data.chainTime,
     wallClock: Math.floor(Date.now() / 1000),
     indexerBehind: data.indexerBehind,
   });
-  $("#freshBadge").textContent = `Confidence: ${freshness.confidence}`;
-  $("#freshBadge").dataset.tone = freshness.tone;
-  $("#freshDetail").textContent = freshness.detail;
+  const line = $("#freshLine");
+  line.replaceChildren();
+  const summary = document.createElement("span");
+  summary.textContent =
+    `Live from the chain · block ${data.blockNumber.toLocaleString("en-US")} · ${freshness.ageSeconds}s old`;
+  line.append(summary);
+  if (data.indexerBehind > 0) {
+    const warning = document.createElement("span");
+    warning.className = "warn";
+    warning.textContent = `Indexer ${data.indexerBehind.toLocaleString("en-US")} blocks behind`;
+    warning.title = "Every figure on this page is read from the chain and does not depend on the indexer.";
+    line.append(warning);
+  }
 
   $("#content").hidden = false;
 }

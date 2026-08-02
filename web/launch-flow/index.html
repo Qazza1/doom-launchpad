@@ -107,14 +107,13 @@
     <div class="eyebrow">DOOMSTREAK LAUNCHPAD · PROTOTYPE</div>
     <h1>LAUNCH A <span>COIN</span></h1>
     <p class="lede">
-      Three days. Three check-ins. You get nothing at launch, the liquidity is locked
-      forever, and your income is the trading fees. Everything below is read from the
-      deployed contract's frozen settings, not typed into this page.
+      Three days. Three check-ins. Nothing at launch, liquidity locked forever, and
+      the trading fees are yours.
     </p>
   </header>
 
   <div class="banner" id="capability">
-    <b>This prototype cannot launch anything.</b> Checking what the chain allows…
+    <b>Prototype — cannot launch.</b> Checking the chain…
   </div>
 
   <div class="steps">
@@ -126,10 +125,7 @@
 
   <section class="card" data-panel="1">
     <h2>Token image</h2>
-    <p class="hint">
-      Optional. Stays in your browser for now — nothing is uploaded. In the finished
-      product the image is uploaded and pinned for you, so you never touch IPFS.
-    </p>
+    <p class="hint">Optional. Stays in your browser — nothing is uploaded yet.</p>
     <label for="image">IMAGE FILE</label>
     <div class="drop" id="drop">
       <img id="preview" alt="" hidden>
@@ -142,10 +138,7 @@
 
   <section class="card" data-panel="2" hidden>
     <h2>Token details</h2>
-    <p class="hint">
-      Only these are yours to choose. Allocation, check-in count, fees, and the pool
-      settings are fixed in the contract and cannot be changed by anyone, including us.
-    </p>
+    <p class="hint">Only these are yours to choose. Everything else is fixed in the contract.</p>
     <div class="row">
       <div class="field">
         <label for="name">NAME</label>
@@ -185,7 +178,7 @@
 
   <section class="card" data-panel="3" hidden>
     <h2>What you are committing to</h2>
-    <p class="hint">Every number below is computed from the contract's own settings and your supply.</p>
+    <p class="hint">Computed from the contract's settings and your supply.</p>
     <table id="reviewTable"></table>
     <div class="locked">
       <h3>Read this before you continue</h3>
@@ -199,10 +192,7 @@
 
   <section class="card" data-panel="4" hidden>
     <h2>Confirm and sign</h2>
-    <p class="hint">
-      The wallet shows the exact call. Compare the recipient and the value with the
-      figures on the previous screen before approving anything.
-    </p>
+    <p class="hint">Check the recipient and the value against the wallet before approving.</p>
     <table id="confirmTable"></table>
     <div class="status" id="status" data-tone="muted">
       <b>Not submitted</b>
@@ -214,10 +204,7 @@
     </div>
     <p class="why" id="launchWhy"></p>
 
-    <p class="why" style="margin-top:22px">
-      Preview the states a real launch moves through. These are the messages the
-      finished product shows; none of them sends anything.
-    </p>
+    <p class="why" style="margin-top:22px">Preview the states a real launch moves through.</p>
     <div class="statepick">
       <button type="button" data-state="pending">Waiting for a block</button>
       <button type="button" data-state="reverted">Failed on chain</button>
@@ -226,11 +213,7 @@
     </div>
   </section>
 
-  <small class="foot">
-    Prototype. It reads the frozen configuration and the public chain, and it has no
-    way to send a transaction. The public factory does not exist yet; the deployed
-    factory is limited by its own code to three test launches.
-  </small>
+  <small class="foot">Reads the chain and the frozen configuration. No send path.</small>
 </div>
 <script type="module" src="./app.js"></script>
 </body>

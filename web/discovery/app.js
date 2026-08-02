@@ -113,15 +113,30 @@ async function load() {
   state.items = sortByUrgency(items);
   state.tab = defaultTab(state.items);
   const indexerBehind = await readIndexerLag(Number(BigInt(head.number)));
+  state.indexerBehind = indexerBehind;
+
+  // Freshness stays on the page, but as one quiet line rather than a paragraph. The warning only
+  // appears when there is something to warn about; a page that explains itself at length every time
+  // trains people to skip the one time it matters.
   const freshness = describeFreshness({
     blockNumber: Number(BigInt(head.number)),
     blockTime: state.chainTime,
     wallClock: Math.floor(Date.now() / 1000),
     indexerBehind,
   });
-  $("#fresh").innerHTML = `<b>Confidence: ${freshness.confidence}.</b> `;
-  $("#fresh").append(document.createTextNode(freshness.detail));
-  state.indexerBehind = indexerBehind;
+  const meta = $("#fresh");
+  meta.replaceChildren();
+  meta.dataset.tone = freshness.tone;
+  const line = document.createElement("span");
+  line.textContent = `Live from the chain · block ${Number(BigInt(head.number)).toLocaleString("en-US")} · ${freshness.ageSeconds}s old`;
+  meta.append(line);
+  if (indexerBehind > 0) {
+    const warning = document.createElement("span");
+    warning.className = "warn";
+    warning.textContent = `Indexer ${indexerBehind.toLocaleString("en-US")} blocks behind`;
+    warning.title = "These figures are read from the chain and do not depend on the indexer.";
+    meta.append(warning);
+  }
   render();
 }
 

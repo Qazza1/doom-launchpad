@@ -74,18 +74,15 @@ async function readCapability() {
       launchCount: BigInt(count),
       maxLaunches: BigInt(max),
     };
-    const remaining = state.chain.maxLaunches - state.chain.launchCount;
     banner.innerHTML =
-      `<b>This prototype cannot launch anything.</b> The deployed factory has used `
-      + `${state.chain.launchCount} of its ${state.chain.maxLaunches} launches and only its `
-      + `approved test account may call it. The public factory that would serve this page has not `
-      + `been built yet. ${remaining > 0n ? `${remaining} test launch(es) remain, and each needs its own owner approval.` : ""}`;
+      `<b>Prototype — cannot launch.</b> The deployed factory has used `
+      + `${state.chain.launchCount} of ${state.chain.maxLaunches} launches and accepts only its test `
+      + "account. The public factory does not exist yet.";
   } catch (error) {
     // Failing to read the chain is itself a state worth showing honestly.
     banner.innerHTML =
-      `<b>This prototype cannot launch anything.</b> It also could not reach the chain to check the `
-      + `current limits (${error.message}). Nothing below depends on that read; the figures come `
-      + `from the frozen configuration.`;
+      `<b>Prototype — cannot launch.</b> The chain could not be reached to check current limits `
+      + `(${error.message}). The figures below come from the frozen configuration.`;
   }
 }
 
@@ -157,21 +154,19 @@ function renderReview() {
 
   const list = $("#warnings");
   list.replaceChildren();
+  // Short, but nothing dropped. Each line is a fact a creator can be angry about later if it was
+  // not said before they signed.
   const points = [
-    `You receive ${bigNumber(split.creator)} tokens at launch. Not a share, not a vesting schedule — nothing.`,
-    `The ${eth(state.nativeLiquidityWei)} ETH and ${bigNumber(split.liquidity)} tokens go into a pool that is locked forever. `
-      + "Nobody can withdraw it: not you, not us. There is no release function in the contract.",
-    `You must check in ${economics.requiredCheckIns} times, once every `
-      + `${economics.cadenceSeconds / 3600} hours, each within a `
-      + `${economics.gracePeriodSeconds / 3600}-hour window. First window if you launched now: `
-      + `${when(schedule[0].opensAt)} to ${when(schedule[0].closesAt)}.`,
-    `Each check-in releases ${bigNumber(split.perCheckIn)} tokens to you. Miss one and everything not `
-      + "yet released goes to the rewards vault permanently. Anyone can trigger that, and check-ins you "
-      + "already made are never taken back.",
-    `Your income is trading fees, not your token balance: `
-      + `${economics.eligibleWethFeeSplitBps.creator / 100}% of the ETH-side fees while your streak is alive. `
-      + "If you dump what you are released into your own thin pool, you get back less than you put in and "
-      + "you destroy the fee stream. That is the design, and you should know it now rather than later.",
+    `You get ${bigNumber(split.creator)} tokens at launch. Nothing now, nothing vesting.`,
+    `${eth(state.nativeLiquidityWei)} ETH and ${bigNumber(split.liquidity)} tokens are locked forever. `
+      + "No release function exists — not for you, not for us.",
+    `${economics.requiredCheckIns} check-ins, one every ${economics.cadenceSeconds / 3600}h, each with a `
+      + `${economics.gracePeriodSeconds / 3600}h window. First: ${when(schedule[0].opensAt)}.`,
+    `Each releases ${bigNumber(split.perCheckIn)} tokens. Miss one and the rest goes to the rewards `
+      + "vault permanently; anyone can trigger it. Check-ins already made are kept.",
+    `Your income is fees, not your bag: ${economics.eligibleWethFeeSplitBps.creator / 100}% of ETH-side `
+      + "trading fees while the streak lives. Dumping into your own thin pool returns less than you put "
+      + "in and kills the fee stream.",
   ];
   for (const point of points) {
     const item = document.createElement("li");
@@ -195,9 +190,8 @@ function renderConfirm() {
   const button = $("#launch");
   button.disabled = true;
   $("#launchWhy").textContent =
-    "Disabled on purpose. The deployed factory only accepts its approved test account and is capped "
-    + "at three launches by its own code, and the public factory does not exist yet. When it does, this "
-    + "button will still be disabled until the plan, the fork rehearsal, and the wallet comparison all pass.";
+    "Disabled on purpose: the public factory does not exist yet, and the deployed one accepts only "
+    + "its approved test account.";
 }
 
 function showState(name) {

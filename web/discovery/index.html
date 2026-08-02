@@ -58,12 +58,19 @@
     .count { margin: 6px 0 0; font-size: 13px; color: var(--soft); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
     .progress { margin: 4px 0 0; font-size: 12px; color: var(--dim); }
 
-    .empty, .fresh {
+    .empty {
       padding: 18px; border-radius: 12px; background: var(--deep); border: 1px dashed var(--line);
       color: var(--soft); line-height: 1.65; font-size: 13px;
     }
-    .fresh { margin-top: 18px; border-style: solid; }
-    .fresh b { color: var(--cyan); }
+    .fresh {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      margin-top: 16px; color: var(--dim); font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .fresh .warn {
+      padding: 3px 9px; border-radius: 999px; border: 1px solid var(--yellow);
+      color: var(--yellow); cursor: help;
+    }
   </style>
 </head>
 <body>
@@ -71,9 +78,7 @@
   <div class="eyebrow">DOOMSTREAK LAUNCHPAD · LAUNCHES</div>
   <h1>THE <span>DEATH</span> WATCH</h1>
   <p class="lede">
-    Every coin here has a clock on it. The creator got nothing at launch and has to
-    check in three days running to earn their allocation. This list is ordered by who
-    is closest to losing it.
+    Every coin here has a clock on it. Ordered by who is closest to losing their allocation.
   </p>
 
   <div class="tabs" id="tabs" role="tablist"></div>
