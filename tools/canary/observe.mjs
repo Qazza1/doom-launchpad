@@ -1,59 +1,18 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { readJson, writeJson } from "../lib/json-file.mjs";
+import { LAUNCH_FIELDS, decodeLaunchRecord, splitWords } from "../lib/launch-record.mjs";
 
 export const CHAIN_ID = 4663;
 export const BPS = 10_000n;
 
+// Re-exported so existing callers and tests keep their import path. The decoder itself lives in
+// tools/lib because the public launch page loads it in the browser.
+export { LAUNCH_FIELDS, decodeLaunchRecord, splitWords };
+
 const directory = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(directory, "../..");
 const outputRoot = resolve(directory, "output");
-
-/// Order matters: this mirrors DoomLaunchFactory.LaunchRecord exactly. Every field is static, so the
-/// tuple is returned as consecutive words.
-export const LAUNCH_FIELDS = [
-  ["token", "address"],
-  ["creator", "address"],
-  ["pool", "address"],
-  ["creatorEscrow", "address"],
-  ["positionId", "uint"],
-  ["totalSupply", "uint"],
-  ["creatorLiquidAmount", "uint"],
-  ["liquidityTokenAmountAllocated", "uint"],
-  ["liquidityTokenAmountUsed", "uint"],
-  ["liquidityTokenRemainder", "uint"],
-  ["escrowTokenAmount", "uint"],
-  ["nativeLiquidityAmountRequested", "uint"],
-  ["nativeLiquidityAmountUsed", "uint"],
-  ["creationFee", "uint"],
-  ["treasuryFee", "uint"],
-  ["nftRewardFee", "uint"],
-  ["createdAt", "uint"],
-  ["liquidityPermanent", "bool"],
-  ["sqrtPriceX96", "uint"],
-  ["configurationHash", "bytes32"],
-];
-
-export function splitWords(hex) {
-  const body = String(hex || "").replace(/^0x/, "");
-  if (body.length % 64 !== 0) throw new Error("return data is not a whole number of words");
-  return Array.from({ length: body.length / 64 }, (_, index) =>
-    body.slice(index * 64, index * 64 + 64));
-}
-
-export function decodeLaunchRecord(hex) {
-  const words = splitWords(hex);
-  if (words.length < LAUNCH_FIELDS.length) throw new Error("launch record is truncated");
-  const record = {};
-  for (const [index, [name, kind]] of LAUNCH_FIELDS.entries()) {
-    const word = words[index];
-    if (kind === "address") record[name] = `0x${word.slice(24)}`;
-    else if (kind === "bool") record[name] = BigInt(`0x${word}`) === 1n;
-    else if (kind === "bytes32") record[name] = `0x${word}`;
-    else record[name] = BigInt(`0x${word}`);
-  }
-  return record;
-}
 
 const same = (left, right) => String(left).toLowerCase() === String(right).toLowerCase();
 

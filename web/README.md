@@ -39,9 +39,31 @@ and listed. The third one is the state the launchpad was actually in on
 2026-08-02, when the token was real and correct but the indexer had not seen it.
 Showing it honestly is the point.
 
+`launch-detail/` — the public page for one launch, at
+<http://127.0.0.1:4181/web/launch-detail/?launch=1>.
+
+Every figure is read from the chain, pinned to a single block, so the page is
+complete without the indexer. It asks the indexer only how far behind it is, with
+a timeout, and says so on the page. On 2026-08-02 that read reported the indexer
+several hundred thousand blocks behind while the page itself was two seconds old.
+
+Three distinctions it keeps carefully:
+
+- **Deadline missed is not defaulted.** After a missed window anyone *can*
+  finalise the default, but until they do the tokens have not moved. The page
+  says exactly that rather than declaring the streak dead early.
+- **Permanent liquidity needs two proofs.** The launch record is the factory's
+  claim about the past; `ownerOf` read now is the chain's answer today. The word
+  "permanent" appears only when both agree, and the page names the block it
+  checked.
+- **A resolved commitment has no deadline.** The contract returns zero once a
+  streak ends, so the page shows a dash instead of a date in 1970.
+
+If a read fails, the page shows why and hides everything else. Partial figures
+about locked money are worse than no figures.
+
 ## Not built yet
 
-- The token detail page (`/launch/:token`) described in
-  `docs/static-site-ui-plan.md`.
 - Image upload and pinning. The image stays in the browser for now.
+- A launch list or discovery page. The detail page takes `?launch=<id>` for now.
 - Anything that depends on the public factory, which does not exist.
