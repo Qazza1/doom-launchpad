@@ -116,11 +116,14 @@ nothing.
 
 Each of these is resolved or it is not. None of them are formalities.
 
-1. **The indexer is stalled and has never seen launch 1.** Resolved when `/launchpad/health`
-   reports `status: ok`, `blocks_behind: 0`, `confidence: high`, and `launches_indexed: 1`, and
-   `/launchpad/launches` returns launch 1 with an allocation matching the observer output above.
-   Until then the runbook's "compare direct reads with the indexer and public API" step cannot be
-   performed, and one of the three things the canary is meant to prove is unproven.
+1. **The indexer is stalled and has never seen launch 1.** Diagnosed in
+   `docs/indexer-stall-2026-08-02.md`: every RPC request the worker makes is timing out, most
+   likely because it is the one component still pointed at the shared public endpoint, which
+   rate-limits. Resolved when `/launchpad/health` reports `status: ok`, `blocks_behind: 0`,
+   `confidence: high`, and `launches_indexed: 1`, and `/launchpad/launches` returns launch 1 with
+   an allocation matching the observer output above. Until then the runbook's "compare direct reads
+   with the indexer and public API" step cannot be performed, and one of the three things the
+   canary is meant to prove is unproven.
 2. **Telegram delivery is unconfirmed for a real alert.** Resolved when you confirm you received
    the pause-state alert, or send a fresh test through the documented path.
 3. **The creator account is underfunded.** Resolved when the balance covers 0.0101 ETH plus gas

@@ -129,7 +129,9 @@ fail-closed before contract deployment. No launch transaction is enabled.
 - [ ] Restore the indexer. As of 2026-08-02 it is stalled at block 25352711 with
   a request timeout, 109 blocks before canary launch 1, and has never indexed the
   launch. Direct reads and Death Watch are correct; the derived layer is empty.
-  This blocks launch 2. See `docs/stage-5-launch-1-review.md`.
+  This blocks launch 2. Diagnosis in `docs/indexer-stall-2026-08-02.md`: the worker's RPC
+  requests are all timing out, and it is the last component still hard-coded to the shared
+  public endpoint. See also `docs/stage-5-launch-1-review.md`.
 
 ## Stage 4 — independent review and deployment preparation
 
