@@ -58,12 +58,36 @@ What is different this time, stated once so the record is honest:
   recorded as an architecture requirement for factory #2 and should be closed
   there rather than inherited.
 
-The owner has been told this and has decided. Open question the owner still owes
-an answer to: **what triggers the audit.** "Later" without a trigger becomes
-never. A TVL threshold, a launch count, or a date all work; pick one and record
-it here.
+The owner has been told this and has decided.
 
-## 4. Stage 6 begins after the canary
+**Trigger, chosen 2026-08-02: a fixed number of public launches.** New launches
+stop until the audit is complete once the public factory has produced **20
+launches**. Twenty is a proposal, not the owner's own number — change it here if
+it is wrong, and treat this paragraph as the authority once it is settled.
+
+The weakness of a count-based trigger, stated so nobody is surprised by it later:
+twenty small launches carry far less risk than twenty large ones, so the trigger
+can fire long after the money at risk justified an audit. If a single launch ever
+locks an unusually large amount, that is a reason to audit early regardless of
+the count.
+
+## 4. The minimum launch liquidity is deferred until the canary ends
+
+Factory #2 needs a minimum liquidity amount per launch. The analysis in
+`docs/launchpad-v2-mechanics.md` says a pool below roughly 0.05 ETH is barely
+tradeable: at 0.01 ETH a 0.005 ETH buy moves the price about 33%, against about
+9% at 0.05 ETH.
+
+The owner chose to decide after watching the canary pools behave with real
+trades. That is a reasonable way to settle it, and it has a deadline attached:
+**this must be answered before factory #2 is specified**, because the minimum is
+a constructor constant and cannot be changed afterwards.
+
+Watch during the canary: how far the DCT1 price moves on real buys, whether
+anyone trades it at all, and whether 0.01 ETH looks like a working market or a
+broken one.
+
+## 5. Stage 6 begins after the canary
 
 The launcher-first product release starts once the canary is complete and the
 blockers in `docs/stage-5-launch-1-review.md` are cleared. Preparatory work that
