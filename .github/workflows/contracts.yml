@@ -16,10 +16,13 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: "24"
+      # The canary tests moved to the foundry job: they read selectors out of the compiled artifact
+      # rather than hard-coding them, so they need an out/ directory this job does not build. They
+      # were failing here from the day they were added.
       - name: Confirm Stage 4 manifest remains fail-closed
         run: |
+          node --test tools/lib/test/*.test.mjs
           node --test tools/deployment/test/*.test.mjs
-          node --test tools/canary/test/*.test.mjs
           node --test tools/deathwatch/test/*.test.mjs
           node tools/deployment/verify-manifest.mjs config/stage4-deployment-manifest.json
 
@@ -137,6 +140,15 @@ jobs:
         env:
           DOOM_PRODUCTION_INDEXER_ABI: production-indexer/doom-launchpad-abis.js
         run: node --test tools/integration/test/*.test.mjs
+      # Same reason: both read function selectors from the compiled artifacts, so that a renamed or
+      # re-typed function fails the build instead of silently reading the wrong storage slot.
+      - name: Canary workflow and public page tests
+        run: |
+          node --test tools/canary/test/*.test.mjs
+          node --test web/launch-flow/test/*.test.mjs
+          node --test web/launch-detail/test/*.test.mjs
+          node --test web/discovery/test/*.test.mjs
+          node --test web/lib/test/*.test.mjs
       - uses: actions/upload-artifact@v6
         if: always()
         with:
