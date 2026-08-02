@@ -1,6 +1,6 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { readJson, writeJson } from "../lib/json-file.mjs";
 import { PLAN_KIND, buildLaunchPlan, buildResumePlan } from "./launch-plan.mjs";
 import { guardSubmission } from "./plan-guards.mjs";
 import { buildObserved, compareProviders, readProvider, validateBalance } from "./preflight.mjs";
@@ -39,10 +39,6 @@ export function parseArguments(argv) {
   const defaultHeadroom = kind === PLAN_KIND.launch ? "3000000000000000" : "100000000000000";
   const gasHeadroomWei = read("--gas-headroom") ?? defaultHeadroom;
   return { errors, kind, index, ttl, gasHeadroomWei };
-}
-
-async function readJson(path) {
-  return JSON.parse(await readFile(path, "utf8"));
 }
 
 export async function main(argv = process.argv.slice(2)) {
@@ -124,9 +120,11 @@ export async function main(argv = process.argv.slice(2)) {
   });
   const balanceFailures = validateBalance(primary, plan, options.gasHeadroomWei);
 
-  await mkdir(outputRoot, { recursive: true });
-  const path = resolve(outputRoot, `${plan.kind}-plan.json`);
-  await writeFile(path, `${JSON.stringify({ plan, observed, generatedAt: new Date().toISOString() }, null, 2)}\n`, "utf8");
+  const path = await writeJson(resolve(outputRoot, `${plan.kind}-plan.json`), {
+    plan,
+    observed,
+    generatedAt: new Date().toISOString(),
+  });
 
   console.log(`\n=== ${plan.kind.toUpperCase()} PLAN ===`);
   console.log(`  to           ${plan.to}`);

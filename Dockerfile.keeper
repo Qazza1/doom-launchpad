@@ -6,6 +6,8 @@ COPY tools/keeper/package.json tools/keeper/package-lock.json ./tools/keeper/
 RUN npm ci --prefix tools/keeper --omit=dev
 
 COPY tools/keeper ./tools/keeper
+# The keeper parses its config through the shared BOM-safe reader.
+COPY tools/lib ./tools/lib
 COPY config/keeper.mainnet.json \
   config/robinhood-mainnet-stage4-deployment.json \
   config/stage4-deployment-manifest.json \
