@@ -109,6 +109,12 @@ $deathWatchTests = Get-ChildItem -LiteralPath (Join-Path $projectRoot "tools\dea
 & $nodeCommand.Source --test $deathWatchTests
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+# Documentation and config claims against live chain state. Skips itself when no endpoint is
+# configured, because CI has no secrets and a check that cannot run must say so rather than block
+# every build. It is loud about skipping; do not read a skip as agreement.
+& $nodeCommand.Source (Join-Path $projectRoot "tools\check-state-drift.mjs")
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 & $forgePath --version
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 

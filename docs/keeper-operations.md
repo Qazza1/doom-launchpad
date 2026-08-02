@@ -31,7 +31,7 @@ placeholders. After the tagged Stage 4 deployment:
 3. independently verify every address and immutable;
 4. keep `expectedFactoryPaused` equal to the state that is actually meant to be
    true right now — `true` before the resume approval, `false` while the canary
-   runs, `true` again the moment the factory is paused. It is a statement about
+   runs, `true` again the moment you pause the factory. It is a statement about
    the world, not a preference. It was left at `true` for about twelve hours
    after the 2026-08-01 resume and the keeper spent that time sending a critical
    alert every five minutes that meant nothing, which is how a real alert gets

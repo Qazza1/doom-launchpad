@@ -119,7 +119,7 @@ fail-closed before contract deployment. No launch transaction is enabled.
   block, then validate its public API against direct contract reads. Confirmed
   2026-08-01: the public API reports the correct factory, `blocks_behind: 0`,
   `confidence: high`, `factory_paused: true`, and zero launches, matching direct
-  contract reads taken the same day.
+  contract reads taken the same day. <!-- state-claim: historical, a dated observation -->
 - [x] Move the indexer and keeper start block from the factory deployment block
   25105648 to the first deployment 25082132, so `PositionLocker.RegistrarBound`
   at block 25102641 stops falling outside the scan range. Done 2026-08-02: the
@@ -190,7 +190,7 @@ layer disagrees with the chain. Two launches remain under the contract cap, each
 needing its own owner approval. Review and open blockers:
 `docs/stage-5-launch-1-review.md`.
 
-- [x] Deploy contracts while the factory remains paused.
+- [x] Deploy contracts while the factory remains paused. <!-- state-claim: historical, completed 2026-08-01 -->
 - [x] Read-only post-deployment verifier for bytecode, constructor values, roles,
   dependencies, bindings, caps, and the paused state, through two providers:
   `tools/deployment/verify-deployment.mjs`.

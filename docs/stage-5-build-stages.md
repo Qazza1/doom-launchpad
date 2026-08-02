@@ -26,6 +26,32 @@ checklist here for launch 2; it lists blockers that are still open.
 Update this table in the same commit as the work. A stage is done only when its
 tests pass in `tools/verify-local.ps1`.
 
+## Keeping the documents honest
+
+`tools/check-state-drift.mjs` compares what this repository *claims* about the
+chain with a live read: prose patterns across every Markdown file, and the
+keeper's `expectedFactoryPaused` field against `launchesPaused()`.
+
+It exists because on 2026-08-02 five documents and one production config were
+stale simultaneously, and the config had been sending a critical alert every five
+minutes for twelve hours. Both classes of failure are regression tests in
+`tools/lib/test/state-claims.test.mjs`.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\check-state-drift.ps1
+```
+
+A document may state a past state where that is the point — dated evidence, a
+signed acceptance, a completed procedure. Two escapes exist and both leave a
+trace: an inline `<!-- state-claim: historical -->` marker, which exempts its
+paragraph, and `config/state-claim-allowlist.json`, which exempts a file and
+requires a written reason. Reach for the inline marker first; a whole-file
+exemption stops checking a file that may later gain live claims.
+
+`verify-local.ps1` runs it and it skips loudly without an endpoint, because CI
+has no secrets. A skip is not agreement — the runbook asks for an explicit run
+before a launch.
+
 ## Shared file access
 
 `tools/lib/json-file.mjs` and `tools/lib/Json.ps1` are the only sanctioned way to

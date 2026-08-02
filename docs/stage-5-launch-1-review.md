@@ -59,7 +59,7 @@ Two things follow from this, and both matter more than the fix:
 
 - **A critical alert that repeats every five minutes and means nothing is how real alerts get
   missed.** It ran for roughly twelve hours. That is the actual finding from launch 1.
-- **This must be flipped back to `true` the moment the factory is paused again**, or the keeper
+- **This must be flipped back to `true` the moment you pause the factory again**, or the keeper
   stops telling you about an unexpected pause — the one thing it exists to catch.
 
 Telegram delivery could not be verified from here. Confirm that you actually received the

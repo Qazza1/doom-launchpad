@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Documents allowed to state a past chain state, with the reason. tools/check-state-drift.mjs fails on any other disagreement between a claim and a live read. Use rule \"*\" to exempt a whole file; prefer a per-rule entry. A single stale line can also opt out inline with a `state-claim: historical` comment, which is the better choice when only one sentence is historical.",
+  "allow": [
+    {
+      "file": "docs/stage-4-mainnet-deployment-evidence.md",
+      "rule": "*",
+      "reason": "A dated record of what the deployment produced on 2026-08-01. It describes the chain at that moment by definition, and rewriting it as the chain moves would destroy the evidence it exists to preserve."
+    },
+    {
+      "file": "docs/stage-4-owner-risk-acceptance.md",
+      "rule": "*",
+      "reason": "A signed statement recorded on 2026-07-29. Its wording is the artifact; it must not be edited to track later state."
+    },
+    {
+      "file": "docs/stage-5-canary-workflow-plan.md",
+      "rule": "*",
+      "reason": "The requirements as recorded on 2026-08-01, superseded in part by a header note rather than rewritten, so the original plan stays readable."
+    }
+  ]
+}

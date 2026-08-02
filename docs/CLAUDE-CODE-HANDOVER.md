@@ -554,7 +554,8 @@ Remaining gates include:
    target or created address, bytecode, constructor/config values, and balance.
 7. Stop on any discrepancy; never blindly submit the next nonce.
 8. Verify source code and constructor arguments on the explorer.
-9. Confirm the factory is paused and both one-time bindings are correct.
+9. Confirm the factory is paused and both one-time bindings are correct. <!-- state-claim: historical, a step in the completed deployment procedure -->
+
 10. Revoke or remove unnecessary hot-wallet funds after the procedure.
 
 ### Stage 5 — capped mainnet canary, in progress

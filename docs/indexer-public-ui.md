@@ -91,7 +91,7 @@ runbook before the UI exposes a write control.
 
 1. Merge and deploy the indexer code with no `DOOM_*` variables.
 2. Confirm `/launchpad/health` reports `not_deployed`.
-3. Deploy and verify the Stage 4 contracts while the factory remains paused.
+3. Deploy and verify the Stage 4 contracts while the factory remains paused. <!-- state-claim: historical, a completed Stage 4 rollout step -->
 4. Add the verified factory address and deployment block to the indexer.
 5. Confirm the dependency addresses read from the factory match the signed
    deployment manifest.

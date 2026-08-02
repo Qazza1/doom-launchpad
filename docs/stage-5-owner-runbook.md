@@ -35,6 +35,10 @@ immediately before the action.
 ## Before anything
 
 - [ ] `powershell -ExecutionPolicy Bypass -File .\tools\verify-local.ps1` exits 0.
+- [ ] `powershell -ExecutionPolicy Bypass -File .\tools\check-state-drift.ps1` exits 0.
+      `verify-local` skips this when no endpoint is configured, so run it explicitly. It compares
+      every claim these documents make about the chain, and the keeper's expected pause state,
+      against a live read. A stale checklist is how a runbook quietly stops describing reality.
 - [ ] `git status` is clean and the branch is pushed.
 - [ ] `src/` still matches `config/review-artifact.json` (CI proves this).
 - [ ] The keeper reports zero active alerts and Telegram delivery works.
