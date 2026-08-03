@@ -230,9 +230,26 @@ needing its own owner approval. Review and open blockers:
 
 ## Stage 6 — launcher-first product release
 
-Status: product direction frozen; implementation and live transactions are
-blocked until the Stage 5 canary passes and the owner gives separate production
-approval.
+Status: **the pages are built** and run locally from `web/` — homepage, guided
+launch flow, per-launch detail, and discovery. They read the chain directly and
+none of them can send a transaction. Live transactions remain blocked until the
+canary passes, factory #2 exists, and the owner gives separate approval.
+
+Built 2026-08-02/03:
+
+- [x] Homepage leading with launch and discovery, NFT game kept in the primary
+  navigation: `web/index.html`.
+- [x] Guided launch flow, four steps, with the creator's downside stated before
+  they sign: `web/launch-flow/`.
+- [x] Per-launch detail page with commitment state, permanent-lock proof read
+  from the position manager, and freshness: `web/launch-detail/`.
+- [x] Discovery list ordered by who is closest to losing their allocation:
+  `web/discovery/`.
+- [x] Honest pending, reverted, indexing, and unreachable states throughout.
+- [x] Images shrunk in the browser before storage, and an IPFS caching route for
+  the site: `api/img/[cid].js` in the website repository.
+- [ ] The upload itself, which needs the Filebase credentials wired up.
+- [ ] Wiring the launch button to factory #2, which does not exist.
 
 - Make the memecoin launchpad the default DoomStreak homepage.
 - Replace the mixed commitment-collection page with one focused coin-launch
