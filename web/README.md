@@ -15,6 +15,17 @@ only, and serves nothing outside this repository.
 
 ## What is here
 
+`index.html` — the homepage, and the entry point at
+<http://127.0.0.1:4181/>. Launching leads the navigation, the live streaks sit
+underneath it as the proof the mechanic is real, and the NFT game and analytics
+keep their places rather than being pushed aside.
+
+The four headline numbers are read from the factory at a single block: launches,
+streaks alive, tokens at stake, and ETH locked forever. If the chain cannot be
+reached the page says the numbers are unknown and clears them, because a
+confident zero is a claim an unreachable node does not support.
+
+
 `launch-flow/` — the four-step creator journey from Stage 6 of the roadmap:
 image, details, review, confirm.
 

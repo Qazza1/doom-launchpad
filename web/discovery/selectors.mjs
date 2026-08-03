@@ -6,6 +6,9 @@ export const DISCOVERY_SELECTORS = {
   // DoomLaunchFactory
   "launchCount()": "0x27cca59f",
   "getLaunch(uint256)": "0x5930d3ce",
+  "launchesPaused()": "0x3bc340c2",
+  "maxLaunches()": "0x03dce94e",
+  "totalNativeLiquidity()": "0x0d6eacf8",
   // GmEscrow
   "status()": "0x200d2ed2",
   "completedCheckIns()": "0x60e0ed15",
@@ -20,6 +23,9 @@ export const DISCOVERY_SELECTORS = {
 export const SELECTOR_SOURCES = {
   "launchCount()": "DoomLaunchFactory",
   "getLaunch(uint256)": "DoomLaunchFactory",
+  "launchesPaused()": "DoomLaunchFactory",
+  "maxLaunches()": "DoomLaunchFactory",
+  "totalNativeLiquidity()": "DoomLaunchFactory",
   "status()": "GmEscrow",
   "completedCheckIns()": "GmEscrow",
   "requiredCheckIns()": "GmEscrow",

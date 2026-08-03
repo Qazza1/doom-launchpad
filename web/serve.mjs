@@ -30,7 +30,7 @@ const server = createServer(async (request, response) => {
   // Redirect rather than serve the page at "/", so the page's relative imports resolve against its
   // own directory. Serving it in place made `./app.js` resolve to the repository root and 404.
   if (path === "/") {
-    response.writeHead(302, { location: "/web/launch-flow/" }).end();
+    response.writeHead(302, { location: "/web/" }).end();
     return;
   }
   if (path.endsWith("/")) path += "index.html";
