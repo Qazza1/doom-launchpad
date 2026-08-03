@@ -31,16 +31,28 @@ test("every headline number is read from the chain, not written into the page", 
   // The markup carries labels and empty containers; the values arrive from the chain at run time.
   assert.match(page, /id="stats"><\/div>/);
   assert.match(page, /id="feed"><\/ul>/);
+  // And it uses the shared system rather than restyling itself.
+  assert.match(page, /assets\/doomstreak\.css/);
+  assert.match(page, /family=Bangers&family=Nunito/);
   assert.match(home, /stat\(stats, String\(count\)/);
   assert.match(home, /DISCOVERY_SELECTORS\["totalNativeLiquidity\(\)"\]/);
 });
 
+/// Checked through the links rather than a slice of markup: a slice breaks whenever the nesting
+/// changes, which says nothing about whether launching still leads.
 test("launching leads, and the NFT game keeps a place in the navigation", () => {
-  const nav = page.slice(page.indexOf("<nav>"), page.indexOf("</nav>"));
-  assert.match(nav, /href="\.\/launch-flow\/"[^>]*data-primary/, "launch is the primary link");
-  assert.match(nav, /NFT GAME/, "the NFT game stays in the main navigation");
-  assert.match(nav, /ANALYTICS/);
-  assert.ok(nav.indexOf("LAUNCH") < nav.indexOf("ANALYTICS"), "launch comes before analytics");
+  const links = [...page.matchAll(/<a\s+href="([^"]+)"([^>]*)>([^<]*)<\/a>/g)]
+    .map(match => ({ href: match[1], attrs: match[2], text: match[3].trim(), at: match.index }));
+
+  const launch = links.find(link => link.href === "./launch-flow/");
+  assert.ok(launch, "the launch page must be linked");
+  assert.match(launch.attrs, /class="primary"/, "launch is the primary link");
+
+  const analytics = links.find(link => link.text === "ANALYTICS");
+  const nft = links.find(link => link.text === "NFT GAME");
+  assert.ok(nft, "the NFT game stays in the main navigation");
+  assert.ok(analytics, "analytics stays in the main navigation");
+  assert.ok(launch.at < analytics.at, "launch comes before analytics");
   // These pages are served from the launchpad repository today and would move under the site
   // repository later. A relative path back to the analytics site is right in exactly one of those
   // two places, so it is absolute.

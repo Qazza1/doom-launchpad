@@ -28,6 +28,10 @@ const padUint = value => BigInt(value).toString(16).padStart(64, "0");
 const tokens = value => (BigInt(value) / 10n ** 18n).toLocaleString("en-US");
 
 // The tab is chosen once the launches are known: urgent if anything is urgent, otherwise all.
+/// The design system's colours carry fixed meanings, so the shared status names are translated
+/// here rather than each page inventing its own palette.
+const TONES = { success: "good", pending: "warn", error: "bad", muted: "", partial: "info" };
+
 const state = { items: [], tab: "all", chainTime: 0, totalLaunches: 0, loadFailed: false };
 
 async function rpc(method, params = []) {
@@ -181,41 +185,45 @@ function render() {
 
   for (const item of visible) {
     const row = document.createElement("li");
-    row.className = "row";
-    row.dataset.tone = item.category.tone;
+    const tone = TONES[item.category.tone] ?? "";
+    if (tone) row.dataset.tone = tone;
 
     const left = document.createElement("div");
-    const name = document.createElement("p");
-    name.className = "name";
+    left.className = "row-main";
+    const name = document.createElement("b");
     const link = document.createElement("a");
     link.href = `../launch-detail/?launch=${item.id}`;
+    link.style.textDecoration = "none";
     // textContent, never innerHTML: the name comes from a token contract anyone can deploy.
     link.textContent = `${item.name} (${item.symbol})`;
     name.append(link);
-    const meta = document.createElement("p");
-    meta.className = "meta";
-    meta.textContent = `#${item.id} · ${item.record.token}`;
-    const progress = document.createElement("p");
-    progress.className = "progress";
-    progress.textContent = `${item.commitment.progress.label} check-ins · `
+    const detail = document.createElement("p");
+    detail.className = "muted num";
+    detail.style.margin = "4px 0 0";
+    detail.style.fontSize = "12px";
+    detail.textContent = `#${item.id} · ${item.commitment.progress.label} check-ins · `
       + `${tokens(item.record.escrowTokenAmount)} at stake`;
-    left.append(name, meta, progress);
+    left.append(name, detail);
 
     const right = document.createElement("div");
-    right.className = "right";
+    right.style.textAlign = "right";
     const badge = document.createElement("span");
     badge.className = "badge";
-    badge.dataset.tone = item.category.tone;
+    if (tone) badge.dataset.tone = tone;
     badge.textContent = item.category.label;
     right.append(badge);
     if (item.category.fresh) {
       const isNew = document.createElement("span");
-      isNew.className = "badge new";
+      isNew.className = "badge";
+      isNew.dataset.tone = "info";
+      isNew.style.marginLeft = "6px";
       isNew.textContent = "NEW";
       right.append(isNew);
     }
     const countdown = document.createElement("p");
-    countdown.className = "count";
+    countdown.className = "num";
+    countdown.style.margin = "6px 0 0";
+    countdown.style.fontSize = "12px";
     countdown.textContent = describeCountdown({ commitment: item.commitment, chainTime: state.chainTime });
     right.append(countdown);
 

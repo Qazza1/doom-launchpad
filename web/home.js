@@ -46,6 +46,10 @@ function decodeString(hex) {
   return text.replace(/[\u0000-\u001f\u007f]/g, "").trim() || null;
 }
 
+/// The design system's colours carry fixed meanings, so the status names the shared modules use are
+/// translated here rather than each page inventing its own.
+const TONES = { success: "good", pending: "warn", error: "bad", muted: "", partial: "info" };
+
 function stat(container, value, label, tone = "") {
   const cell = document.createElement("div");
   cell.className = "stat";
@@ -124,25 +128,31 @@ async function load() {
 
   const stats = $("#stats");
   stats.replaceChildren();
-  stat(stats, String(count), "LAUNCHES", count > 0 ? "success" : "");
-  stat(stats, String(alive.length), "STREAKS ALIVE", alive.length ? "pending" : "");
-  stat(stats, tokens(atStake), "TOKENS AT STAKE");
-  stat(stats, `${eth(BigInt(liquidityWord))} ETH`, "LOCKED FOREVER", "success");
+  stat(stats, String(count), "LAUNCHES");
+  stat(stats, String(alive.length), "STREAKS ALIVE", alive.length ? "good" : "");
+  stat(stats, tokens(atStake), "TOKENS AT STAKE", "calm");
+  stat(stats, `${eth(BigInt(liquidityWord))} ETH`, "LOCKED FOREVER");
 
   const feed = $("#feed");
   feed.replaceChildren();
   for (const item of sorted.slice(0, 3)) {
     const row = document.createElement("li");
+    const tone = TONES[item.category.tone] ?? "";
+    if (tone) row.dataset.tone = tone;
+
     const left = document.createElement("div");
     const link = document.createElement("a");
     link.href = `./launch-detail/?launch=${item.id}`;
     link.textContent = `${item.name} (${item.symbol})`;
     const sub = document.createElement("span");
-    sub.className = "sub";
+    sub.className = "muted num";
+    sub.style.display = "block";
+    sub.style.fontSize = "12px";
     sub.textContent = `${item.commitment.progress.label} check-ins · ${tokens(item.record.escrowTokenAmount)} at stake`;
     left.append(link, sub);
+
     const right = document.createElement("div");
-    right.className = "right";
+    right.className = "num";
     right.textContent = describeCountdown({ commitment: item.commitment, chainTime });
     row.append(left, right);
     feed.append(row);

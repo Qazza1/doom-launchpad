@@ -35,10 +35,18 @@ const server = createServer(async (request, response) => {
   }
   if (path.endsWith("/")) path += "index.html";
 
-  // Contain every request inside the repository, whatever the path contains.
-  const target = resolve(projectRoot, `.${normalize(path)}`);
-  if (target !== projectRoot && !target.startsWith(projectRoot + sep)) {
-    response.writeHead(403).end("outside the repository");
+  // The design system lives in the website repository, one level up, because it belongs to the
+  // whole site rather than to the launchpad. These pages will move there; until then the dev server
+  // serves that one directory so both use the same stylesheet instead of a copy that drifts.
+  const siteRoot = resolve(projectRoot, "..");
+  const insideAssets = path.startsWith("/assets/");
+  const root = insideAssets ? siteRoot : projectRoot;
+
+  // Contain every request inside whichever root applies, whatever the path contains.
+  const target = resolve(root, `.${normalize(path)}`);
+  const allowed = insideAssets ? resolve(siteRoot, "assets") : projectRoot;
+  if (target !== allowed && !target.startsWith(allowed + sep)) {
+    response.writeHead(403).end("outside the served directory");
     return;
   }
 
