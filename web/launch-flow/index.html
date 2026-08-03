@@ -3,118 +3,62 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DoomStreak — Launch a coin</title>
+  <title>DoomStreak — launch a coin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/assets/doomstreak.css">
   <style>
-    :root {
-      color-scheme: dark;
-      --cyan: #15dff2; --lime: #9cff00; --yellow: #ffe600; --pink: #ff2d96;
-      --ink: #f8f5ff; --dim: #8d7ba9; --soft: #c9bce2;
-      --panel: #16072a; --deep: #0b0414; --line: #4e3869;
-      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; padding: 28px 0 80px; color: var(--ink);
-      background:
-        radial-gradient(circle at 82% 12%, #55103f 0, transparent 32%),
-        radial-gradient(circle at 12% 88%, #062b48 0, transparent 34%), #090415;
-    }
-    .wrap { width: min(880px, calc(100% - 32px)); margin: 0 auto; }
-    header { margin-bottom: 22px; }
-    .eyebrow { color: var(--cyan); letter-spacing: .14em; font-weight: 800; font-size: 12px; }
-    h1 { margin: 10px 0 6px; font-size: clamp(30px, 6vw, 50px); line-height: .96; }
-    h1 span { color: var(--pink); }
-    .lede { margin: 0; color: var(--soft); line-height: 1.6; max-width: 60ch; }
-
-    .banner {
-      margin: 20px 0; padding: 14px 16px; border-radius: 10px;
-      background: #291e02; border-left: 4px solid var(--yellow); color: #fff4a8; line-height: 1.55;
-    }
-    .banner b { color: var(--yellow); }
-
-    .steps { display: flex; gap: 8px; margin: 26px 0 18px; flex-wrap: wrap; }
+    /* Page composition only. Anything reusable belongs in the design system. */
+    .steps { display: flex; gap: calc(var(--step) * 1.25); margin: calc(var(--step) * 3) 0; flex-wrap: wrap; }
     .pip {
-      flex: 1 1 140px; padding: 10px 12px; border-radius: 10px; font-size: 12px; font-weight: 800;
-      letter-spacing: .06em; background: var(--deep); border: 1px solid var(--line); color: var(--dim);
+      flex: 1 1 150px; padding: 10px 14px; border: var(--edge-thin); border-radius: var(--radius-sm);
+      background: var(--card2); color: var(--muted);
+      font-family: var(--font-display); font-size: 16px; letter-spacing: 1px;
     }
-    .pip[data-state="active"] { border-color: var(--cyan); color: var(--cyan); }
-    .pip[data-state="done"] { border-color: var(--lime); color: var(--lime); }
-
-    section.card {
-      padding: 26px; background: var(--panel); border: 2px solid var(--line);
-      border-radius: 18px; box-shadow: 8px 8px 0 #000; margin-bottom: 18px;
-    }
-    section.card[hidden] { display: none; }
-    h2 { margin: 0 0 6px; font-size: 20px; color: var(--cyan); }
-    .hint { margin: 0 0 18px; color: var(--dim); font-size: 13px; line-height: 1.55; }
-
-    label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 800; letter-spacing: .07em; color: var(--lime); }
-    input[type="text"], input[type="number"], textarea {
-      width: 100%; padding: 12px; margin-bottom: 4px; border-radius: 10px; color: var(--ink);
-      background: var(--deep); border: 1px solid var(--line); font: inherit;
-    }
-    input:focus, textarea:focus { outline: 2px solid var(--cyan); outline-offset: 1px; }
-    .field { margin-bottom: 16px; }
-    .error { min-height: 16px; margin: 0; color: var(--pink); font-size: 12px; }
-    .row { display: flex; gap: 14px; flex-wrap: wrap; }
-    .row > .field { flex: 1 1 200px; }
+    .pip[data-state="active"] { background: var(--cyan); color: #0d0221; }
+    .pip[data-state="done"] { background: var(--lime); color: #0d0221; }
 
     .drop {
-      display: grid; place-items: center; gap: 10px; padding: 30px; text-align: center;
-      border: 2px dashed var(--line); border-radius: 14px; background: var(--deep); cursor: pointer;
+      display: grid; place-items: center; gap: 10px; padding: calc(var(--step) * 5); text-align: center;
+      border: 3px dashed var(--muted); border-radius: var(--radius-sm); background: var(--card2); cursor: pointer;
     }
     .drop:hover { border-color: var(--cyan); }
-    .drop img { max-width: 128px; max-height: 128px; border-radius: 12px; }
-    .drop p { margin: 0; color: var(--dim); font-size: 13px; }
+    .drop img { max-width: 128px; max-height: 128px; border-radius: var(--radius-sm); border: var(--edge-thin); }
+    .drop p { margin: 0; color: var(--muted); font-size: 14px; }
 
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th, td { padding: 9px 0; text-align: left; border-bottom: 1px solid #2a1c3f; vertical-align: top; }
-    th { color: var(--dim); font-weight: 600; }
-    td { color: var(--ink); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-align: right; }
-    td.note { font-family: inherit; color: var(--soft); text-align: right; font-size: 13px; }
-    tr.total td, tr.total th { border-bottom: none; padding-top: 14px; font-size: 16px; }
-    tr.total td { color: var(--yellow); }
-
-    .locked { margin-top: 18px; padding: 14px; border-radius: 10px; background: #2a0616; border-left: 4px solid var(--pink); }
-    .locked h3 { margin: 0 0 8px; font-size: 14px; color: var(--pink); }
-    .locked ul { margin: 0; padding-left: 18px; color: var(--soft); line-height: 1.7; font-size: 13px; }
-
-    .status { margin-top: 16px; padding: 14px; border-radius: 10px; background: var(--deep); border: 1px solid var(--line); }
-    .status b { display: block; margin-bottom: 4px; font-size: 14px; }
-    .status p { margin: 0; color: var(--soft); font-size: 13px; line-height: 1.6; }
-    .status[data-tone="pending"] b { color: var(--yellow); }
-    .status[data-tone="error"] b { color: var(--pink); }
-    .status[data-tone="success"] b { color: var(--lime); }
-    .status[data-tone="partial"] b { color: var(--cyan); }
-    .status[data-tone="muted"] b { color: var(--dim); }
-
-    .actions { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
-    button {
-      padding: 13px 20px; border: 2px solid #000; border-radius: 12px; color: #090415;
-      background: var(--lime); box-shadow: 4px 4px 0 #000; font: inherit; font-weight: 900; cursor: pointer;
+    .row { display: flex; gap: calc(var(--step) * 2); flex-wrap: wrap; }
+    .row > .field { flex: 1 1 220px; }
+    .actions { display: flex; gap: calc(var(--step) * 1.5); margin-top: calc(var(--step) * 3); flex-wrap: wrap; }
+    .why { margin: calc(var(--step) * 1.5) 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .statepick { display: flex; gap: calc(var(--step)); flex-wrap: wrap; margin-top: calc(var(--step) * 1.5); }
+    .statepick button {
+      padding: 6px 14px; border: var(--edge-thin); border-radius: var(--radius-pill);
+      background: var(--card2); color: var(--muted);
+      font-family: var(--font-display); font-size: 14px; letter-spacing: 1px; cursor: pointer;
     }
-    button.ghost { background: transparent; color: var(--soft); border-color: var(--line); box-shadow: none; }
-    button:disabled { cursor: not-allowed; opacity: .4; }
-    .why { margin: 10px 0 0; color: var(--dim); font-size: 12px; line-height: 1.6; }
-    small.foot { display: block; margin-top: 26px; color: var(--dim); line-height: 1.6; font-size: 12px; }
-    .statepick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-    .statepick button { padding: 7px 12px; font-size: 11px; background: var(--deep); color: var(--soft); border-color: var(--line); box-shadow: none; }
+    .statepick button:hover { color: var(--cyan); }
+    tr.total th, tr.total td { border-bottom: none; padding-top: calc(var(--step) * 2); font-size: 17px; }
+    tr.total td { color: var(--yellow); }
   </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div class="eyebrow">DOOMSTREAK LAUNCHPAD · PROTOTYPE</div>
-    <h1>LAUNCH A <span>COIN</span></h1>
-    <p class="lede">
-      Three days. Three check-ins. Nothing at launch, liquidity locked forever, and
-      the trading fees are yours.
-    </p>
-  </header>
-
-  <div class="banner" id="capability">
-    <b>Prototype — cannot launch.</b> Checking the chain…
+  <div class="nav">
+    <div class="brand"><a href="../" style="color:inherit;text-decoration:none">DOOM<span class="alt">STREAK</span></a></div>
+    <a href="./" class="primary" aria-current="page">LAUNCH</a>
+    <a href="../discovery/">LAUNCHES</a>
+    <a href="https://www.doomstreak.xyz/">ANALYTICS</a>
+    <a href="https://www.doomstreak.xyz/#nft">NFT GAME</a>
   </div>
+
+  <h1 style="margin-top:calc(var(--step)*5)">LAUNCH A <span class="alt">COIN</span></h1>
+  <p class="lede">
+    Three days. Three check-ins. Nothing at launch, liquidity locked forever,
+    and the trading fees are yours.
+  </p>
+
+  <div class="notice" id="capability"><b>Prototype — cannot launch.</b> Checking the chain…</div>
 
   <div class="steps">
     <div class="pip" data-step="1">1 · IMAGE</div>
@@ -124,8 +68,8 @@
   </div>
 
   <section class="card" data-panel="1">
-    <h2>Token image</h2>
-    <p class="hint">Optional. Shrunk to about 200 KB in your browser. Nothing is uploaded yet.</p>
+    <h3>TOKEN IMAGE</h3>
+    <p>Optional. Shrunk to about 200 KB in your browser. Nothing is uploaded yet.</p>
     <label for="image">IMAGE FILE</label>
     <div class="drop" id="drop">
       <img id="preview" alt="" hidden>
@@ -133,12 +77,12 @@
     </div>
     <input type="file" id="image" accept="image/png,image/jpeg,image/svg+xml" hidden>
     <p class="error" id="imageError"></p>
-    <div class="actions"><button type="button" data-go="2">CONTINUE</button></div>
+    <div class="actions"><button class="btn go" type="button" data-go="2">CONTINUE</button></div>
   </section>
 
   <section class="card" data-panel="2" hidden>
-    <h2>Token details</h2>
-    <p class="hint">Only these are yours to choose. Everything else is fixed in the contract.</p>
+    <h3>TOKEN DETAILS</h3>
+    <p>Only these are yours to choose. Everything else is fixed in the contract.</p>
     <div class="row">
       <div class="field">
         <label for="name">NAME</label>
@@ -171,40 +115,40 @@
       </div>
     </div>
     <div class="actions">
-      <button type="button" class="ghost" data-go="1">BACK</button>
-      <button type="button" data-go="3" id="toReview">REVIEW</button>
+      <button class="btn ghost" type="button" data-go="1">BACK</button>
+      <button class="btn go" type="button" data-go="3" id="toReview">REVIEW</button>
     </div>
   </section>
 
   <section class="card" data-panel="3" hidden>
-    <h2>What you are committing to</h2>
-    <p class="hint">Computed from the contract's settings and your supply.</p>
+    <h3>WHAT YOU ARE COMMITTING TO</h3>
+    <p>Computed from the contract's settings and your supply.</p>
     <table id="reviewTable"></table>
-    <div class="locked">
-      <h3>Read this before you continue</h3>
-      <ul id="warnings"></ul>
+    <div class="notice bad" style="margin-top:calc(var(--step)*3)">
+      <b>READ THIS BEFORE YOU CONTINUE</b>
+      <ul id="warnings" style="margin:10px 0 0;padding-left:18px;line-height:1.7"></ul>
     </div>
     <div class="actions">
-      <button type="button" class="ghost" data-go="2">BACK</button>
-      <button type="button" data-go="4">CONTINUE</button>
+      <button class="btn ghost" type="button" data-go="2">BACK</button>
+      <button class="btn go" type="button" data-go="4">CONTINUE</button>
     </div>
   </section>
 
   <section class="card" data-panel="4" hidden>
-    <h2>Confirm and sign</h2>
-    <p class="hint">Check the recipient and the value against the wallet before approving.</p>
+    <h3>CONFIRM AND SIGN</h3>
+    <p>Check the recipient and the value against the wallet before approving.</p>
     <table id="confirmTable"></table>
-    <div class="status" id="status" data-tone="muted">
+    <div class="notice" id="status" data-tone="muted" style="margin-top:calc(var(--step)*3)">
       <b>Not submitted</b>
-      <p>Nothing has been sent.</p>
+      <p style="margin:6px 0 0;color:var(--muted)">Nothing has been sent.</p>
     </div>
     <div class="actions">
-      <button type="button" class="ghost" data-go="3">BACK</button>
-      <button type="button" id="launch" disabled>LAUNCH</button>
+      <button class="btn ghost" type="button" data-go="3">BACK</button>
+      <button class="btn" type="button" id="launch" disabled>LAUNCH</button>
     </div>
     <p class="why" id="launchWhy"></p>
 
-    <p class="why" style="margin-top:22px">Preview the states a real launch moves through.</p>
+    <p class="why">Preview the states a real launch moves through.</p>
     <div class="statepick">
       <button type="button" data-state="pending">Waiting for a block</button>
       <button type="button" data-state="reverted">Failed on chain</button>
@@ -213,7 +157,7 @@
     </div>
   </section>
 
-  <small class="foot">Reads the chain and the frozen configuration. No send path.</small>
+  <div class="meta">Reads the chain and the frozen configuration. No send path.</div>
 </div>
 <script type="module" src="./app.js"></script>
 </body>

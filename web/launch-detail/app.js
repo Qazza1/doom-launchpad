@@ -22,6 +22,10 @@ const POSITION_MANAGER = "0x73991a25C818Bf1f1128dEAaB1492D45638DE0D3";
 const POSITION_LOCKER = "0xdaE01c32131fF283f403b4C1fD71018Fa31cfAC0";
 
 const $ = selector => document.querySelector(selector);
+
+/// The design system's colours carry fixed meanings, so the shared status names are translated
+/// here rather than each page inventing a palette.
+const TONES = { success: "good", pending: "warn", error: "bad", partial: "info", muted: "" };
 const padUint = value => BigInt(value).toString(16).padStart(64, "0");
 const padAddress = value => String(value).replace(/^0x/, "").toLowerCase().padStart(64, "0");
 const asAddress = word => `0x${String(word).slice(-40)}`;
@@ -130,7 +134,7 @@ async function load() {
 
 function render(data) {
   const { record, escrow } = data;
-  $("#title").innerHTML = `LAUNCH #${data.launchId} <span>·</span> ${record.token.slice(0, 10)}…`;
+  $("#title").replaceChildren(`LAUNCH #${data.launchId} · ${record.token.slice(0, 10)}…`);
   $("#subtitle").textContent = `${record.token} — created ${when(record.createdAt)}`;
 
   const commitment = describeCommitment({
@@ -143,7 +147,7 @@ function render(data) {
   });
   const badge = $("#gmBadge");
   badge.textContent = `${commitment.label} · ${commitment.progress.label}`;
-  badge.dataset.tone = commitment.tone;
+  badge.dataset.tone = TONES[commitment.tone] ?? "";
   $("#gmBar").style.width = `${(commitment.progress.done / commitment.progress.required) * 100}%`;
   $("#gmDetail").textContent = commitment.deadline
     ? `${commitment.detail} Deadline: ${when(commitment.deadline)}.`
@@ -169,7 +173,7 @@ function render(data) {
     verifiedAtBlock: data.blockNumber,
   });
   $("#lockBadge").textContent = permanence.label;
-  $("#lockBadge").dataset.tone = permanence.tone;
+  $("#lockBadge").dataset.tone = TONES[permanence.tone] ?? "";
   $("#lockDetail").textContent = permanence.detail;
   rows($("#lockTable"), [
     ["Position ID", String(record.positionId)],
@@ -187,10 +191,15 @@ function render(data) {
     ["Released so far", tokens(escrow.released)],
     ["Still held in escrow", tokens(data.balances.escrow)],
   ]);
+  // Set as text with a colour class rather than as markup: these figures describe locked money, so
+  // the path that renders them should not be one that can render anything else.
   const allOk = checks.supplyReconciles && checks.liquidityReconciles && checks.feeReconciles;
-  $("#allocCheck").innerHTML = allOk
-    ? "<span class=\"ok\">Allocation, liquidity, and fees all reconcile exactly.</span>"
-    : "<span class=\"bad\">These figures do not reconcile. Treat this launch as suspect.</span>";
+  const verdict = $("#allocCheck");
+  verdict.textContent = allOk
+    ? "Allocation, liquidity, and fees all reconcile exactly."
+    : "These figures do not reconcile. Treat this launch as suspect.";
+  verdict.style.color = allOk ? "var(--lime)" : "var(--pink)";
+  
 
   rows($("#feeTable"), [
     ["Liquidity requested", eth(record.nativeLiquidityAmountRequested)],
@@ -233,7 +242,7 @@ function render(data) {
 }
 
 load().catch(error => {
-  $("#title").innerHTML = "COULD NOT <span>LOAD</span>";
+  $("#title").replaceChildren("COULD NOT LOAD");
   $("#subtitle").textContent = "";
   const box = $("#error");
   box.style.display = "block";

@@ -201,6 +201,10 @@ function renderConfirm() {
     + "its approved test account.";
 }
 
+/// The design system's colours carry fixed meanings, so the shared status names are translated at
+/// the edge of the page rather than each page inventing a palette.
+const TONES = { success: "good", pending: "warn", error: "bad", partial: "info", muted: "muted" };
+
 function showState(name) {
   const description = {
     pending: describeLaunch({ receiptStatus: null }),
@@ -209,7 +213,7 @@ function showState(name) {
     listed: describeLaunch({ receiptStatus: 1, confirmations: 12, indexed: true }),
   }[name];
   const panel = $("#status");
-  panel.dataset.tone = description.tone;
+  panel.dataset.tone = TONES[description.tone] ?? "muted";
   panel.querySelector("b").textContent = description.label;
   panel.querySelector("p").textContent = description.detail;
 }

@@ -121,19 +121,19 @@ async function refresh() {
   let ready = false;
   if (Number(status) === 1) {
     badge.textContent = "Streak complete — nothing to do";
-    badge.dataset.tone = "success";
+    badge.dataset.tone = "good";
   } else if (Number(status) === 2) {
     badge.textContent = "Defaulted — a check-in would revert";
-    badge.dataset.tone = "error";
+    badge.dataset.tone = "bad";
   } else if (now > Number(closes)) {
     badge.textContent = `Window closed ${gap(now - Number(closes))} ago`;
-    badge.dataset.tone = "error";
+    badge.dataset.tone = "bad";
   } else if (now < Number(opens)) {
     badge.textContent = `Opens in ${gap(Number(opens) - now)}`;
-    badge.dataset.tone = "pending";
+    badge.dataset.tone = "warn";
   } else {
     badge.textContent = `Open · ${gap(Number(closes) - now)} left`;
-    badge.dataset.tone = "success";
+    badge.dataset.tone = "good";
     ready = true;
   }
   $("#window").replaceChildren(badge);
@@ -167,10 +167,10 @@ async function start() {
       ready
         ? `Connected as ${account}. Read every field above, then check in.`
         : `Connected as ${account}. The button stays disabled until the window is open.`,
-      ready ? "success" : "",
+      ready ? "good" : "",
     );
   } catch (error) {
-    setStatus(error.message, "error");
+    setStatus(error.message, "bad");
   }
 }
 
@@ -182,13 +182,13 @@ $("#send").addEventListener("click", async () => {
     if (!(await refresh())) throw new Error("The window is no longer open. Nothing was sent.");
     const { provider, account } = await connect();
 
-    setStatus("Confirm in your wallet. Check the recipient, the zero value, and the data.", "pending");
+    setStatus("Confirm in your wallet. Check the recipient, the zero value, and the data.", "warn");
     const hash = await provider.request({
       method: "eth_sendTransaction",
       params: [{ from: account, to: escrow, value: "0x0", data: SELECTORS["recordGm()"] }],
     });
 
-    setStatus(`Submitted ${hash}. Waiting for the receipt…`, "pending");
+    setStatus(`Submitted ${hash}. Waiting for the receipt…`, "warn");
     let receipt = null;
     for (let attempt = 0; attempt < 60 && !receipt; attempt += 1) {
       receipt = await rpc("eth_getTransactionReceipt", [hash]);
@@ -200,10 +200,10 @@ $("#send").addEventListener("click", async () => {
     }
 
     await refresh();
-    setStatus(`Checked in. Tokens released, streak advanced. Hash ${hash}`, "success");
+    setStatus(`Checked in. Tokens released, streak advanced. Hash ${hash}`, "good");
     $("#send").disabled = true;
   } catch (error) {
-    setStatus(error.message, "error");
+    setStatus(error.message, "bad");
     $("#send").disabled = !state.ready;
   }
 });
