@@ -1,4 +1,4 @@
-import { decodeLaunchRecord } from "../../tools/lib/launch-record.mjs";
+import { decodeLaunchRecord } from "../lib/launch-record.mjs";
 import { describeCommitment, describeFreshness } from "../lib/status.mjs";
 import {
   TABS,

@@ -1,4 +1,4 @@
-import { decodeLaunchRecord } from "../tools/lib/launch-record.mjs";
+import { decodeLaunchRecord } from "./lib/launch-record.mjs";
 import { describeCommitment, describeFreshness } from "./lib/status.mjs";
 import { categorizeLaunch, describeCountdown, sortByUrgency } from "./lib/feed.mjs";
 import { DISCOVERY_SELECTORS } from "./discovery/selectors.mjs";

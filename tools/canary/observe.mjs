@@ -1,7 +1,7 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { readJson, writeJson } from "../lib/json-file.mjs";
-import { LAUNCH_FIELDS, decodeLaunchRecord, splitWords } from "../lib/launch-record.mjs";
+import { LAUNCH_FIELDS, decodeLaunchRecord, splitWords } from "../../web/lib/launch-record.mjs";
 
 export const CHAIN_ID = 4663;
 export const BPS = 10_000n;
