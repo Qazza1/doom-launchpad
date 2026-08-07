@@ -133,24 +133,25 @@ Each of these is resolved or it is not. None of them are formalities.
 5. **The keeper config change is not deployed.** The repository is correct; Railway is running the
    old config until it redeploys.
 
-## The GM commitment, which is running now
+## The GM commitment — how it resolved
 
-The first check-in window for DCT1:
+Recorded 2026-08-07. Each honoured check-in released 200,000,000 DCT1.
 
-- **Opens** 2026-08-02T21:12:39Z
-- **Closes** 2026-08-03T09:12:39Z
+- Check-in 1: honoured (window 2026-08-02→03).
+- Check-in 2: honoured (window 2026-08-03→04).
+- Check-in 3: **missed** (window 2026-08-04T21:12:39Z to 2026-08-05T09:12:39Z closed unsigned).
 
-The creator calls `recordGm()` on the escrow `0x19b0780f01567c1c05349a1d8a113042c4cd07ed` inside
-that window; each honoured check-in releases 200,000,000 DCT1. Three of them, one per day, each
-inside its own 12-hour grace period. Miss one and everything still unreleased goes to DoomRewards
-permanently, and anyone can finalise it.
+Result: 400,000,000 DCT1 released to the creator and kept — honoured check-ins are not clawed
+back, confirmed on mainnet. 200,000,000 DCT1 remains in escrow, destined for DoomRewards. The
+escrow reads `Active` until someone calls `finalizeDefault()`; the owner chose to leave it
+unfinalised for now.
 
-The keeper will now warn an hour before the window opens and escalate to critical in the last
-fifteen minutes, so the alerting path gets tested by this too.
+On a canary a missed check-in is a **successful test of the default path**, not a failure — and
+this is the path that a clean survival would have left unproven on mainnet. Launch 1 tested both
+branches: two honoured releases and a default.
 
-On a canary, a missed check-in is a **successful test of the default path**, not a failure — but
-it is a one-way test. Decide deliberately which path you want launch 1 to take rather than
-letting the clock decide for you.
+Still worth confirming for the record: that the keeper fired its missed-deadline alert and
+Telegram delivered it. If the indexer is restored, that its feed shows the default too.
 
 ## What launch 1 actually taught
 

@@ -7,20 +7,29 @@ delivery sequence and one overrides a documented gate.
 broadcast still requires its own explicit owner approval given immediately before
 the action.
 
-## 1. Launch 1's GM streak should survive
+## 1. Launch 1's GM streak — intended to survive, actually defaulted
 
-The creator intends to complete all three check-ins on DCT1 rather than let the
-commitment default.
+**Outcome, recorded 2026-08-07.** The intent was to complete all three check-ins.
+Check-ins 1 and 2 were made; check-in 3's window (2026-08-04T21:12:39Z to
+2026-08-05T09:12:39Z) closed unsigned. The streak defaulted.
 
-The first window opens 2026-08-02T21:12:39Z and closes 2026-08-03T09:12:39Z, on
-escrow `0x19b0780f01567c1c05349a1d8a113042c4cd07ed`, by calling `recordGm()`. Two
-more follow, one per day, each with a 12-hour grace period.
+State on chain at the time of writing:
 
-Consequence worth stating: the default path — unreleased escrow routed to
-DoomRewards, permissionless finalization — will therefore **not** be exercised by
-launch 1. It remains covered by unit and fork tests but unproven on mainnet. If
-you want it proven with real money, launch 2 or 3 is where that happens, and that
-is a deliberate choice to make in advance rather than by missing an alarm.
+- 400,000,000 DCT1 released to the creator across the two honoured check-ins, and
+  held in the creator wallet. Honoured check-ins are never clawed back — confirmed
+  on mainnet, which is the single most important property this proved.
+- 200,000,000 DCT1 still in escrow, destined for DoomRewards.
+- Escrow status is still `Active` because `finalizeDefault()` has not been called;
+  the owner chose to leave it as-is. The window is closed, so no further check-in
+  is possible; the 200,000,000 moves to DoomRewards whenever anyone finalises.
+
+This is not a failure of the system. It is the **default path**, exercised on
+mainnet — which the note below correctly said would otherwise go unproven. Launch
+1 therefore tested both branches: two honoured releases and a default. That is a
+more complete canary than a clean survival would have been.
+
+Original note, kept because its reasoning held: the default path was covered only
+by unit and fork tests, not mainnet. It is now covered on mainnet by this launch.
 
 ## 2. Factory #2 targets Uniswap v3, not v4
 
