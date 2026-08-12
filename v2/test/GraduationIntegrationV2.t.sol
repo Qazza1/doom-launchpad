@@ -10,7 +10,11 @@ import {GmEscrowV2} from "../src/GmEscrowV2.sol";
 import {PositionLockerV2} from "../src/PositionLockerV2.sol";
 import {V3GraduationManagerV2} from "../src/V3GraduationManagerV2.sol";
 import {MockWrappedNativeV2, MockDoomRewardsV2} from "./mocks/ProtocolMocks.sol";
-import {MockCanonicalV3FactoryV2, MockCanonicalPositionManagerV2} from "./mocks/CanonicalV3Mocks.sol";
+import {
+    MockCanonicalV3FactoryV2,
+    MockCanonicalPositionManagerV2,
+    MockCanonicalV3PoolV2
+} from "./mocks/CanonicalV3Mocks.sol";
 
 contract GraduationIntegrationV2Test is Test {
     uint256 internal constant SUPPLY = 1_000_000_000 ether;
@@ -112,6 +116,22 @@ contract GraduationIntegrationV2Test is Test {
         locker.collectFees(positionId);
         assertEq(weth.balanceOf(creator), creatorBefore);
         assertEq(weth.balanceOf(address(rewards)) - rewardsWethBefore, uint256(wethFee) * 85 / 100);
+    }
+
+    /// @dev Documents the reviewed V2 liveness issue: a permissionlessly initialized
+    ///      canonical pool at another price makes the delayed graduation revert.
+    function testPreinitializedWrongPriceBlocksGraduation() public {
+        vm.prank(creator, creator);
+        (, address tokenAddress, address curveAddress,) = factory.launch{value: 0.001 ether}(
+            DoomLaunchFactoryV2.LaunchParams("Pool Grief", "GRIEF", SUPPLY, "ipfs://metadata")
+        );
+        assertTrue(tokenAddress != address(0));
+        MockCanonicalV3PoolV2(npm.pool()).initialize(uint160(1 << 96));
+
+        vm.expectRevert();
+        vm.prank(buyer);
+        DoomBondingCurve(payable(curveAddress)).buy{value: 1 ether}(0, block.timestamp);
+        assertFalse(DoomBondingCurve(payable(curveAddress)).graduated());
     }
 
     function _seedFees(IERC20 token, uint256 positionId, uint128 launchFee, uint128 wethFee) internal {

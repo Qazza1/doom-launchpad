@@ -49,6 +49,15 @@ node --test tools\v2\test\curve-model.test.mjs
 The Solidity suite contains unit, fuzz, stateful invariant, and canonical-V3
 integration coverage. Mainnet fork validation remains a deployment gate.
 
+For dual-provider fork validation, copy `.env.example` to `.env`, add the two
+RPC URLs locally, set `RUN_ROBINHOOD_V2_FORK_TESTS=true`, then run:
+
+```powershell
+..\.tools\foundry-v1.7.1\forge.exe test --root v2 --match-contract RobinhoodDependenciesV2Test -vv
+```
+
+Railway variables are not automatically available to a local Foundry process.
+
 ## Fail-closed deployment order
 
 No broadcast script is included in this candidate.
