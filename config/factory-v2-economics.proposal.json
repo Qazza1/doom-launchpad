@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "status": "proposed_not_approved_for_deployment",
+  "network": {
+    "name": "Robinhood Chain Mainnet",
+    "chainId": 4663
+  },
+  "supply": {
+    "creatorLiquidBps": 0,
+    "curveAndGraduationBps": 4000,
+    "gmEscrowBps": 6000,
+    "soldOnCurveAtGraduationBps": 3000,
+    "v3LiquidityTokenBps": 1000
+  },
+  "curve": {
+    "type": "constant_product_with_virtual_reserves",
+    "virtualTokenStartBps": 4500,
+    "virtualTokenAtGraduationBps": 1500,
+    "virtualNativeStartWei": "25000000000000000",
+    "netNativeGraduationTargetWei": "50000000000000000",
+    "tradingFeeBps": 100,
+    "feeTreatment": "kept_separate_from_graduation_collateral"
+  },
+  "graduation": {
+    "venue": "canonical_uniswap_v3",
+    "feeTier": 10000,
+    "tickSpacing": 200,
+    "position": "full_range_permanently_locked",
+    "terminalCurvePriceMustMatchV3Initialization": true
+  },
+  "beta": {
+    "creatorAllowlist": true,
+    "maximumLaunches": 100,
+    "flatAntiSpamFeeWei": "1000000000000000",
+    "broadcastAuthorized": false
+  },
+  "unresolved": [
+    "owner approval of the proposed 30/10 curve-to-V3 token split",
+    "anti-spam fee routing",
+    "pre-graduation creator fee vesting and default treatment",
+    "non-graduating curve timeout and escrow treatment",
+    "per-transaction limits and MEV policy",
+    "exact Solidity rounding and V3 sqrtPriceX96 boundary behavior"
+  ]
+}

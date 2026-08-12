@@ -104,6 +104,11 @@ $canaryTests = Get-ChildItem -LiteralPath (Join-Path $projectRoot "tools\canary\
 & $nodeCommand.Source --test $canaryTests
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+$v2Tests = Get-ChildItem -LiteralPath (Join-Path $projectRoot "tools\v2\test") `
+    -Filter "*.test.mjs" | ForEach-Object { $_.FullName }
+& $nodeCommand.Source --test $v2Tests
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 # Reads the compiled factory artifact for the selector check, so it runs with the other Node suites
 # only because `out/` is already present from a previous build; the selector test fails loudly if it
 # is not.
