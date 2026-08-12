@@ -1,7 +1,8 @@
 # Factory V2 bonding-curve proposal
 
-Status: economic simulation candidate, **not approved for deployment**. This
-work does not change the live three-launch factory or its frozen `src/` digest.
+Status: economics approved by the owner for engineering, **not approved for
+deployment**. The isolated implementation lives in `v2/`; it does not change
+the live three-launch factory or its frozen `src/` digest.
 
 ## Recommended allocation
 
@@ -83,19 +84,29 @@ round-trip loss, overfund refunds, allocation conservation and fee conservation.
 Run `node tools/v2/simulate.mjs` to compare candidate allocations and print a
 sample path.
 
-## Still blocking Solidity implementation
+## Approved controls
 
-The following are product/security choices, not safe values to infer in code:
+- The flat `0.001 ETH` launch fee is split 50/50 between treasury and
+  DoomRewards.
+- Curve trading fees route 70/15/15 to creator/treasury/DoomRewards. The
+  creator share remains in the curve until graduation and vests over the three
+  GM check-ins; an unvested default share goes to DoomRewards.
+- The GM clock starts only after V3 graduation and permanent NFT registration
+  complete atomically.
+- Curves do not expire. Every buy and sell takes caller-provided minimum output
+  and deadline protection. The terminal buy accepts the exact remaining net
+  target and refunds excess native value.
+- The 100-launch beta limit, creator allowlist, operator/guardian pause and
+  operator-only resume are enforced onchain. A new factory starts paused and
+  reports invalid until both its curve deployer and V3 manager bindings are
+  complete.
 
-1. Approve or change the proposed 30% sold / 10% V3 split.
-2. Decide where the flat `0.001 ETH` anti-spam fee goes.
-3. Decide whether pre-graduation creator fee shares pay immediately, vest until
-   graduation, or become claimable through the GM commitment.
-4. Define what happens to the 60% escrow if a curve never graduates, including
-   whether there is a timeout.
-5. Set per-transaction limits and an explicit MEV/slippage policy.
-6. Validate exact `sqrtPriceX96`, token ordering and rounding on a Robinhood V3
-   fork before freezing a contract candidate.
+## Deployment gates
+
+The V2 contracts are an engineering candidate, not audited production code.
+Mainnet remains blocked on an independent audit, a Robinhood fork test against
+the deployed canonical V3 contracts, a deployment/address-manifest rehearsal,
+and explicit authorization to broadcast.
 
 Factory V2 needs a new liquidity manager and permanent locker. The deployed
 locker and manager have irreversible one-time bindings and cannot be reused.
