@@ -17,6 +17,8 @@ Every deployment and resume transaction still requires its own explicit approval
 
 ## Beta cap and audit stop
 
+- Creator access is allowlisted during the initial beta. Unrestricted public
+  creation requires a later explicit decision.
 - The public beta has a constructor-enforced maximum of 100 launches.
 - New launches stop automatically after launch 100.
 - An external smart-contract audit is deferred until after initial launch and is
