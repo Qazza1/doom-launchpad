@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "status": "v2_factory_activation_verified_success",
+  "activatedAt": "2026-08-13T21:26:58.587Z",
+  "chainId": 4663,
+  "transactionHash": "0xa8866c1345cd4650bd789f185a446d3e1b2257b41e28e3d140c1cadb77af7907",
+  "transaction": {
+    "from": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "to": "0x142760D2C865537c063492933FB71ddefA2372C6",
+    "value": "0x0",
+    "data": "0xd255d203",
+    "nonce": 17,
+    "gasLimit": "50000",
+    "function": "resumeLaunches()"
+  },
+  "receipt": {
+    "blockNumber": 35712838,
+    "blockHash": "0xaae63a999ff3fa611bb03b9ea654534eb936e6d5115e593e58f090925e278a79",
+    "gasUsed": "23446",
+    "status": 1
+  },
+  "verification": {
+    "providersAgreed": true,
+    "factoryPaused": false,
+    "factoryLaunchCount": 0,
+    "operatorPendingNonce": 18
+  },
+  "safety": {
+    "tokenLaunchAuthorized": false,
+    "tokenLaunched": false,
+    "ethTransferAuthorized": false,
+    "contractDeploymentAuthorized": false,
+    "tokenApprovalAuthorized": false,
+    "otherContractCallAuthorized": false,
+    "localhostSigningGateStopped": true
+  },
+  "nextGates": {
+    "keeperLivePolicyRequired": true,
+    "websiteTransactionsRemainDisabled": true,
+    "firstTokenLaunchRequiresSeparateAuthorization": true
+  }
+}
