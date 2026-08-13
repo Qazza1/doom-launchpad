@@ -13,6 +13,7 @@ interface ILaunchDeployerV2 {
         address treasury,
         address doomRewards,
         address wrappedNative,
-        address graduationManager
+        address graduationManager,
+        bytes32 tokenSalt
     ) external returns (address token, address curve, address escrow);
 }

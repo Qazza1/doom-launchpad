@@ -10,6 +10,7 @@ import {ILaunchDeployerV2} from "./interfaces/ILaunchDeployerV2.sol";
 
 interface IGraduationManagerHealthV2 {
     function isNetworkConfigurationValid() external view returns (bool);
+    function initializeLaunchPool(address curve) external returns (address pool);
 }
 
 /// @title DoomLaunchFactoryV2
@@ -73,6 +74,7 @@ contract DoomLaunchFactoryV2 is ReentrancyGuard {
         address creator;
         address curve;
         address escrow;
+        address initializedPool;
         uint256 totalSupply;
         uint256 curveAndLpAmount;
         uint256 escrowAmount;
@@ -104,6 +106,7 @@ contract DoomLaunchFactoryV2 is ReentrancyGuard {
         address indexed creator,
         address curve,
         address escrow,
+        address initializedPool,
         uint256 totalSupply,
         string metadataURI
     );
@@ -178,6 +181,20 @@ contract DoomLaunchFactoryV2 is ReentrancyGuard {
         if (!isLaunchConfigurationValid()) revert InvalidLiquidityConfiguration();
 
         launchId = nextLaunchId++;
+        bytes32 tokenSalt = keccak256(
+            abi.encode(
+                block.prevrandao,
+                block.number,
+                block.timestamp,
+                address(this),
+                msg.sender,
+                launchId,
+                params.totalSupply,
+                keccak256(bytes(params.name)),
+                keccak256(bytes(params.symbol)),
+                keccak256(bytes(params.metadataURI))
+            )
+        );
         (tokenAddress, curveAddress, escrowAddress) = ILaunchDeployerV2(curveDeployer)
             .deployLaunch(
                 launchId,
@@ -188,19 +205,25 @@ contract DoomLaunchFactoryV2 is ReentrancyGuard {
                 treasury,
                 doomRewards,
                 address(wrappedNative),
-                graduationManager
+                graduationManager,
+                tokenSalt
             );
         uint256 escrowAmount = params.totalSupply * ESCROW_TOKEN_BPS / BPS;
         uint256 curveAmount = params.totalSupply - escrowAmount;
         uint256 funded = IERC20(tokenAddress).balanceOf(escrowAddress) + IERC20(tokenAddress).balanceOf(curveAddress);
         if (funded != params.totalSupply) revert AllocationMismatch(params.totalSupply, funded);
         isCurve[curveAddress] = true;
+        address initializedPool = IGraduationManagerHealthV2(graduationManager).initializeLaunchPool(curveAddress);
+        if (initializedPool == address(0) || initializedPool.code.length == 0) {
+            revert DependencyHasNoCode(initializedPool);
+        }
         launchIdByToken[tokenAddress] = launchId;
         _launches[launchId] = LaunchRecord({
             token: tokenAddress,
             creator: msg.sender,
             curve: curveAddress,
             escrow: escrowAddress,
+            initializedPool: initializedPool,
             totalSupply: params.totalSupply,
             curveAndLpAmount: curveAmount,
             escrowAmount: escrowAmount,
@@ -209,7 +232,14 @@ contract DoomLaunchFactoryV2 is ReentrancyGuard {
         });
         _processLaunchFee(launchId);
         emit LaunchCreated(
-            launchId, tokenAddress, msg.sender, curveAddress, escrowAddress, params.totalSupply, params.metadataURI
+            launchId,
+            tokenAddress,
+            msg.sender,
+            curveAddress,
+            escrowAddress,
+            initializedPool,
+            params.totalSupply,
+            params.metadataURI
         );
     }
 

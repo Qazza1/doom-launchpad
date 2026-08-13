@@ -26,6 +26,20 @@ Every deployment and resume transaction still requires its own explicit approval
   cap.
 - The cap limits exposure; it is not represented as a substitute for an audit.
 
+## Independent-audit timing decision — 2026-08-13
+
+- The owner elected to launch the initial capped beta before obtaining an
+  independent smart-contract audit.
+- The owner accepts that the beta will therefore expose real users and funds to
+  unaudited contract risk, including defects not found by the internal review,
+  tests, fuzzing, invariants, fork rehearsals, or static analysis.
+- An independent audit remains required after the initial launch and before any
+  replacement factory or any continuation beyond the immutable 100-launch cap.
+- This timing decision is not authorization to deploy, bind contracts, resume
+  launches, approve a creator, or submit a beta launch. Each mainnet transaction
+  remains separately gated by a final manifest, wallet rehearsal, and explicit
+  approval immediately before signing.
+
 ## Approved beta economics
 
 - Creator liquid allocation at launch: 0%.
@@ -39,6 +53,15 @@ Every deployment and resume transaction still requires its own explicit approval
 - Flat launch anti-spam fee: 0.001 ETH.
 - The implementation must show all fees, slippage, graduation state and creator
   downside before signature.
+
+## Approved temporary transfer policy
+
+- Before V3 graduation, holders may buy from and sell back to the bonding curve,
+  but cannot make wallet-to-wallet transfers or seed another exchange.
+- The canonical V3 pool is initialized atomically with token launch so its first
+  price cannot be claimed during the bonding-curve period.
+- After the canonical position is minted and its permanent lock is registered,
+  normal ERC-20 transfers unlock irreversibly. There is no re-lock function.
 
 ## Roles
 
@@ -60,12 +83,9 @@ Existing role addresses remain unchanged:
 
 ## Still unresolved before public launch
 
-- Final constant-product virtual reserves and price path.
-- Exact rounding, dust, graduation and failed-graduation behavior.
-- Curve inventory accounting that reconciles buyer balances, the remaining V3
-  token side and the 40% allocation at every point.
 - Upload bot protection and public-wallet rate limits.
 - Operator legal identity, governing law, target jurisdictions and professional
   legal review.
-- Final tagged review candidate, mainnet fork evidence, deployment funding and
-  explicit broadcast approval.
+- Final tagged candidate, deployment funding confirmation, and explicit
+  broadcast approval. Post-credential-rotation dual-RPC evidence passed on
+  2026-08-13. Independent review is deferred under the recorded timing decision.

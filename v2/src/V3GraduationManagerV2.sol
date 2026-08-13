@@ -13,6 +13,15 @@ import {IDoomLaunchFactoryV2} from "./interfaces/IDoomLaunchFactoryV2.sol";
 import {IPositionLockerV2} from "./interfaces/IPositionLockerV2.sol";
 import {IWrappedNativeV2} from "./interfaces/IWrappedNativeV2.sol";
 
+interface IDoomBondingCurveRegistrationV2 {
+    function launchId() external view returns (uint256);
+    function token() external view returns (address);
+    function escrow() external view returns (address);
+    function creator() external view returns (address);
+    function wrappedNative() external view returns (address);
+    function graduationSqrtPriceX96() external view returns (uint160);
+}
+
 /// @notice One-time-bound adapter that graduates registered curves into permanent canonical V3 positions.
 contract V3GraduationManagerV2 is IERC721Receiver, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -33,7 +42,11 @@ contract V3GraduationManagerV2 is IERC721Receiver, ReentrancyGuard {
     error UnauthorizedBinder(address caller);
     error FactoryAlreadyBound(address factory);
     error InvalidFactoryBinding(address factory, address configuredManager);
+    error UnauthorizedFactory(address caller);
     error UnauthorizedCurve(address caller);
+    error LaunchPoolAlreadyInitialized(address curve, address pool);
+    error LaunchPoolNotInitialized(address curve);
+    error LaunchIdentityMismatch();
     error InvalidLiquidityParams();
     error InvalidPool(address pool);
     error PoolPriceMismatch(uint160 expected, uint160 actual);
@@ -50,8 +63,13 @@ contract V3GraduationManagerV2 is IERC721Receiver, ReentrancyGuard {
     address public immutable positionLocker;
     bytes32 public immutable configurationHash;
     address public authorizedFactory;
+    mapping(address curve => address pool) public launchPoolByCurve;
+    mapping(address curve => uint160 sqrtPriceX96) public launchSqrtPriceByCurve;
 
     event FactoryBound(address indexed factory, address indexed binder);
+    event LaunchPoolInitialized(
+        address indexed curve, address indexed token, address indexed pool, uint160 sqrtPriceX96
+    );
     event V3Graduation(
         address indexed curve,
         address indexed token,
@@ -124,13 +142,44 @@ contract V3GraduationManagerV2 is IERC721Receiver, ReentrancyGuard {
         emit FactoryBound(factory_, msg.sender);
     }
 
+    /// @notice Initializes the canonical pool during the atomic launch transaction.
+    function initializeLaunchPool(address curve) external nonReentrant returns (address pool) {
+        address factory = authorizedFactory;
+        if (msg.sender != factory) revert UnauthorizedFactory(msg.sender);
+        if (curve == address(0) || curve.code.length == 0 || !IDoomLaunchFactoryV2(factory).isCurve(curve)) {
+            revert UnauthorizedCurve(curve);
+        }
+        address existing = launchPoolByCurve[curve];
+        if (existing != address(0)) revert LaunchPoolAlreadyInitialized(curve, existing);
+
+        IDoomBondingCurveRegistrationV2 launchCurve = IDoomBondingCurveRegistrationV2(curve);
+        address token = launchCurve.token();
+        uint160 sqrtPriceX96 = launchCurve.graduationSqrtPriceX96();
+        if (
+            token == address(0) || token == address(wrappedNative) || token.code.length == 0
+                || launchCurve.wrappedNative() != address(wrappedNative) || sqrtPriceX96 <= FULL_RANGE_MIN_SQRT_RATIO
+                || sqrtPriceX96 >= FULL_RANGE_MAX_SQRT_RATIO
+        ) revert InvalidLiquidityParams();
+
+        (address token0, address token1) =
+            token < address(wrappedNative) ? (token, address(wrappedNative)) : (address(wrappedNative), token);
+        pool = positionManagerContract.createAndInitializePoolIfNecessary(token0, token1, POOL_FEE, sqrtPriceX96);
+        if (pool == address(0) || pool.code.length == 0) revert InvalidPool(pool);
+        if (IUniswapV3Factory(uniswapV3Factory).getPool(token0, token1, POOL_FEE) != pool) revert InvalidPool(pool);
+        (uint160 actual,,,,,,) = IUniswapV3Pool(pool).slot0();
+        if (actual != sqrtPriceX96) revert PoolPriceMismatch(sqrtPriceX96, actual);
+
+        launchPoolByCurve[curve] = pool;
+        launchSqrtPriceByCurve[curve] = sqrtPriceX96;
+        emit LaunchPoolInitialized(curve, token, pool, sqrtPriceX96);
+    }
+
     function createAndLockPosition(
         uint256 launchId,
         address token,
         address escrow,
         address creator,
-        uint256 tokenAmount,
-        uint160 sqrtPriceX96
+        uint256 tokenAmount
     ) external payable nonReentrant returns (address pool, uint256 positionId, uint256 tokenUsed, uint256 nativeUsed) {
         address factory = authorizedFactory;
         if (factory == address(0) || !IDoomLaunchFactoryV2(factory).isCurve(msg.sender)) {
@@ -139,10 +188,21 @@ contract V3GraduationManagerV2 is IERC721Receiver, ReentrancyGuard {
         if (
             launchId == 0 || token == address(0) || token == address(wrappedNative) || escrow == address(0)
                 || creator == address(0) || tokenAmount == 0 || msg.value == 0
-                || sqrtPriceX96 <= FULL_RANGE_MIN_SQRT_RATIO || sqrtPriceX96 >= FULL_RANGE_MAX_SQRT_RATIO
         ) revert InvalidLiquidityParams();
         if (token.code.length == 0) revert DependencyHasNoCode(token);
         if (escrow.code.length == 0) revert DependencyHasNoCode(escrow);
+
+        IDoomBondingCurveRegistrationV2 launchCurve = IDoomBondingCurveRegistrationV2(msg.sender);
+        if (
+            launchCurve.launchId() != launchId || launchCurve.token() != token || launchCurve.escrow() != escrow
+                || launchCurve.creator() != creator || launchCurve.wrappedNative() != address(wrappedNative)
+        ) revert LaunchIdentityMismatch();
+        pool = launchPoolByCurve[msg.sender];
+        uint160 sqrtPriceX96 = launchSqrtPriceByCurve[msg.sender];
+        if (pool == address(0) || sqrtPriceX96 == 0) revert LaunchPoolNotInitialized(msg.sender);
+        if (sqrtPriceX96 <= FULL_RANGE_MIN_SQRT_RATIO || sqrtPriceX96 >= FULL_RANGE_MAX_SQRT_RATIO) {
+            revert InvalidLiquidityParams();
+        }
 
         IERC20 launchToken = IERC20(token);
         uint256 tokenBaseline = launchToken.balanceOf(address(this));
@@ -152,8 +212,7 @@ contract V3GraduationManagerV2 is IERC721Receiver, ReentrancyGuard {
         wrappedNative.deposit{value: msg.value}();
         (address token0, address token1) =
             token < address(wrappedNative) ? (token, address(wrappedNative)) : (address(wrappedNative), token);
-        pool = positionManagerContract.createAndInitializePoolIfNecessary(token0, token1, POOL_FEE, sqrtPriceX96);
-        if (pool == address(0) || pool.code.length == 0) revert InvalidPool(pool);
+        if (IUniswapV3Factory(uniswapV3Factory).getPool(token0, token1, POOL_FEE) != pool) revert InvalidPool(pool);
         (uint160 actual,,,,,,) = IUniswapV3Pool(pool).slot0();
         if (actual != sqrtPriceX96) revert PoolPriceMismatch(sqrtPriceX96, actual);
 

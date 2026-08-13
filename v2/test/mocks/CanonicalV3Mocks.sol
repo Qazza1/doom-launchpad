@@ -9,9 +9,24 @@ import {ICanonicalV3PositionManagerV2} from "../../src/interfaces/ICanonicalV3Po
 
 contract MockCanonicalV3FactoryV2 {
     mapping(uint24 fee => int24 spacing) public feeAmountTickSpacing;
+    mapping(bytes32 key => address pool) private _pools;
 
     constructor() {
         feeAmountTickSpacing[10_000] = 200;
+    }
+
+    function createPool(address tokenA, address tokenB, uint24 fee) external returns (address pool) {
+        require(tokenA != tokenB && tokenA != address(0) && tokenB != address(0), "tokens");
+        (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+        bytes32 key = keccak256(abi.encode(token0, token1, fee));
+        require(_pools[key] == address(0), "exists");
+        pool = address(new MockCanonicalV3PoolV2());
+        _pools[key] = pool;
+    }
+
+    function getPool(address tokenA, address tokenB, uint24 fee) external view returns (address) {
+        (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+        return _pools[keccak256(abi.encode(token0, token1, fee))];
     }
 }
 
@@ -44,7 +59,7 @@ contract MockCanonicalPositionManagerV2 is ERC721 {
 
     address public immutable factory;
     address public immutable WETH9;
-    address public immutable pool;
+    address public pool;
     uint32 public usePpm = 1_000_000;
     uint256 public nextId = 1;
     mapping(uint256 => PositionData) private _positions;
@@ -52,31 +67,35 @@ contract MockCanonicalPositionManagerV2 is ERC721 {
     constructor(address factory_, address weth_) ERC721("Mock V3 Positions", "MV3") {
         factory = factory_;
         WETH9 = weth_;
-        pool = address(new MockCanonicalV3PoolV2());
     }
 
     function setUsePpm(uint32 value) external {
         usePpm = value;
     }
 
-    function createAndInitializePoolIfNecessary(address, address, uint24, uint160 sqrtPriceX96)
+    function createAndInitializePoolIfNecessary(address token0, address token1, uint24 fee, uint160 sqrtPriceX96)
         external
-        returns (address)
+        returns (address targetPool)
     {
-        MockCanonicalV3PoolV2 target = MockCanonicalV3PoolV2(pool);
+        MockCanonicalV3FactoryV2 v3Factory = MockCanonicalV3FactoryV2(factory);
+        targetPool = v3Factory.getPool(token0, token1, fee);
+        if (targetPool == address(0)) targetPool = v3Factory.createPool(token0, token1, fee);
+        MockCanonicalV3PoolV2 target = MockCanonicalV3PoolV2(targetPool);
         if (target.sqrtPriceX96() == 0) target.initialize(sqrtPriceX96);
-        return pool;
+        pool = targetPool;
     }
 
     function mint(ICanonicalV3PositionManagerV2.MintParams calldata params)
         external
         returns (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
     {
+        address targetPool = MockCanonicalV3FactoryV2(factory).getPool(params.token0, params.token1, params.fee);
+        require(targetPool != address(0), "pool");
         amount0 = Math.mulDiv(params.amount0Desired, usePpm, 1_000_000);
         amount1 = Math.mulDiv(params.amount1Desired, usePpm, 1_000_000);
         require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, "minimum");
-        IERC20(params.token0).safeTransferFrom(msg.sender, address(this), amount0);
-        IERC20(params.token1).safeTransferFrom(msg.sender, address(this), amount1);
+        IERC20(params.token0).safeTransferFrom(msg.sender, targetPool, amount0);
+        IERC20(params.token1).safeTransferFrom(msg.sender, targetPool, amount1);
         tokenId = nextId++;
         uint256 smaller = amount0 < amount1 ? amount0 : amount1;
         liquidity = uint128(smaller > type(uint128).max ? type(uint128).max : smaller);

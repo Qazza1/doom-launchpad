@@ -62,6 +62,7 @@ contract MockGraduationManagerV2 {
     uint256 public nextPositionId = 1;
     uint256 public lastNative;
     uint256 public lastTokens;
+    mapping(address => address) public launchPoolByCurve;
 
     function setHealthy(bool value) external {
         healthy = value;
@@ -71,7 +72,12 @@ contract MockGraduationManagerV2 {
         return healthy;
     }
 
-    function createAndLockPosition(uint256, address token, address, address, uint256 tokenAmount, uint160)
+    function initializeLaunchPool(address curve) external returns (address pool) {
+        launchPoolByCurve[curve] = address(this);
+        return address(this);
+    }
+
+    function createAndLockPosition(uint256, address token, address, address, uint256 tokenAmount)
         external
         payable
         returns (address pool, uint256 positionId, uint256 tokenUsed, uint256 nativeUsed)

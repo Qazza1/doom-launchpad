@@ -2,9 +2,12 @@
 pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/interfaces/IUniswapV3Factory.sol";
+import {DoomBondingCurve} from "../../src/DoomBondingCurve.sol";
 import {DoomLaunchDeployerV2} from "../../src/DoomLaunchDeployerV2.sol";
 import {DoomLaunchFactoryV2} from "../../src/DoomLaunchFactoryV2.sol";
+import {DoomTokenV2} from "../../src/DoomTokenV2.sol";
 import {PositionLockerV2} from "../../src/PositionLockerV2.sol";
 import {V3GraduationManagerV2} from "../../src/V3GraduationManagerV2.sol";
 import {ICanonicalV3PositionManagerV2} from "../../src/interfaces/ICanonicalV3PositionManagerV2.sol";
@@ -20,6 +23,7 @@ contract RobinhoodDependenciesV2Test is Test {
     address internal constant V3_FACTORY = 0x1f7d7550B1b028f7571E69A784071F0205FD2EfA;
     address internal constant NPM = 0x73991a25C818Bf1f1128dEAaB1492D45638DE0D3;
     address internal constant DOOM_REWARDS = 0x615f6E6B0AEA7Ac94F4391424aF601F9290dd9dC;
+    uint256 internal constant SUPPLY = 1_000_000_000 ether;
 
     function testPrimaryRpcDependenciesAndV2Wiring() external {
         _run("ROBINHOOD_RPC_URL");
@@ -81,5 +85,21 @@ contract RobinhoodDependenciesV2Test is Test {
         assertTrue(factory.creatorAllowed(DEPLOYER_AND_OPERATOR));
         assertEq(factory.MAX_LAUNCHES(), 100);
         assertEq(factory.LAUNCH_FEE(), 0.001 ether);
+
+        vm.deal(DEPLOYER_AND_OPERATOR, 2 ether);
+        vm.startPrank(DEPLOYER_AND_OPERATOR, DEPLOYER_AND_OPERATOR);
+        factory.resumeLaunches();
+        (, address tokenAddress, address curveAddress,) = factory.launch{value: 0.001 ether}(
+            DoomLaunchFactoryV2.LaunchParams("Fork Rehearsal", "FORK", SUPPLY, "ipfs://fork-rehearsal")
+        );
+        DoomBondingCurve curve = DoomBondingCurve(payable(curveAddress));
+        curve.buy{value: 1 ether}(0, block.timestamp);
+        vm.stopPrank();
+
+        assertTrue(curve.graduated());
+        assertTrue(DoomTokenV2(tokenAddress).transfersUnrestricted());
+        assertEq(curve.pool(), manager.launchPoolByCurve(curveAddress));
+        assertEq(positionManager.ownerOf(curve.positionId()), address(locker));
+        assertEq(IERC20(tokenAddress).balanceOf(address(manager)), 0);
     }
 }

@@ -156,6 +156,43 @@ jobs:
           path: foundry-build.log
           if-no-files-found: ignore
 
+  v2-foundry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.7.1
+      - name: Install pinned Solidity dependencies
+        run: |
+          forge install --no-git OpenZeppelin/openzeppelin-contracts@v5.6.1
+          forge install --no-git foundry-rs/forge-std@v1.16.1
+          forge install --no-git uniswap-v3-core=Uniswap/v3-core@v1.0.0
+          forge install --no-git uniswap-v3-periphery=Uniswap/v3-periphery@v1.0.0
+      - run: forge fmt --root v2 --check
+      - name: Build V2 and report contract sizes
+        run: |
+          set +e
+          forge build --root v2 --sizes > v2-foundry-build.log 2>&1
+          status=$?
+          cat v2-foundry-build.log
+          if [ "$status" -ne 0 ]; then
+            message="$(tail -n 20 v2-foundry-build.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g; s/::/: :/g')"
+            echo "::error title=V2 Foundry build failed::$message"
+            exit "$status"
+          fi
+      - name: V2 unit, fuzz, invariant, and integration tests
+        env:
+          RUN_ROBINHOOD_V2_FORK_TESTS: "false"
+        run: forge test --root v2 -vv
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: v2-foundry-build-log
+          path: v2-foundry-build.log
+          if-no-files-found: ignore
+
   static-analysis:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -189,6 +226,18 @@ jobs:
             echo "::error title=Slither high-severity gate failed::$message"
             exit "$status"
           fi
+      - name: V2 Slither high-severity gate
+        run: |
+          set +e
+          cd v2
+          slither . --filter-paths "(../lib|test|script)" --exclude reentrancy-balance --fail-high > ../v2-slither-gate.log 2>&1
+          status=$?
+          cat ../v2-slither-gate.log
+          if [ "$status" -ne 0 ]; then
+            message="$(tail -n 30 ../v2-slither-gate.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g; s/::/: :/g')"
+            echo "::error title=V2 Slither high-severity gate failed::$message"
+            exit "$status"
+          fi
       - name: Aderyn 0.6.8
         run: npx --yes @cyfrin/aderyn@0.6.8 .
       - uses: actions/upload-artifact@v6
@@ -199,5 +248,6 @@ jobs:
             slither-report.json
             slither-full.log
             slither-gate.log
+            v2-slither-gate.log
             report.md
           if-no-files-found: ignore

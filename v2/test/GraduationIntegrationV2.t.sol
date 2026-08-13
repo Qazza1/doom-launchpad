@@ -6,9 +6,11 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {DoomLaunchFactoryV2} from "../src/DoomLaunchFactoryV2.sol";
 import {DoomLaunchDeployerV2} from "../src/DoomLaunchDeployerV2.sol";
 import {DoomBondingCurve} from "../src/DoomBondingCurve.sol";
+import {DoomTokenV2} from "../src/DoomTokenV2.sol";
 import {GmEscrowV2} from "../src/GmEscrowV2.sol";
 import {PositionLockerV2} from "../src/PositionLockerV2.sol";
 import {V3GraduationManagerV2} from "../src/V3GraduationManagerV2.sol";
+import {ICanonicalV3PositionManagerV2} from "../src/interfaces/ICanonicalV3PositionManagerV2.sol";
 import {MockWrappedNativeV2, MockDoomRewardsV2} from "./mocks/ProtocolMocks.sol";
 import {
     MockCanonicalV3FactoryV2,
@@ -85,8 +87,8 @@ contract GraduationIntegrationV2Test is Test {
         assertEq(curve.pool(), npm.pool());
         assertEq(npm.ownerOf(positionId), address(locker));
         assertTrue(locker.isPermanentlyLocked(positionId));
-        assertEq(token.balanceOf(address(npm)), SUPPLY * 10 / 100);
-        assertEq(weth.balanceOf(address(npm)), 0.05 ether);
+        assertEq(token.balanceOf(curve.pool()), SUPPLY * 10 / 100);
+        assertEq(weth.balanceOf(curve.pool()), 0.05 ether);
         assertEq(uint8(escrow.status()), uint8(GmEscrowV2.Status.Active));
         assertEq(token.balanceOf(address(escrow)), SUPPLY * 60 / 100);
         assertEq(address(manager).balance, 0);
@@ -118,20 +120,83 @@ contract GraduationIntegrationV2Test is Test {
         assertEq(weth.balanceOf(address(rewards)) - rewardsWethBefore, uint256(wethFee) * 85 / 100);
     }
 
-    /// @dev Documents the reviewed V2 liveness issue: a permissionlessly initialized
-    ///      canonical pool at another price makes the delayed graduation revert.
-    function testPreinitializedWrongPriceBlocksGraduation() public {
+    function testCanonicalPoolIsInitializedAtLaunchAndCannotBeRepriced() public {
         vm.prank(creator, creator);
         (, address tokenAddress, address curveAddress,) = factory.launch{value: 0.001 ether}(
             DoomLaunchFactoryV2.LaunchParams("Pool Grief", "GRIEF", SUPPLY, "ipfs://metadata")
         );
         assertTrue(tokenAddress != address(0));
-        MockCanonicalV3PoolV2(npm.pool()).initialize(uint160(1 << 96));
-
+        address initializedPool = manager.launchPoolByCurve(curveAddress);
+        assertEq(initializedPool, npm.pool());
+        assertEq(MockCanonicalV3PoolV2(initializedPool).sqrtPriceX96(), manager.launchSqrtPriceByCurve(curveAddress));
         vm.expectRevert();
+        MockCanonicalV3PoolV2(initializedPool).initialize(uint160(1 << 96));
+
         vm.prank(buyer);
         DoomBondingCurve(payable(curveAddress)).buy{value: 1 ether}(0, block.timestamp);
-        assertFalse(DoomBondingCurve(payable(curveAddress)).graduated());
+        assertTrue(DoomBondingCurve(payable(curveAddress)).graduated());
+    }
+
+    function testPoolPrecreatedForPredictableCreateAddressDoesNotCaptureLaunch() public {
+        address guessedToken = vm.computeCreateAddress(address(deployer), 1);
+        address guessedPool = npm.createAndInitializePoolIfNecessary(
+            guessedToken < address(weth) ? guessedToken : address(weth),
+            guessedToken < address(weth) ? address(weth) : guessedToken,
+            10_000,
+            uint160(1 << 96)
+        );
+        assertTrue(guessedPool != address(0));
+
+        vm.prank(creator, creator);
+        (, address tokenAddress, address curveAddress,) = factory.launch{value: 0.001 ether}(
+            DoomLaunchFactoryV2.LaunchParams("Salted Launch", "SALT", SUPPLY, "ipfs://metadata")
+        );
+        assertTrue(tokenAddress != guessedToken);
+        assertTrue(manager.launchPoolByCurve(curveAddress) != guessedPool);
+    }
+
+    function testHolderCannotSeedCanonicalPoolBeforeGraduation() public {
+        vm.prank(creator, creator);
+        (, address tokenAddress, address curveAddress,) = factory.launch{value: 0.001 ether}(
+            DoomLaunchFactoryV2.LaunchParams("No Early LP", "NOELP", SUPPLY, "ipfs://metadata")
+        );
+        DoomBondingCurve curve = DoomBondingCurve(payable(curveAddress));
+        IERC20 token = IERC20(tokenAddress);
+        vm.prank(buyer);
+        uint256 bought = curve.buy{value: 0.01 ether}(0, block.timestamp);
+        address poolAddress = manager.launchPoolByCurve(curveAddress);
+
+        vm.expectRevert(abi.encodeWithSelector(DoomTokenV2.TransfersRestricted.selector, buyer, poolAddress));
+        vm.prank(buyer);
+        // The call must revert, so there is no boolean return value to inspect.
+        // forge-lint: disable-next-line(erc20-unchecked-transfer)
+        token.transfer(poolAddress, bought / 2);
+
+        vm.startPrank(buyer);
+        weth.deposit{value: 0.001 ether}();
+        token.approve(address(npm), bought / 2);
+        weth.approve(address(npm), 0.001 ether);
+        (address token0, address token1) =
+            tokenAddress < address(weth) ? (tokenAddress, address(weth)) : (address(weth), tokenAddress);
+        uint256 amount0Desired = token0 == tokenAddress ? bought / 2 : 0.001 ether;
+        uint256 amount1Desired = token1 == tokenAddress ? bought / 2 : 0.001 ether;
+        vm.expectRevert(abi.encodeWithSelector(DoomTokenV2.TransfersRestricted.selector, buyer, poolAddress));
+        npm.mint(
+            ICanonicalV3PositionManagerV2.MintParams({
+                token0: token0,
+                token1: token1,
+                fee: 10_000,
+                tickLower: -887200,
+                tickUpper: 887200,
+                amount0Desired: amount0Desired,
+                amount1Desired: amount1Desired,
+                amount0Min: 0,
+                amount1Min: 0,
+                recipient: buyer,
+                deadline: block.timestamp
+            })
+        );
+        vm.stopPrank();
     }
 
     function _seedFees(IERC20 token, uint256 positionId, uint128 launchFee, uint128 wethFee) internal {

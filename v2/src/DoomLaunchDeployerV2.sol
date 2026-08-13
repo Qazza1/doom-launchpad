@@ -59,16 +59,18 @@ contract DoomLaunchDeployerV2 {
         address treasury,
         address doomRewards,
         address wrappedNative,
-        address graduationManager
+        address graduationManager,
+        bytes32 tokenSalt
     ) external returns (address tokenAddress, address curveAddress, address escrowAddress) {
         if (msg.sender != authorizedFactory) revert UnauthorizedFactory(msg.sender);
-        DoomTokenV2 token = new DoomTokenV2(name, symbol, totalSupply, address(this));
+        DoomTokenV2 token = new DoomTokenV2{salt: tokenSalt}(name, symbol, totalSupply, address(this));
         tokenAddress = address(token);
         DoomBondingCurve curve = new DoomBondingCurve(
             launchId, tokenAddress, creator, treasury, doomRewards, wrappedNative, graduationManager, totalSupply
         );
         curveAddress = address(curve);
         escrowAddress = address(curve.escrow());
+        token.bindLaunch(curveAddress, escrowAddress, graduationManager);
         uint256 escrowAmount = totalSupply * 6_000 / 10_000;
         IERC20(tokenAddress).safeTransfer(escrowAddress, escrowAmount);
         IERC20(tokenAddress).safeTransfer(curveAddress, totalSupply - escrowAmount);

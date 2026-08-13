@@ -93,6 +93,10 @@ sample path.
   GM check-ins; an unvested default share goes to DoomRewards.
 - The GM clock starts only after V3 graduation and permanent NFT registration
   complete atomically.
+- The canonical V3 pool is initialized at the terminal ratio inside the token's
+  launch transaction. Until permanent position registration succeeds, the
+  token only permits bootstrap, curve-trading and graduation transfer paths.
+  Normal transfers then unlock permanently.
 - Curves do not expire. Every buy and sell takes caller-provided minimum output
   and deadline protection. The terminal buy accepts the exact remaining net
   target and refunds excess native value.
@@ -104,9 +108,9 @@ sample path.
 ## Deployment gates
 
 The V2 contracts are an engineering candidate, not audited production code.
-Mainnet remains blocked on an independent audit, a Robinhood fork test against
-the deployed canonical V3 contracts, a deployment/address-manifest rehearsal,
-and explicit authorization to broadcast.
+Mainnet remains blocked on an independent review, post-RPC-rotation Robinhood
+fork validation against the deployed canonical V3 contracts, final manifest
+approval, and explicit authorization to broadcast.
 
 Factory V2 needs a new liquidity manager and permanent locker. The deployed
 locker and manager have irreversible one-time bindings and cannot be reused.

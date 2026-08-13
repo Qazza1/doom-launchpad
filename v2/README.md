@@ -12,6 +12,11 @@ or replace the deployed three-launch canary contracts in `../src`.
 - Buy/sell fee: 1%, routed 70/15/15 to creator/treasury/DoomRewards. Creator
   curve fees vest over the three post-graduation GM check-ins.
 - The terminal curve price exactly matches the V3 initialization ratio.
+- Each token uses an execution-entropy CREATE2 salt and its canonical 1% V3
+  pool is initialized at the graduation price inside the launch transaction.
+- Before graduation, token transfers are limited to curve/bootstrap/graduation
+  paths. Successful permanent-position registration unlocks ordinary ERC-20
+  transfers irreversibly.
 - The final buy is capped at the exact target and refunds excess native value.
 - There is no curve expiry. Every trade includes minimum-output and deadline
   protection.
@@ -27,10 +32,11 @@ or replace the deployed three-launch canary contracts in `../src`.
 - `DoomBondingCurve`: buy/sell accounting, exact graduation endpoint, fee
   custody, creator vesting, and automatic graduation.
 - `GmEscrowV2`: 60% creator allocation; its clock begins only after graduation.
-- `V3GraduationManagerV2`: canonical 1% full-range V3 mint with near-total
-  utilization and no retained launch balances.
+- `V3GraduationManagerV2`: launch-time canonical-pool initialization, canonical
+  1% full-range V3 mint, near-total utilization, and no retained balances.
 - `PositionLockerV2`: permanent NFT custody and immutable V3 fee routing.
-- `DoomTokenV2`: ownerless fixed-supply ERC-20.
+- `DoomTokenV2`: ownerless fixed-supply ERC-20 with temporary launch-path
+  restrictions and one-way post-graduation unlock.
 
 The existing DoomRewards vault may be reused because its deposit entry points
 are permissionless and balance checked. The V2 locker, manager, deployer, and
@@ -46,8 +52,9 @@ From `doom-launchpad`:
 node --test tools\v2\test\curve-model.test.mjs
 ```
 
-The Solidity suite contains unit, fuzz, stateful invariant, and canonical-V3
-integration coverage. Mainnet fork validation remains a deployment gate.
+The Solidity suite contains unit, fuzz, stateful invariant, pool-precreation,
+temporary-transfer, irreversible-unlock, and canonical-V3 integration coverage.
+Mainnet fork validation remains a deployment gate.
 
 For dual-provider fork validation, copy `.env.example` to `.env`, add the two
 RPC URLs locally, set `RUN_ROBINHOOD_V2_FORK_TESTS=true`, then run:
@@ -57,6 +64,8 @@ RPC URLs locally, set `RUN_ROBINHOOD_V2_FORK_TESTS=true`, then run:
 ```
 
 Railway variables are not automatically available to a local Foundry process.
+Rotate provider credentials immediately if an RPC URL containing an embedded
+API key is ever printed in a terminal, log, issue, or task transcript.
 
 ## Fail-closed deployment order
 
@@ -77,6 +86,24 @@ No broadcast script is included in this candidate.
    constructor arguments, role addresses, bindings, and constants.
 9. Keep the factory paused until independent review, fork testing, manifest
    approval, and explicit authorization to resume.
+
+The fail-closed deployment worksheet is
+`../config/v2-mainnet-deployment-manifest.json`. It intentionally contains no
+private key, RPC URL, transaction signature, or broadcast switch.
+
+## Sequencer threat model
+
+The launch salt includes execution-time `block.prevrandao`, block data, the
+creator, launch ID, and launch content. The canonical pool is initialized in
+the same transaction as the CREATE2 token deployment. This prevents an ordinary
+observer from squatting the old predictable CREATE address and leaves no
+post-launch initialization window.
+
+As with transaction-order-sensitive applications on Nitro chains, a malicious
+or compromised sequencer may know execution inputs before users. The launchpad
+therefore assumes Robinhood Chain's sequencer follows its documented ordering
+policy. This residual chain-operator trust must be included in independent
+review; no contract can make public-mempool ordering private by itself.
 
 Robinhood mainnet dependencies currently recorded by the project are:
 

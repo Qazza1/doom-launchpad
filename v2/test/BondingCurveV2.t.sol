@@ -6,6 +6,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {DoomLaunchFactoryV2} from "../src/DoomLaunchFactoryV2.sol";
 import {DoomLaunchDeployerV2} from "../src/DoomLaunchDeployerV2.sol";
 import {DoomBondingCurve} from "../src/DoomBondingCurve.sol";
+import {DoomTokenV2} from "../src/DoomTokenV2.sol";
 import {GmEscrowV2} from "../src/GmEscrowV2.sol";
 import {MockWrappedNativeV2, MockDoomRewardsV2, MockGraduationManagerV2} from "./mocks/ProtocolMocks.sol";
 
@@ -79,6 +80,35 @@ contract BondingCurveV2Test is Test {
         assertEq(address(curve).balance, curve.accountedNativeBalance());
     }
 
+    function testPreGraduationWalletTransfersAreRestrictedButCurveSellWorks() public {
+        (DoomBondingCurve curve, IERC20 token,) = _launch();
+        vm.prank(buyer);
+        uint256 bought = curve.buy{value: 0.01 ether}(0, block.timestamp);
+        address recipient = makeAddr("recipient");
+        vm.expectRevert(abi.encodeWithSelector(DoomTokenV2.TransfersRestricted.selector, buyer, recipient));
+        vm.prank(buyer);
+        // The call must revert, so there is no boolean return value to inspect.
+        // forge-lint: disable-next-line(erc20-unchecked-transfer)
+        token.transfer(recipient, 1 ether);
+        vm.expectRevert(abi.encodeWithSelector(DoomTokenV2.TransfersRestricted.selector, buyer, address(curve)));
+        vm.prank(buyer);
+        // Direct donations do not count as sells and are also blocked.
+        // forge-lint: disable-next-line(erc20-unchecked-transfer)
+        token.transfer(address(curve), 1 ether);
+
+        vm.startPrank(buyer);
+        token.approve(address(curve), bought);
+        assertGt(curve.sell(bought, 0, block.timestamp), 0);
+        vm.stopPrank();
+    }
+
+    function testOnlyCurveCanPermanentlyUnlockTransfers() public {
+        (, IERC20 token,) = _launch();
+        vm.expectRevert(abi.encodeWithSelector(DoomTokenV2.UnauthorizedUnlock.selector, buyer));
+        vm.prank(buyer);
+        DoomTokenV2(address(token)).unlockTransfers();
+    }
+
     function testFinalBuyRefundsExcessAndGraduates() public {
         (DoomBondingCurve curve, IERC20 token, GmEscrowV2 escrow) = _launch();
         uint256 beforeBalance = buyer.balance;
@@ -90,6 +120,14 @@ contract BondingCurveV2Test is Test {
         assertEq(manager.lastNative(), 0.05 ether);
         assertEq(manager.lastTokens(), SUPPLY * 10 / 100);
         assertEq(uint8(escrow.status()), uint8(GmEscrowV2.Status.Active));
+        assertTrue(DoomTokenV2(address(token)).transfersUnrestricted());
+        address recipient = makeAddr("post-graduation-recipient");
+        vm.prank(buyer);
+        assertTrue(token.transfer(recipient, 1 ether));
+        assertEq(token.balanceOf(recipient), 1 ether);
+        vm.expectRevert(DoomTokenV2.TransfersAlreadyUnrestricted.selector);
+        vm.prank(address(curve));
+        DoomTokenV2(address(token)).unlockTransfers();
         assertGt(buyer.balance, beforeBalance - 0.051 ether);
         assertEq(address(curve).balance, curve.accountedNativeBalance());
     }

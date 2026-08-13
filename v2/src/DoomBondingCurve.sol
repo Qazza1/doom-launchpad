@@ -11,6 +11,10 @@ import {IDoomRewardsV2} from "./interfaces/IDoomRewardsV2.sol";
 import {IWrappedNativeV2} from "./interfaces/IWrappedNativeV2.sol";
 import {IGraduationManagerV2} from "./interfaces/IGraduationManagerV2.sol";
 
+interface IRestrictedLaunchTokenV2 {
+    function unlockTransfers() external;
+}
+
 /// @title DoomBondingCurve
 /// @notice Per-launch, two-way constant-product market that graduates permanently into canonical V3.
 contract DoomBondingCurve is ReentrancyGuard {
@@ -290,23 +294,27 @@ contract DoomBondingCurve is ReentrancyGuard {
             - creatorFeesForfeited;
     }
 
+    function graduationSqrtPriceX96() public view returns (uint160) {
+        return _computeInitialSqrtPrice(lpTokenAllocation, GRADUATION_TARGET);
+    }
+
     function _graduate() internal {
         graduated = true;
         uint256 tokenAmount = realTokenReserve;
         uint256 nativeAmount = realNativeReserve;
         realTokenReserve = 0;
         realNativeReserve = 0;
-        uint160 sqrtPriceX96 = _computeInitialSqrtPrice(tokenAmount, nativeAmount);
         token.forceApprove(address(graduationManager), tokenAmount);
         (address deployedPool, uint256 nftId, uint256 tokenUsed_, uint256 nativeUsed_) = graduationManager.createAndLockPosition{
             value: nativeAmount
         }(
-            launchId, address(token), address(escrow), creator, tokenAmount, sqrtPriceX96
+            launchId, address(token), address(escrow), creator, tokenAmount
         );
         token.forceApprove(address(graduationManager), 0);
         if (tokenUsed_ > tokenAmount || nativeUsed_ > nativeAmount) {
             revert AccountingMismatch(tokenAmount + nativeAmount, tokenUsed_ + nativeUsed_);
         }
+        IRestrictedLaunchTokenV2(address(token)).unlockTransfers();
         uint256 tokenRemainder = tokenAmount - tokenUsed_;
         uint256 nativeRemainder = nativeAmount - nativeUsed_;
         if (tokenRemainder != 0) {

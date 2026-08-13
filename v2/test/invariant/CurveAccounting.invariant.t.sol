@@ -62,6 +62,7 @@ contract CurveAccountingInvariantTest is Test {
             SUPPLY
         );
         escrow = curve.escrow();
+        token.bindLaunch(address(curve), address(escrow), address(manager));
         assertTrue(token.transfer(address(escrow), SUPPLY * 60 / 100));
         assertTrue(token.transfer(address(curve), SUPPLY * 40 / 100));
         handler = new CurveTradingHandler(curve, token);
