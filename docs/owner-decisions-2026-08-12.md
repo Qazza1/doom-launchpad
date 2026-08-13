@@ -87,5 +87,7 @@ Existing role addresses remain unchanged:
 - Operator legal identity, governing law, target jurisdictions and professional
   legal review.
 - Final tagged candidate, deployment funding confirmation, and explicit
-  broadcast approval. Post-credential-rotation dual-RPC evidence passed on
-  2026-08-13. Independent review is deferred under the recorded timing decision.
+  broadcast approval. Post-primary-rotation dual-RPC evidence passed on
+  2026-08-13; the unrotatable fallback credential is removed from Railway and
+  retained only for local fork checks. Independent review is deferred under the
+  recorded timing decision.

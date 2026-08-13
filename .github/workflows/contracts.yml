@@ -164,6 +164,8 @@ jobs:
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: v1.7.1
+      - name: Confirm V2 sources match the frozen candidate
+        run: node tools/v2/review-package.mjs --verify config/v2-review-artifact.json --ref HEAD
       - name: Install pinned Solidity dependencies
         run: |
           forge install --no-git OpenZeppelin/openzeppelin-contracts@v5.6.1

@@ -4,7 +4,7 @@ Review date: 2026-08-12; owner audit-timing decision recorded 2026-08-13
 
 Reviewed engineering baseline: `523ed18074a8515860d8417b24196cb7a4fe16b9`
 
-Remediation candidate: pending final commit and CI
+Remediation candidate: `df47b27804e7add005261730fa81cb83c9b068e8`
 
 Review type: author-assisted internal adversarial review, **not independent audit**
 
@@ -115,13 +115,20 @@ Recommended operational controls are a dedicated hardware-backed account,
 transaction simulation, minimal connected applications, and an incident plan.
 A multisig remains the preferred remediation.
 
-## I-01: Dual-RPC fork validation passed, but credentials require rotation
+## I-01: Dual-RPC fork validation passed; fallback credential has residual exposure
 
 Both provider-backed dependency and ephemeral V2 wiring tests passed on
 2026-08-12. During a later diagnostic probe, the two credential-bearing RPC URLs
-were echoed into local task output. Those credentials must be treated as
-compromised, rotated, and replaced locally and in Railway. The dual-provider
-fork tests must then pass again immediately before deployment.
+were echoed into local task output. The Alchemy credential was rotated. The
+QuickNode free plan did not permit rotation; the owner accepted that residual
+risk, and the credential was removed from Railway so it is no longer used by a
+continuously running production service. It remains local fork-test fallback
+only and should be rotated when the provider permits it.
+
+Both fork suites passed again on 2026-08-13 after the primary rotation. Each
+provider independently verified the recorded Robinhood dependencies and an
+ephemeral complete V2 launch, graduation, permanent position lock, and transfer
+unlock. This evidence does not make the exposed fallback credential private.
 
 No RPC URL or credential is committed to this repository.
 
@@ -157,9 +164,12 @@ it does not authorize deployment, unpausing, or a launch.
 1. ~~Approve and implement a mitigation for H-01.~~ Candidate implemented.
 2. ~~Add adversarial tests for pool pre-creation, wrong initialization, early
    liquidity, irreversible token unlock, and graduation.~~ Candidate covered.
-3. Rotate both RPC credentials and rerun both Robinhood fork suites against the
-   recorded mainnet dependencies.
-4. Freeze a new exact commit and regenerate source hashes and bytecode sizes.
+3. ~~Rotate the primary credential and rerun both Robinhood fork suites against
+   the recorded mainnet dependencies.~~ Passed 2026-08-13. The unrotatable
+   fallback is removed from Railway and retains a documented local-only risk.
+4. ~~Freeze a new exact commit and regenerate source hashes and bytecode sizes.~~
+   Candidate `df47b27804e7add005261730fa81cb83c9b068e8`, digest
+   `ce824376a4639f5c8882d7723668576ebf5b1f9e21b596aba605463614164d24`.
 5. ~~Obtain independent review before launch or explicitly record the owner's
    decision to defer it.~~ Deferral decision recorded 2026-08-13; independent
    review remains required after the initial launch.
