@@ -47,6 +47,34 @@ These are local fork artifacts, not predicted or deployed mainnet addresses.
 Actual mainnet addresses depend on the deployer nonce immediately before each
 transaction.
 
+## Exact nonce-10 payload and gas preview
+
+After both providers independently reported deployer pending nonce `10`, the
+unsigned transaction planner generated the exact seven payloads and an
+auto-impersonated localhost fork executed them in order. Every receipt,
+predicted CREATE address, binding, factory pause state, and network
+configuration postcondition passed.
+
+| Nonce | Step | Gas used |
+|---:|---|---:|
+| 10 | Deploy `DoomLaunchDeployerV2` | 5,008,670 |
+| 11 | Deploy `PositionLockerV2` | 1,657,440 |
+| 12 | Deploy `V3GraduationManagerV2` | 2,237,386 |
+| 13 | Bind locker registrar | 49,382 |
+| 14 | Deploy `DoomLaunchFactoryV2` | 1,726,508 |
+| 15 | Bind curve deployer factory | 49,088 |
+| 16 | Bind graduation manager factory | 49,138 |
+
+The snapshot funding requirement was `0.001499637572355 ETH`. This includes
+25% headroom on each estimated transaction gas limit and a further 25% funding
+buffer at the observed EIP-1559 fee ceiling. The deployer balance was
+`0.013256557821060110 ETH`, so the snapshot shortfall was zero. Gas prices and
+nonce can change; the preflight and funding calculation must be rerun
+immediately before any deployment approval.
+
+No signer was loaded. Anvil auto-impersonated the deployer and every state write
+was sent exclusively to `127.0.0.1`.
+
 ## Remaining gates
 
 - The Rabby no-broadcast rendering/review is not complete.

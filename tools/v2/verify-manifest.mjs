@@ -68,6 +68,22 @@ export function validateV2Manifest(manifest) {
       "docs/v2-no-broadcast-rehearsal-2026-08-13.md",
     "dual-RPC rehearsal evidence path must be recorded",
   );
+  requireValue(
+    errors,
+    manifest?.gates?.localhostExactPayloadPreviewPassed === true,
+    "localhost exact-payload preview must have passed",
+  );
+  requireValue(
+    errors,
+    /^\d{4}-\d{2}-\d{2}$/.test(manifest?.gates?.localhostExactPayloadPreviewRecordedAt || ""),
+    "localhost exact-payload preview date must be recorded",
+  );
+  requireValue(
+    errors,
+    manifest?.gates?.localhostExactPayloadPreviewEvidence ===
+      "docs/v2-no-broadcast-rehearsal-2026-08-13.md",
+    "localhost exact-payload preview evidence path must be recorded",
+  );
   requireValue(errors, manifest?.gates?.explicitBroadcastApproval === false, "broadcast approval must remain false");
   return errors;
 }
