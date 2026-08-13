@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "status": "v2_mainnet_deployment_verified_paused",
+  "deployedAt": "2026-08-13",
+  "chainId": 4663,
+  "deployer": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+  "planSha256": "296f3bc0541f044fa496bb86802deb65ed3e3662a9b2b7eb3ebafd88e1afa9b2",
+  "contractDigest": "ce824376a4639f5c8882d7723668576ebf5b1f9e21b596aba605463614164d24",
+  "addresses": {
+    "curveDeployer": "0x7Da8f0317341DB59650939036145c057Cc71bFB0",
+    "positionLocker": "0x9Cf65eD04eBA45F68241591ba8a7D6BAa8E86cFB",
+    "graduationManager": "0x72b094f084915F6d868177b68925cA9D5e6f2A01",
+    "launchFactory": "0x142760D2C865537c063492933FB71ddefA2372C6"
+  },
+  "transactions": [
+    {
+      "nonce": 10,
+      "label": "Deploy DoomLaunchDeployerV2",
+      "transactionHash": "0xa10c3b83674d8b4b9bb33422abc348b41c6b0f24904b8bd261aed3ffe1f7084e",
+      "blockNumber": 35540966,
+      "status": "verified_success"
+    },
+    {
+      "nonce": 11,
+      "label": "Deploy PositionLockerV2",
+      "transactionHash": "0xabf4cb8a674c98f351b66b3df22761a336d70a584750d6f5781a1bd5858ff9a4",
+      "blockNumber": 35544776,
+      "status": "verified_success"
+    },
+    {
+      "nonce": 12,
+      "label": "Deploy V3GraduationManagerV2",
+      "transactionHash": "0x37a64168bcabc46b0f490cfc58a38af60b9b1cdca47fd29e9c0b67ad1c973077",
+      "blockNumber": 35546187,
+      "status": "verified_success"
+    },
+    {
+      "nonce": 13,
+      "label": "PositionLockerV2.bindRegistrar(address)",
+      "transactionHash": "0x97509542581e471f1c2b36c08cb142688ea7f3d1c49a9ad3ffee555dc2684bbb",
+      "blockNumber": 35547504,
+      "status": "verified_success"
+    },
+    {
+      "nonce": 14,
+      "label": "Deploy DoomLaunchFactoryV2",
+      "transactionHash": "0x9c9327691149957beb0ba1782dcf71fe8ad47e6d3be07f17dd4c5ebdf2964980",
+      "blockNumber": 35548791,
+      "status": "verified_success"
+    },
+    {
+      "nonce": 15,
+      "label": "DoomLaunchDeployerV2.bindFactory(address)",
+      "transactionHash": "0x19c193139bd0922984edc112f46bb5b87fc0911221faccc57fa5f8b0bcfe2579",
+      "blockNumber": 35550926,
+      "status": "verified_success"
+    },
+    {
+      "nonce": 16,
+      "label": "V3GraduationManagerV2.bindFactory(address)",
+      "transactionHash": "0x168d9c1e6ead45a5cc1cdbcd27f8d0fc086b8d90bafd17f3fe7208c1f1b902a1",
+      "blockNumber": 35552303,
+      "status": "verified_success"
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-08-13T17:14:17.321Z",
+    "auditBlock": 35561360,
+    "primaryHead": 35561460,
+    "fallbackHead": 35561463,
+    "pendingNonce": 17,
+    "receiptCount": 7,
+    "providersAgreed": true,
+    "allRuntimeBytecodesMatch": true,
+    "deployerAuthorizedFactory": "0x142760D2C865537c063492933FB71ddefA2372C6",
+    "lockerAuthorizedRegistrar": "0x72b094f084915F6d868177b68925cA9D5e6f2A01",
+    "managerAuthorizedFactory": "0x142760D2C865537c063492933FB71ddefA2372C6",
+    "managerNetworkValid": true,
+    "factoryConfigurationValid": true,
+    "factoryPaused": true,
+    "factoryLaunchCount": 0
+  },
+  "safety": {
+    "factoryMustRemainPaused": true,
+    "factoryResumeAuthorized": false,
+    "tokenLaunchAuthorized": false,
+    "mainnetExecutorStopped": true,
+    "independentAuditDeferredUntilAfterInitialBetaLaunch": true
+  }
+}

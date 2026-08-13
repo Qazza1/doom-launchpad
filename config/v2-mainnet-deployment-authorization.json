@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "status": "owner_authorized_exact_paused_v2_deployment",
+  "recordedAt": "2026-08-13",
+  "chainId": 4663,
+  "deployer": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+  "sourceCommit": "0c65ca9357e5ae2b971b20c58e987b03da137353",
+  "contractDigest": "ce824376a4639f5c8882d7723668576ebf5b1f9e21b596aba605463614164d24",
+  "planSha256": "296f3bc0541f044fa496bb86802deb65ed3e3662a9b2b7eb3ebafd88e1afa9b2",
+  "startingNonce": 10,
+  "endingNonce": 16,
+  "transactionCount": 7,
+  "predictedAddresses": {
+    "curveDeployer": "0x7Da8f0317341DB59650939036145c057Cc71bFB0",
+    "positionLocker": "0x9Cf65eD04eBA45F68241591ba8a7D6BAa8E86cFB",
+    "graduationManager": "0x72b094f084915F6d868177b68925cA9D5e6f2A01",
+    "launchFactory": "0x142760D2C865537c063492933FB71ddefA2372C6"
+  },
+  "authorization": {
+    "sevenTransactionsOneAtATime": true,
+    "useExistingDeployerBalance": true,
+    "fundingTransfer": false,
+    "stopAndVerifyEveryReceipt": true,
+    "factoryMustRemainPaused": true,
+    "factoryResume": false,
+    "tokenLaunch": false,
+    "independentAuditDeferredUntilAfterInitialBetaLaunch": true
+  },
+  "validity": {
+    "pendingNonceMustRemain": 10,
+    "exactPlanDigestRequired": true,
+    "reauthorizationRequiredAfterNonceOrPayloadDrift": true
+  }
+}
