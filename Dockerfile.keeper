@@ -10,6 +10,7 @@ COPY tools/keeper ./tools/keeper
 COPY tools/lib ./tools/lib
 COPY config/keeper-v2.mainnet.json \
   config/keeper-v2-live.mainnet.json \
+  config/keeper.mainnet.json \
   config/robinhood-mainnet-stage4-deployment.json \
   config/stage4-deployment-manifest.json \
   ./config/
