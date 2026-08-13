@@ -1,5 +1,17 @@
 # V2 mainnet deployment execution
 
+## Deployment result
+
+The exact authorized sequence completed successfully on 2026-08-13. All seven transactions were
+verified through both configured providers, and a later sequential verification pass at fixed block
+35,561,360 confirmed the four deployed runtime bytecodes, three irreversible bindings, and final
+configuration. The deployer pending nonce is 17.
+
+The factory is `0x142760D2C865537c063492933FB71ddefA2372C6`. It remains paused, its launch
+count is zero, and no factory-resume or token-launch transaction was submitted. The localhost
+executor was stopped after the seventh receipt. Sanitized transaction and verification evidence is
+stored in `config/v2-mainnet-deployment-record.json`.
+
 ## Authorized scope
 
 The owner authorization recorded on 2026-08-13 covers only the exact seven-transaction V2 plan
