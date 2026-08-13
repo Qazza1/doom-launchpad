@@ -142,7 +142,7 @@ async function submit(transaction, button, detail) {
       const report = await finish.json();
       if (!finish.ok || !report.ok) throw new Error(report.error || "finalisation failed");
       setStatus(
-        `All six steps confirmed. Factory paused: ${report.postconditions.factoryPaused}. ` +
+        `All ${report.steps.length} steps confirmed. Factory paused: ${report.postconditions.factoryPaused}. ` +
           "Signatures are bound to the preview chain and cannot be replayed on mainnet.",
         "success",
       );
