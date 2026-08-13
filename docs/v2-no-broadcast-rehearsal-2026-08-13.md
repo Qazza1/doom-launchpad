@@ -75,9 +75,41 @@ immediately before any deployment approval.
 No signer was loaded. Anvil auto-impersonated the deployer and every state write
 was sent exclusively to `127.0.0.1`.
 
+## Rabby wallet-rendering rehearsal
+
+The owner completed all seven wallet prompts through Rabby on the isolated
+preview chain ID `4663666`. The server read each mined transaction back from
+the preview fork and verified the sender, recipient, nonce, zero value, full
+calldata, predicted CREATE address, successful receipt, and sequence before
+enabling the next prompt.
+
+The verified preview used nonces `1010` through `1016` and passed these final
+postconditions:
+
+- the factory remained paused;
+- the locker registrar was bound to the V2 graduation manager;
+- the curve deployer was bound to the V2 factory;
+- the graduation manager was bound to the V2 factory.
+
+The V3 manager's `isNetworkConfigurationValid()` correctly returns false on
+the preview chain because its immutable expected chain is production `4663`.
+The same postcondition passed on production-chain forks through both providers
+and in the exact chain-4663 localhost payload rehearsal.
+
+Rabby preview CREATE addresses were:
+
+- curve deployer: `0x59779F78C683B36A5520aDCc7E6fd29675Bb72db`
+- position locker: `0xbe238efd5F18d7ebc442FF3d9EADcdfa1E17B791`
+- graduation manager: `0xEc109124eC97F387951075fED792AB5F11ad0a7c`
+- launch factory: `0xe26ddEB2FE09D764B93962f3720C5B77eD0aC6dA`
+
+Those addresses are preview-only because the preview nonce is deliberately
+offset above the real deployer nonce. No raw signed transaction was retained.
+EIP-155 binds the preview signatures to `4663666`, so they are invalid on
+Robinhood mainnet `4663`.
+
 ## Remaining gates
 
-- The Rabby no-broadcast rendering/review is not complete.
 - No exact nonce or gas plan has been frozen.
 - Mainnet deployment is not authorized.
 - Factory resume is not authorized.

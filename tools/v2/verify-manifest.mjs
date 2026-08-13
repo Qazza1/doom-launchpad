@@ -84,6 +84,23 @@ export function validateV2Manifest(manifest) {
       "docs/v2-no-broadcast-rehearsal-2026-08-13.md",
     "localhost exact-payload preview evidence path must be recorded",
   );
+  requireValue(errors, manifest?.gates?.rabbyNoBroadcastReviewComplete === true, "Rabby preview must be complete");
+  requireValue(
+    errors,
+    /^\d{4}-\d{2}-\d{2}$/.test(manifest?.gates?.rabbyNoBroadcastReviewRecordedAt || ""),
+    "Rabby preview date must be recorded",
+  );
+  requireValue(
+    errors,
+    manifest?.gates?.rabbyNoBroadcastReviewEvidence === "docs/v2-no-broadcast-rehearsal-2026-08-13.md",
+    "Rabby preview evidence path must be recorded",
+  );
+  requireValue(errors, manifest?.gates?.rabbyPreviewChainId === 4_663_666, "Rabby preview chain must be isolated");
+  requireValue(
+    errors,
+    manifest?.gates?.rabbyPreviewSignaturesValidOnMainnet === false,
+    "Rabby preview signatures must not be valid on mainnet",
+  );
   requireValue(errors, manifest?.gates?.explicitBroadcastApproval === false, "broadcast approval must remain false");
   return errors;
 }
