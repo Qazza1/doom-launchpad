@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "status": "frozen_internal_review_candidate",
+  "candidateCommit": "df47b27804e7add005261730fa81cb83c9b068e8",
+  "contractDigest": "ce824376a4639f5c8882d7723668576ebf5b1f9e21b596aba605463614164d24",
+  "contractFileCount": 14,
+  "contractScope": "v2/src/",
+  "frozenAt": "2026-08-13",
+  "independentAuditComplete": false,
+  "independentAuditDeferredByOwner": true,
+  "note": "The digest covers canonical Git blob bytes under v2/src only. CI rejects contract-source drift from this candidate. Audit deferral changes timing only and does not authorize deployment or launch."
+}

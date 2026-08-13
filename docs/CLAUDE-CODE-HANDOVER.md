@@ -1,6 +1,6 @@
 # DoomStreak / Doom Launchpad — Claude Code Handover
 
-Last updated: 2026-07-28
+Last updated: 2026-08-01
 
 This document is the authoritative handover for continuing Doom Launchpad in
 Claude Code. Read it completely before changing code.
@@ -29,32 +29,69 @@ First:
    scripts, and tests identified in the handover.
 4. Run the repository's local verification command before editing:
    powershell -ExecutionPolicy Bypass -File .\tools\verify-local.ps1
-5. Do not deploy, fund an address, sign, or broadcast any transaction.
+5. Do not deploy, fund an address, sign, or broadcast any transaction. The
+   contracts are already live; see the mainnet state section immediately below.
 
-The project is in Stage 4 deployment preparation. Stages 3.1–3.4 are complete.
-Every Stage 4 tool now exists: dual-RPC preflight, the localhost six-transaction
-preview, the chain-isolated wallet transaction preview, the unsigned transaction
-plan, the Blockscout verification bundle, the funding-refresh worksheet, the
-post-deployment verifier, and the Stage 5 canary observer. No mainnet contract
-has been deployed and no transaction has been signed or broadcast.
+READ THIS FIRST. THE CONTRACTS ARE LIVE ON MAINNET AND THE CANARY IS RUNNING.
 
-The economics were reworked on 2026-07-28 and are now frozen at 0% creator at
-launch / 40% permanent liquidity / 60% GM escrow, with the escrow releasing one
-equal share per check-in, a 1% creation fee, and a 70/15/15 creator/treasury/
-rewards split on WETH LP fees.
+All four contracts are deployed on Robinhood Chain (4663). The factory was
+RESUMED on 2026-08-01 and is open now. Canary launch 1 is done and every observer
+invariant holds; two launches remain within the contract cap of three. Stages 3.1
+to 3.4 and Stage 4 are complete.
 
-What remains is sequencing rather than tooling:
-1. Finish the Stage 6 launcher-first site work and the Stage 6.5 mechanics the
-   owner has chosen (see `docs/launchpad-v2-mechanics.md`).
-2. Obtain an independent review of the final contract artifact. Do not treat your
-   own review, Codex's review, or the owner's review as independent.
-3. Refresh the funding worksheet from the final commit, minutes before approval.
-4. Deploy one transaction at a time, verify, then run the capped canary.
+Launch 1 state, for orientation only:
 
-When changing contracts, expect downstream consumers to break. The economics
+- Token DCT1 `0xbebf865056a3fe9914e9edeaddd6ed763309ddb6`
+- Pool `0x515b8e7271b81a20c9f5e1a69f96565a22db945d`, position 548289 held by the
+  PositionLocker
+- Escrow `0x19b0780f01567c1c05349a1d8a113042c4cd07ed` holding 600,000,000 DCT1,
+  GM streak open at 0/3
+- Launch transaction
+  `0xf46332c0645743a1c8b0baec50ab5bc72efa08e62f25bdaa52821772b747044c`, block
+  25352820
+
+Read `docs/stage-5-launch-1-review.md` before anything touching launch 2. It
+records the evidence and the blockers that are still open.
+
+You are NOT authorized to: execute a canary launch, pause or resume the factory,
+sign or broadcast any transaction, request or load a private key, deploy
+replacements, withdraw fees, or create reward campaigns. Launches 2 and 3 each
+require a separate, explicit owner approval given immediately before that action.
+This document is not that approval, and neither is any earlier message in a
+conversation.
+
+All work is read-only, non-broadcast, fail-closed, and test-first.
+
+Deployed addresses (verified on chain and on Blockscout):
+- DoomRewards        0x615f6E6B0AEA7Ac94F4391424aF601F9290dd9dC
+- PositionLocker     0xdaE01c32131fF283f403b4C1fD71018Fa31cfAC0
+- V3LiquidityManager 0xbf36be8861ca4fe9920B10fc526E3fD039F88519
+- DoomLaunchFactory  0xDC0DF0Ba9e519D1E082F8B45307450F418eED9dE
+
+Full deployment record, receipts, and verification evidence:
+`config/robinhood-mainnet-stage4-deployment.json` and
+`docs/stage-4-mainnet-deployment-evidence.md`.
+
+The economics are frozen at 0% creator at launch / 40% permanent liquidity /
+60% GM escrow, escrow released one equal share per check-in, a 1% creation fee,
+and a 70/15/15 creator/treasury/rewards split on WETH LP fees.
+
+The owner accepted proceeding to the capped three-launch canary without an
+independent third-party audit. That waiver covers this unchanged contract digest
+and the capped canary only. It does not cover a replacement or public factory,
+and it does not authorize resume or launch. See
+`docs/stage-4-owner-risk-acceptance.md`.
+
+Contract sources are frozen at commit `740a473` with digest
+`7aab9e3b0c0c7066ee31e89807900e63112b0c4815338825e02f5d85fa4684c8`. Do not modify
+`src/` or re-freeze `config/review-artifact.json` unless the owner explicitly
+authorizes a new contract version. A source change now means the deployed
+contracts no longer match the repository.
+
+When changing anything, expect downstream consumers to break. The economics
 rework silently broke the canary observer's custody check, both opt-in fork
-tests, and the indexer event declarations. Check `tools/`, `integration/`, and
-the fork tests every time.
+tests, and the indexer event declarations. Check `tools/`, `integration/`, the
+fork tests, and the `stage34-indexer` repository every time.
 
 Maintain these hard boundaries:
 - No live signing or broadcasting without a later, explicit owner instruction
@@ -62,15 +99,18 @@ Maintain these hard boundaries:
 - Never ask for, store, print, or commit seed phrases, private keys, RPC URLs,
   Telegram tokens, API keys, or other secrets.
 - Never import the SafePal seed/private key into Rabby.
-- The factory must remain paused after deployment.
+- The factory is open for the capped canary. Do not pause or resume it without an
+  explicit owner instruction; both directions are owner decisions, and the keeper
+  manifest must be updated in the same sitting.
 - The two one-time bindings are irreversible. Preserve the exact deployment
   order and stop on any receipt or postcondition mismatch.
 - Never guess Robinhood Chain or Uniswap V3-compatible addresses.
 - Do not populate final nonce, predicted contract addresses, gas, or required
   funding in the canonical manifest from the current snapshot. Those values
   become stale when the deployer nonce, block, gas, or code changes.
-- Do not merge this branch to main, fund the Rabby deployer, unpause the
-  factory, or begin the three-launch canary without explicit owner approval.
+- Do not merge this branch to main, fund the Rabby deployer, change the factory's
+  pause state, or execute canary launch 2 or 3 without explicit owner approval
+  given immediately before the action.
 - Any contract source change invalidates the frozen review artifact. Re-freeze
   `config/review-artifact.json` in the same commit; after an independent review
   it also requires focused re-review.
@@ -87,13 +127,20 @@ without making a mainnet assumption.
   `C:\Users\golis\Desktop\doomstreak-site\doom-launchpad`
 - GitHub: <https://github.com/Qazza1/doom-launchpad>
 - Active branch: `stage4-deployment-prep`
-- Work from the head of `origin/stage4-deployment-prep` with a clean tree.
+- Work from the head of `origin/stage4-deployment-prep` with a clean tree. The
+  same commits are also pushed to `main`.
+- Sibling repositories: `..\stage34-indexer` (production indexer and public API)
+  and `..` itself (the static DoomStreak website).
 - The contract artifact is frozen by digest in `config/review-artifact.json`, not
   by a tag. `tools/review/package.mjs --ref HEAD` regenerates the manifest, and CI
   fails if `src/` no longer matches the frozen digest.
 
 Useful checkpoints:
 
+- `1f5e48f` — Stage 5 operations ready (branch head, also on main)
+- `740a473` — frozen deployed contract source, digest `7aab9e3b…`
+- `44d435a` — approved deployment plan
+- `551a27f` — paused Robinhood mainnet deployment recorded
 - `a51fb7c` — indexer event contract and its both-directions guard
 - `91f781c` — Death Watch feed engine
 - `e240417` — fork tests updated to the new economics and passing live
@@ -427,33 +474,55 @@ Do not set deployment approval or broadcast flags during engineering work.
 
 ## What is being worked on now
 
-Stage 4 tooling is complete. Work has moved to the product: the launcher-first
-site and the Stage 6.5 differentiation mechanics.
+Everything is deployed and verified, the factory is resumed, and the capped
+canary is in progress with one launch done. Operations are live and read-only.
 
-Built and not yet wired into the public site:
+Running in production:
 
-- `launch.html` in the site repository, matching the current economics, with
-  launch actions disabled and the creator's own downside stated plainly.
-- The Death Watch feed engine, which reads the chain directly and broadcasts only
-  transitions: `docs/death-watch.md`.
+- **Keeper** on Railway (`doom-launchpad-keeper`), read-only, no signing key, two
+  RPC providers, persistent alert state. It sees launch 1, its permanent-lock
+  check passes, and a local dry run against the reconciled config reports zero
+  active alerts. See `docs/keeper-operations.md`.
+- **Indexer** on Railway (`OnchainDiligence-indexer`), read-only — **currently
+  stalled**. It stopped at block 25352711, 109 blocks before launch 1 was mined,
+  reports `status: stalled` with a request timeout, and has never indexed the
+  launch. This is the largest open item.
+- **Public site** with the Death Watch survival feed, creator Doom Record, and
+  persistent watchlist alerts. Death Watch reads the chain directly and is
+  correct; anything the site derives from the indexer is not.
 
-Next engineering work:
+Direct reads, the observer, and Death Watch agree on the factory being resumed
+with launch count 1. The indexer does not.
 
-1. The Death Watch public web feed, and per-launch shareable pages.
-2. Point `index.html`'s navigation at the launch page and move the legacy NFT
-   commitment-collection launcher off the `CREATE` tab.
-3. Creator reputation tiers from the analytics dataset.
-4. Holder insurance on default — blocked on resolving the self-dealing vector
-   described in `docs/launchpad-v2-mechanics.md`.
+Before launch 2, in order:
+
+1. Clear the blockers in `docs/stage-5-launch-1-review.md`: the stalled indexer,
+   the unfunded creator account, unconfirmed Telegram delivery, and the open GM
+   streak.
+2. Owner grants explicit approval for launch 2, immediately before the action.
+   Approval for launch 1 does not carry.
+3. Prepare the plan with `tools/canary/prepare.ps1 -Kind launch -Launch 2` and
+   rehearse it with `tools/canary/fork-rehearsal.ps1 -Kind launch`.
+4. Launch exactly 0.01 ETH of liquidity — 0.0101 ETH of value — from the approved
+   creator.
+5. Run `tools/canary/observe.mjs` against that launch and review every invariant
+   before launch 3 is even considered. Three launches is the hard cap.
+6. Compare indexer and public API output against direct contract reads.
+
+Closed on 2026-08-02: `PositionLocker.bindRegistrar` at block 25102641 fell
+outside the scan range that started at the factory deployment block 25105648.
+Both the indexer and `config/keeper.mainnet.json` now start at 25082132, the
+first deployment, so `RegistrarBound` is inside the range.
 
 Two structural facts to carry forward:
 
 - Factory #1 can only ever perform three launches of exactly 0.01 ETH. The canary
   caps are contract constants the constructor enforces, so public launching needs
-  a second factory regardless.
-- Do not skip independent review because the website has little traffic. The
-  irreversible bindings, permanent LP custody, token accounting, and live user
-  funds make traffic irrelevant to contract risk.
+  a second factory, and that factory is outside the audit waiver.
+- The first-party audit in `docs/internal-audit-2026-07-28.md` is not an
+  independent review. M-1 (permissionless pool pre-creation can grief a launch)
+  is remediated only as a diagnostic revert; the denial of service itself remains
+  and must be treated as an architecture requirement for factory v2.
 
 ## Remaining staged roadmap
 
@@ -485,15 +554,16 @@ Remaining gates include:
    target or created address, bytecode, constructor/config values, and balance.
 7. Stop on any discrepancy; never blindly submit the next nonce.
 8. Verify source code and constructor arguments on the explorer.
-9. Confirm the factory is paused and both one-time bindings are correct.
+9. Confirm the factory is paused and both one-time bindings are correct. <!-- state-claim: historical, a step in the completed deployment procedure -->
+
 10. Revoke or remove unnecessary hot-wallet funds after the procedure.
 
-### Stage 5 — capped mainnet canary
+### Stage 5 — capped mainnet canary, in progress
 
 This is separate from deployment:
 
-- Owner explicitly approves resuming the factory.
-- Launch no more than three canary tokens.
+- Owner explicitly approves resuming the factory. **Done 2026-08-01.**
+- Launch no more than three canary tokens. **One done; two remain.**
 - Each uses exactly 0.01 ETH of native liquidity.
 - Aggregate canary liquidity cannot exceed 0.03 ETH.
 - Observe and review each launch before proceeding to the next.

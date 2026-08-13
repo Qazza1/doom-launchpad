@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DoomStreak — launches</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/assets/doomstreak.css">
+  <style>
+    /* Page composition only; everything reusable lives in the design system. */
+    .tabs { display: flex; gap: calc(var(--step) * 1.25); flex-wrap: wrap; margin: calc(var(--step) * 3) 0; }
+    .tabs button {
+      padding: 7px 16px; border: var(--edge-thin); border-radius: var(--radius-pill);
+      background: var(--card2); color: var(--muted);
+      font-family: var(--font-display); font-size: 15px; letter-spacing: 1px; cursor: pointer;
+    }
+    .tabs button[aria-selected="true"] { background: var(--cyan); color: #0d0221; }
+    .tabs button .n { opacity: .75; }
+    .row-main b { font-size: 17px; }
+    .empty {
+      padding: calc(var(--step) * 3); border: var(--edge-thin); border-radius: var(--radius-sm);
+      background: var(--card); color: var(--muted); line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav">
+    <div class="brand"><a href="../"><img src="/assets/img/3ce1b327f332.png" alt="DoomStreak"></a></div>
+    <a href="../launch-flow/" class="primary">LAUNCH</a>
+    <a href="../" aria-current="page">LAUNCHES</a>
+    <a href="https://www.doomstreak.xyz/">ANALYTICS</a>
+    <a href="https://www.doomstreak.xyz/#nft">NFT GAME</a>
+  </div>
+
+  <h1 style="margin-top:calc(var(--step)*5)">THE <span class="alt">DEATH</span> WATCH</h1>
+  <p class="lede">Every coin here has a clock on it. Ordered by who is closest to losing their allocation.</p>
+
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <ul class="list" id="feed"></ul>
+  <div class="empty" id="empty" hidden></div>
+  <div class="meta" id="fresh"></div>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>

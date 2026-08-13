@@ -1,59 +1,18 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { readJson, writeJson } from "../lib/json-file.mjs";
+import { LAUNCH_FIELDS, decodeLaunchRecord, splitWords } from "../../web/lib/launch-record.mjs";
 
 export const CHAIN_ID = 4663;
 export const BPS = 10_000n;
 
+// Re-exported so existing callers and tests keep their import path. The decoder itself lives in
+// tools/lib because the public launch page loads it in the browser.
+export { LAUNCH_FIELDS, decodeLaunchRecord, splitWords };
+
 const directory = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(directory, "../..");
 const outputRoot = resolve(directory, "output");
-
-/// Order matters: this mirrors DoomLaunchFactory.LaunchRecord exactly. Every field is static, so the
-/// tuple is returned as consecutive words.
-export const LAUNCH_FIELDS = [
-  ["token", "address"],
-  ["creator", "address"],
-  ["pool", "address"],
-  ["creatorEscrow", "address"],
-  ["positionId", "uint"],
-  ["totalSupply", "uint"],
-  ["creatorLiquidAmount", "uint"],
-  ["liquidityTokenAmountAllocated", "uint"],
-  ["liquidityTokenAmountUsed", "uint"],
-  ["liquidityTokenRemainder", "uint"],
-  ["escrowTokenAmount", "uint"],
-  ["nativeLiquidityAmountRequested", "uint"],
-  ["nativeLiquidityAmountUsed", "uint"],
-  ["creationFee", "uint"],
-  ["treasuryFee", "uint"],
-  ["nftRewardFee", "uint"],
-  ["createdAt", "uint"],
-  ["liquidityPermanent", "bool"],
-  ["sqrtPriceX96", "uint"],
-  ["configurationHash", "bytes32"],
-];
-
-export function splitWords(hex) {
-  const body = String(hex || "").replace(/^0x/, "");
-  if (body.length % 64 !== 0) throw new Error("return data is not a whole number of words");
-  return Array.from({ length: body.length / 64 }, (_, index) =>
-    body.slice(index * 64, index * 64 + 64));
-}
-
-export function decodeLaunchRecord(hex) {
-  const words = splitWords(hex);
-  if (words.length < LAUNCH_FIELDS.length) throw new Error("launch record is truncated");
-  const record = {};
-  for (const [index, [name, kind]] of LAUNCH_FIELDS.entries()) {
-    const word = words[index];
-    if (kind === "address") record[name] = `0x${word.slice(24)}`;
-    else if (kind === "bool") record[name] = BigInt(`0x${word}`) === 1n;
-    else if (kind === "bytes32") record[name] = `0x${word}`;
-    else record[name] = BigInt(`0x${word}`);
-  }
-  return record;
-}
 
 const same = (left, right) => String(left).toLowerCase() === String(right).toLowerCase();
 
@@ -199,9 +158,7 @@ async function rpc(url, method, params = []) {
 }
 
 async function selectorOf(contract, signature) {
-  const artifact = JSON.parse(
-    await readFile(resolve(projectRoot, "out", `${contract}.sol`, `${contract}.json`), "utf8"),
-  );
+  const artifact = await readJson(resolve(projectRoot, "out", `${contract}.sol`, `${contract}.json`));
   const identifier = artifact.methodIdentifiers?.[signature];
   if (!identifier) throw new Error(`${contract} has no ${signature}`);
   return `0x${identifier}`;
@@ -210,28 +167,14 @@ async function selectorOf(contract, signature) {
 const padAddress = address => String(address).replace(/^0x/, "").toLowerCase().padStart(64, "0");
 const padUint = value => BigInt(value).toString(16).padStart(64, "0");
 
-export async function main(argv = process.argv.slice(2)) {
-  const read = flag => {
-    const index = argv.indexOf(flag);
-    return index === -1 ? null : argv[index + 1];
-  };
-  const factory = read("--factory");
-  const launchId = read("--launch");
-  const addressesPath = read("--addresses");
-  if (!factory || !launchId || !addressesPath) {
-    throw new Error("--factory, --launch, and --addresses are required");
-  }
-  const url = process.env.ROBINHOOD_RPC_URL || "";
-  if (!/^https:\/\//.test(url)) throw new Error("ROBINHOOD_RPC_URL must be an HTTPS endpoint");
+export async function loadDecisions() {
+  return readJson(resolve(projectRoot, "config/robinhood-mainnet-canary.decisions.json"));
+}
 
-  const chainId = Number(await rpc(url, "eth_chainId"));
-  if (chainId !== CHAIN_ID) throw new Error(`the endpoint returned chain ID ${chainId}`);
-
-  const addresses = JSON.parse(await readFile(resolve(process.cwd(), addressesPath), "utf8"));
-  const decisions = JSON.parse(
-    await readFile(resolve(projectRoot, "config/robinhood-mainnet-canary.decisions.json"), "utf8"),
-  );
-
+/// Reads one launch and evaluates every invariant against it. The endpoint is a parameter so the
+/// Stage D fork rehearsal judges a rehearsed launch by exactly the same rules as a mainnet one;
+/// a second implementation would be a second set of bugs.
+export async function observeLaunch({ url, factory, launchId, addresses, decisions }) {
   const call = (to, data) => rpc(url, "eth_call", [{ to, data }, "latest"]);
   const getLaunch = await selectorOf("DoomLaunchFactory", "getLaunch(uint256)");
   const record = decodeLaunchRecord(await call(factory, `${getLaunch}${padUint(launchId)}`));
@@ -276,6 +219,14 @@ export async function main(argv = process.argv.slice(2)) {
     )
   ).slice(-40)}`;
 
+  const limits = {
+    maxLaunches: await factoryValue("maxLaunches()"),
+    launchCount: await factoryValue("launchCount()"),
+    totalNativeLiquidity: await factoryValue("totalNativeLiquidity()"),
+    maxNativeLiquidityPerLaunchWei: decisions.pilotLimits.maxNativeLiquidityPerLaunchWei,
+    maxNativeLiquidityGlobalWei: decisions.pilotLimits.maxNativeLiquidityGlobalWei,
+  };
+
   const failures = evaluateLaunch({
     record,
     economics: {
@@ -288,17 +239,42 @@ export async function main(argv = process.argv.slice(2)) {
       cadenceSeconds: decisions.gmCommitment.cadenceSeconds,
       gracePeriodSeconds: decisions.gmCommitment.gracePeriodSeconds,
     },
-    limits: {
-      maxLaunches: await factoryValue("maxLaunches()"),
-      launchCount: await factoryValue("launchCount()"),
-      totalNativeLiquidity: await factoryValue("totalNativeLiquidity()"),
-      maxNativeLiquidityPerLaunchWei: decisions.pilotLimits.maxNativeLiquidityPerLaunchWei,
-      maxNativeLiquidityGlobalWei: decisions.pilotLimits.maxNativeLiquidityGlobalWei,
-    },
+    limits,
     escrow,
     balances,
     positionOwner,
     addresses,
+  });
+
+  return { record, escrow, balances, positionOwner, limits, failures };
+}
+
+export async function main(argv = process.argv.slice(2)) {
+  const read = flag => {
+    const index = argv.indexOf(flag);
+    return index === -1 ? null : argv[index + 1];
+  };
+  const factory = read("--factory");
+  const launchId = read("--launch");
+  const addressesPath = read("--addresses");
+  if (!factory || !launchId || !addressesPath) {
+    throw new Error("--factory, --launch, and --addresses are required");
+  }
+  const url = process.env.ROBINHOOD_RPC_URL || "";
+  if (!/^https:\/\//.test(url)) throw new Error("ROBINHOOD_RPC_URL must be an HTTPS endpoint");
+
+  const chainId = Number(await rpc(url, "eth_chainId"));
+  if (chainId !== CHAIN_ID) throw new Error(`the endpoint returned chain ID ${chainId}`);
+
+  const addresses = await readJson(resolve(process.cwd(), addressesPath));
+  const decisions = await loadDecisions();
+
+  const { record, escrow, balances, positionOwner, failures } = await observeLaunch({
+    url,
+    factory,
+    launchId,
+    addresses,
+    decisions,
   });
 
   const stringify = value => (typeof value === "bigint" ? value.toString() : value);
@@ -317,12 +293,7 @@ export async function main(argv = process.argv.slice(2)) {
     warning:
       "Read-only observation. A pass does not authorize the next launch; review each one first.",
   };
-  await mkdir(outputRoot, { recursive: true });
-  await writeFile(
-    resolve(outputRoot, `launch-${launchId}.json`),
-    `${JSON.stringify(report, null, 2)}\n`,
-    "utf8",
-  );
+  await writeJson(resolve(outputRoot, `launch-${launchId}.json`), report);
 
   console.log(`Launch ${launchId} token ${record.token}`);
   console.log(`  pool ${record.pool} position ${record.positionId} owned by ${positionOwner}`);

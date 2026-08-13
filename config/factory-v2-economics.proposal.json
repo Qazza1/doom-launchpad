@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "status": "owner_approved_for_engineering_not_deployment",
+  "network": {
+    "name": "Robinhood Chain Mainnet",
+    "chainId": 4663
+  },
+  "supply": {
+    "creatorLiquidBps": 0,
+    "curveAndGraduationBps": 4000,
+    "gmEscrowBps": 6000,
+    "soldOnCurveAtGraduationBps": 3000,
+    "v3LiquidityTokenBps": 1000
+  },
+  "curve": {
+    "type": "constant_product_with_virtual_reserves",
+    "virtualTokenStartBps": 4500,
+    "virtualTokenAtGraduationBps": 1500,
+    "virtualNativeStartWei": "25000000000000000",
+    "netNativeGraduationTargetWei": "50000000000000000",
+    "tradingFeeBps": 100,
+    "feeTreatment": "kept_separate_from_graduation_collateral"
+  },
+  "graduation": {
+    "venue": "canonical_uniswap_v3",
+    "feeTier": 10000,
+    "tickSpacing": 200,
+    "position": "full_range_permanently_locked",
+    "terminalCurvePriceMustMatchV3Initialization": true
+  },
+  "beta": {
+    "creatorAllowlist": true,
+    "maximumLaunches": 100,
+    "flatAntiSpamFeeWei": "1000000000000000",
+    "broadcastAuthorized": false
+  },
+  "fees": {
+    "flatLaunchFeeTreasuryBps": 5000,
+    "flatLaunchFeeRewardsBps": 5000,
+    "curveFeeCreatorBps": 7000,
+    "curveFeeTreasuryBps": 1500,
+    "curveFeeRewardsBps": 1500,
+    "creatorCurveFeeUnlock": "three_post_graduation_gm_check_ins",
+    "creatorDefaultTreatment": "unvested_share_to_rewards"
+  },
+  "controls": {
+    "curveExpiry": "none",
+    "tradeProtection": "caller_minimum_output_and_deadline",
+    "finalBuyTreatment": "exact_target_and_refund_excess"
+  },
+  "remainingDeploymentGates": [
+    "independent smart-contract audit",
+    "Robinhood mainnet fork validation against canonical V3 deployment",
+    "multisig deployment rehearsal and address manifest review",
+    "explicit owner authorization for mainnet broadcast"
+  ]
+}

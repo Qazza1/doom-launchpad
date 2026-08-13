@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DoomStreak — GM check-in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/assets/doomstreak.css">
+  <style>
+    /* Page composition only. */
+    main { width: min(660px, calc(100% - calc(var(--step) * 4))); margin: 0 auto; }
+    #send { width: 100%; margin-top: calc(var(--step) * 3); font-size: 22px; }
+    #status { margin-top: calc(var(--step) * 2); min-height: 22px; font-size: 14px; line-height: 1.6; color: var(--muted); }
+    #status[data-tone="good"] { color: var(--lime); }
+    #status[data-tone="warn"] { color: var(--yellow); }
+    #status[data-tone="bad"] { color: var(--pink); }
+    #window { margin-top: calc(var(--step) * 2); }
+  </style>
+</head>
+<body>
+<main>
+  <div class="nav">
+    <div class="brand"><a href="../"><img src="/assets/img/3ce1b327f332.png" alt="DoomStreak"></a></div>
+    <a href="../discovery/">LAUNCHES</a>
+  </div>
+
+  <h1 style="margin-top:calc(var(--step)*4)">KEEP THE <span class="hi">STREAK</span></h1>
+
+  <div class="notice" style="margin-bottom:calc(var(--step)*3)">
+    This page sends a real transaction on Robinhood Chain. It can only ever call
+    <b>recordGm()</b> with zero value, on the escrow below, from the creator account.
+  </div>
+
+  <div class="card">
+    <table id="state"></table>
+    <div id="window"></div>
+    <button class="btn go" id="send" type="button" disabled>CHECK IN</button>
+    <div id="status" role="status" aria-live="polite">Connecting…</div>
+  </div>
+
+  <div class="card" style="margin-top:calc(var(--step)*2)">
+    <p class="label">THE EXACT CALL</p>
+    <table id="call"></table>
+  </div>
+
+  <div class="meta">
+    Runs on 127.0.0.1. No key is loaded; your wallet signs. Re-run
+    tools/canary/checkin.mjs afterwards to confirm from a second source.
+  </div>
+</main>
+<script type="module" src="./app.js"></script>
+</body>
+</html>

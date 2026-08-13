@@ -77,7 +77,7 @@ After all six transactions:
 
 1. run `VerifyRobinhoodCanary` through both RPCs;
 2. verify source and constructor arguments on Blockscout;
-3. verify the factory is paused;
+3. verify the factory is paused; <!-- state-claim: historical, a step in the completed deployment procedure -->
 4. configure the read-only indexer and keeper with verified addresses;
 5. wait for confirmation depth and compare public API state with direct reads;
 6. publish the completed manifest.

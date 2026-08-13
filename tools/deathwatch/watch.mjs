@@ -1,6 +1,7 @@
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { parseJson, writeJson } from "../lib/json-file.mjs";
 import { buildFeed, feedEvents, toAlert } from "./feed.mjs";
 import { sendTelegramAlert } from "../keeper/lib/telegram.mjs";
 
@@ -147,7 +148,7 @@ export function decodeString(hex) {
 
 export async function readState(path) {
   try {
-    const parsed = JSON.parse(await readFile(path, "utf8"));
+    const parsed = parseJson(await readFile(path, "utf8"), path);
     return {
       entries: Array.isArray(parsed.entries) ? parsed.entries : [],
       deliveredEventIds: Array.isArray(parsed.deliveredEventIds) ? parsed.deliveredEventIds : [],
@@ -158,16 +159,9 @@ export async function readState(path) {
   }
 }
 
+/// Kept as the Death Watch name for what is now the shared writer: atomic, UTF-8, never a BOM.
 export async function writeJsonAtomic(path, value) {
-  await mkdir(dirname(path), { recursive: true });
-  const temporary = `${path}.${process.pid}.${Date.now()}.tmp`;
-  try {
-    await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, "utf8");
-    await rename(temporary, path);
-  } catch (error) {
-    await rm(temporary, { force: true }).catch(() => {});
-    throw error;
-  }
+  await writeJson(path, value);
 }
 
 /// Sends all unsent events without advancing the feed checkpoint first. Event IDs are persisted

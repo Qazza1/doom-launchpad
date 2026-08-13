@@ -143,3 +143,106 @@ and conclude they were scammed.
 trading fees, a creator who dumps destroys the stream that was their actual
 income. Saying that plainly reframes "my liquidity is locked forever" into "and it
 pays me on every trade forever."
+
+## Uniswap v4 as the factory #2 venue — evaluated 2026-08-01
+
+Prompted by a competitor (Pons) announcing a v4 deployment. **No decision made.**
+Factory #1 is deployed, immutable, and bound to v3 through constructor
+immutables, so none of this affects the canary.
+
+### What v4 changes
+
+- **Singleton `PoolManager`.** Every pool is state inside one contract rather
+  than its own deployment. Pool creation becomes a state write.
+- **Hooks.** Contracts attached at pool creation that run at defined lifecycle
+  points (`before/afterInitialize`, `…AddLiquidity`, `…RemoveLiquidity`,
+  `…Swap`, `…Donate`). Enabled callbacks are encoded in the hook's *address*, so
+  hook addresses must be mined with CREATE2 salts.
+- **Flash accounting.** Balances net within a transaction via transient storage
+  and settle once, instead of transferring at every step.
+- **Native ETH.** No WETH wrapping.
+
+### Why it is a genuine upgrade for this product
+
+Today the two differentiators are enforced *around* the pool: permanence comes
+from an ownerless locker with no release path, and the fee split comes from a
+collector contract. Hooks make both properties **of the pool itself**:
+
+- A `beforeRemoveLiquidity` that always reverts means liquidity provably cannot
+  be removed by anyone. The claim shortens from *"we locked it"* to **"the pool
+  does not implement removal"** — architectural rather than custodial, and not
+  something a competitor can match by upgrading.
+- `afterSwap` can route the fee split at pool level, removing the collector.
+- Dynamic fees can enforce creator reputation tiers on-chain instead of in the
+  backend.
+- The bonding curve, graduation, and permanent lock could collapse into a single
+  hook, rather than a curve contract plus a migration plus custody.
+
+### Effort, at this project's standard of testing and evidence
+
+Minimal port — same economics, v4 instead of v3:
+
+| Work | Estimate |
+|---|---|
+| Learning spike: flash accounting, unlock/settle/take, hook callbacks | 3–5 days |
+| Replace `V3LiquidityManager` with a `PoolManager` integration | 1–2 weeks |
+| No-remove hook plus CREATE2 address mining | 1 week |
+| Unit, fuzz, invariant and fork tests | 1–2 weeks |
+| Adapt deployment tooling, observer, indexer, Death Watch | ~1 week |
+
+**Total 4–8 weeks.** The full v2 vision — curve-as-hook with custom `beforeSwap`
+accounting, holder insurance, reputation tiers — is **3–6 months**, because
+custom swap accounting is the deep end of v4 rather than the shallow end.
+
+### The audit is a hard cost, not an optional one
+
+Hooks are new, subtly stateful, and a mistake can brick or drain a pool. Firms
+with real v4 hook experience are few and book out. Budget **4–10 weeks of
+calendar time** for booking, audit, remediation, and re-review, at a price
+materially above a standard ERC-20 launchpad audit.
+
+The independent-review waiver does **not** extend here. It was defensible for a
+capped 0.03 ETH canary with bounded exposure. It is not defensible for a public
+factory holding other people's liquidity permanently.
+
+### Three verification gates before any work starts
+
+**Answered 2026-08-02 — all three pass. Full evidence in
+`docs/v4-venue-gates-2026-08-02.md`.** In short: the PoolManager is at
+`0x8366a39cc670b4001a1121b8f6a443a643e40951` and every v4 address on chain 4663
+was confirmed to hold code; v4 carries roughly a fifth of v3's swap count on the
+same chain, so it is active rather than empty; and v4-core is BUSL-1.1 until
+2027-06-15, after which it becomes MIT, with v4-periphery under copyleft GPL-2.0.
+
+The owner nonetheless chose v3 for factory #2 on the same day
+(`docs/owner-decisions-2026-08-02.md`), which these answers support: the option
+stays open, and the licence question largely dissolves by mid-2027. Re-run all
+three before v4 work actually begins — gate 1 is a chain read, gate 2 is a log
+count, and gate 3 has a date on it.
+
+The original gates, kept because they are the right questions to ask again:
+
+1. **Does a v4 `PoolManager` exist on chain 4663, and at what address?** From
+   Uniswap's official deployment list or the chain's own documentation — the same
+   standard applied to the v3 addresses. Never guess. If v4 is not on the chain,
+   the estimate is moot.
+2. **Is there volume on v4 pools there, or is it deployed and empty?** A
+   technically better venue with no traders is worse than v3 with traders.
+3. **The licence.** v4 core shipped under BUSL-1.1 with a delayed transition to
+   open licensing. Confirm the position for a commercial launchpad before
+   building on it.
+
+### Sequencing recommendation
+
+Run the canary on what is already built and verified. Three launches cost 0.03
+ETH and a few days, and they are the only way to learn whether creators will pay
+to commit, whether buyers care, and whether three days is the right shape.
+
+Then build factory #2 on v4 with those lessons. The build costs months whenever
+it happens; it will be a better build afterwards.
+
+"Newest" and "best" are not the same thing. No buyer has ever chosen a launchpad
+because of its AMM version — they choose it for tokens they want and a venue they
+trust. A competitor's v4 announcement is a technology signal, not a liquidity or
+trust signal. The thing worth watching is whether their v4 pools attract volume,
+because that is a market answer rather than a technical one.

@@ -1,6 +1,12 @@
 # Static-site launchpad UI plan
 
-Status: Stage 3.4. No write transaction is enabled during Stage 3.1.
+Status: Stage 3.4, with the Stage 6 build starting 2026-08-02. No write
+transaction is enabled.
+
+The allocation figures below were corrected on 2026-08-02. They still described
+the pre-rework economics of 10% creator / 40% liquidity / 50% escrow, which have
+not been true since commit `733895f`. A user interface built from the old numbers
+would have displayed a creator allocation that does not exist.
 
 ## Product hierarchy
 
@@ -16,13 +22,18 @@ The eventual creator form exposes only:
 - token name;
 - symbol;
 - supply within 1 million–1 quadrillion;
-- the fixed 0.01 ETH liquidity amount as read-only.
+- the fixed liquidity amount as read-only.
+
+Everything else — allocation split, check-in count, cadence, grace period,
+creation fee, fee routing, pool fee tier, tick range — is a contract constant.
+Do not offer it as an input, and do not let the interface state a value that
+disagrees with the deployed factory.
 
 Before signing, show an exact simulation summary:
 
-- 10% liquid creator allocation;
+- 0% liquid creator allocation at launch;
 - 40% supplied to permanent liquidity;
-- 50% held behind three daily GM check-ins;
+- 60% held behind three daily GM check-ins, released one equal share each;
 - 1% creation fee and 50 / 50 fee routing;
 - permanent 1% full-range V3 position;
 - conditional LP-fee split;

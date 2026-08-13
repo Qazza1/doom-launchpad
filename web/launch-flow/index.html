@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DoomStreak — launch a coin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/assets/doomstreak.css">
+  <style>
+    /* Page composition only. Anything reusable belongs in the design system. */
+    .steps { display: flex; gap: calc(var(--step) * 1.25); margin: calc(var(--step) * 3) 0; flex-wrap: wrap; }
+    .pip {
+      flex: 1 1 150px; padding: 10px 14px; border: var(--edge-thin); border-radius: var(--radius-sm);
+      background: var(--card2); color: var(--muted);
+      font-family: var(--font-display); font-size: 16px; letter-spacing: 1px;
+    }
+    .pip[data-state="active"] { background: var(--cyan); color: #0d0221; }
+    .pip[data-state="done"] { background: var(--lime); color: #0d0221; }
+
+    .drop {
+      display: grid; place-items: center; gap: 10px; padding: calc(var(--step) * 5); text-align: center;
+      border: 3px dashed var(--muted); border-radius: var(--radius-sm); background: var(--card2); cursor: pointer;
+    }
+    .drop:hover { border-color: var(--cyan); }
+    .drop img { max-width: 128px; max-height: 128px; border-radius: var(--radius-sm); border: var(--edge-thin); }
+    .drop p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .row { display: flex; gap: calc(var(--step) * 2); flex-wrap: wrap; }
+    .row > .field { flex: 1 1 220px; }
+    .actions { display: flex; gap: calc(var(--step) * 1.5); margin-top: calc(var(--step) * 3); flex-wrap: wrap; }
+    .why { margin: calc(var(--step) * 1.5) 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .statepick { display: flex; gap: calc(var(--step)); flex-wrap: wrap; margin-top: calc(var(--step) * 1.5); }
+    .statepick button {
+      padding: 6px 14px; border: var(--edge-thin); border-radius: var(--radius-pill);
+      background: var(--card2); color: var(--muted);
+      font-family: var(--font-display); font-size: 14px; letter-spacing: 1px; cursor: pointer;
+    }
+    .statepick button:hover { color: var(--cyan); }
+    tr.total th, tr.total td { border-bottom: none; padding-top: calc(var(--step) * 2); font-size: 17px; }
+    tr.total td { color: var(--yellow); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav">
+    <div class="brand"><a href="../"><img src="/assets/img/3ce1b327f332.png" alt="DoomStreak"></a></div>
+    <a href="./" class="primary" aria-current="page">LAUNCH</a>
+    <a href="../discovery/">LAUNCHES</a>
+    <a href="https://www.doomstreak.xyz/">ANALYTICS</a>
+    <a href="https://www.doomstreak.xyz/#nft">NFT GAME</a>
+  </div>
+
+  <h1 style="margin-top:calc(var(--step)*5)">LAUNCH A <span class="alt">COIN</span></h1>
+  <p class="lede">
+    Three days. Three check-ins. Nothing at launch, liquidity locked forever,
+    and the trading fees are yours.
+  </p>
+
+  <div class="notice" id="capability"><b>Prototype — cannot launch.</b> Checking the chain…</div>
+
+  <div class="steps">
+    <div class="pip" data-step="1">1 · IMAGE</div>
+    <div class="pip" data-step="2">2 · DETAILS</div>
+    <div class="pip" data-step="3">3 · REVIEW</div>
+    <div class="pip" data-step="4">4 · CONFIRM</div>
+  </div>
+
+  <section class="card" data-panel="1">
+    <h3>TOKEN IMAGE</h3>
+    <p>Optional. Shrunk to about 200 KB in your browser. Nothing is uploaded yet.</p>
+    <label for="image">IMAGE FILE</label>
+    <div class="drop" id="drop">
+      <img id="preview" alt="" hidden>
+      <p id="dropText">Click to choose a PNG, JPG, or SVG. 2 MB maximum.</p>
+    </div>
+    <input type="file" id="image" accept="image/png,image/jpeg,image/svg+xml" hidden>
+    <p class="error" id="imageError"></p>
+    <div class="actions"><button class="btn go" type="button" data-go="2">CONTINUE</button></div>
+  </section>
+
+  <section class="card" data-panel="2" hidden>
+    <h3>TOKEN DETAILS</h3>
+    <p>Only these are yours to choose. Everything else is fixed in the contract.</p>
+    <div class="row">
+      <div class="field">
+        <label for="name">NAME</label>
+        <input type="text" id="name" placeholder="DoomStreak Canary Test 2" autocomplete="off">
+        <p class="error" id="nameError"></p>
+      </div>
+      <div class="field">
+        <label for="symbol">TICKER</label>
+        <input type="text" id="symbol" placeholder="DCT2" autocomplete="off">
+        <p class="error" id="symbolError"></p>
+      </div>
+    </div>
+    <div class="field">
+      <label for="supply">TOTAL SUPPLY (WHOLE TOKENS)</label>
+      <input type="text" id="supply" value="1000000000" inputmode="numeric" autocomplete="off">
+      <p class="error" id="supplyError"></p>
+    </div>
+    <div class="field">
+      <label for="description">DESCRIPTION (OPTIONAL)</label>
+      <textarea id="description" rows="3" placeholder="What is this coin?"></textarea>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="website">WEBSITE (OPTIONAL)</label>
+        <input type="text" id="website" placeholder="https://" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="social">X / TELEGRAM (OPTIONAL)</label>
+        <input type="text" id="social" placeholder="@handle" autocomplete="off">
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" type="button" data-go="1">BACK</button>
+      <button class="btn go" type="button" data-go="3" id="toReview">REVIEW</button>
+    </div>
+  </section>
+
+  <section class="card" data-panel="3" hidden>
+    <h3>WHAT YOU ARE COMMITTING TO</h3>
+    <p>Computed from the contract's settings and your supply.</p>
+    <table id="reviewTable"></table>
+    <div class="notice bad" style="margin-top:calc(var(--step)*3)">
+      <b>READ THIS BEFORE YOU CONTINUE</b>
+      <ul id="warnings" style="margin:10px 0 0;padding-left:18px;line-height:1.7"></ul>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" type="button" data-go="2">BACK</button>
+      <button class="btn go" type="button" data-go="4">CONTINUE</button>
+    </div>
+  </section>
+
+  <section class="card" data-panel="4" hidden>
+    <h3>CONFIRM AND SIGN</h3>
+    <p>Check the recipient and the value against the wallet before approving.</p>
+    <table id="confirmTable"></table>
+    <div class="notice" id="status" data-tone="muted" style="margin-top:calc(var(--step)*3)">
+      <b>Not submitted</b>
+      <p style="margin:6px 0 0;color:var(--muted)">Nothing has been sent.</p>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" type="button" data-go="3">BACK</button>
+      <button class="btn" type="button" id="launch" disabled>LAUNCH</button>
+    </div>
+    <p class="why" id="launchWhy"></p>
+
+    <p class="why">Preview the states a real launch moves through.</p>
+    <div class="statepick">
+      <button type="button" data-state="pending">Waiting for a block</button>
+      <button type="button" data-state="reverted">Failed on chain</button>
+      <button type="button" data-state="indexing">Mined, indexer behind</button>
+      <button type="button" data-state="listed">Live and listed</button>
+    </div>
+  </section>
+
+  <div class="meta">Reads the chain and the frozen configuration. No send path.</div>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>

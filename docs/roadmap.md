@@ -91,7 +91,10 @@ address configuration remains a Stage 4 operation.
 - [x] No keeper action is required for asset safety; delayed execution affects
   freshness only.
 - [x] Owner confirms receipt of the local Telegram setup alert.
-- [ ] Fill and verify deployed addresses after Stage 4 deployment.
+- [x] Fill and verify deployed addresses after Stage 4 deployment. The production
+  keeper runs read-only on Railway with the verified addresses in
+  `config/keeper.mainnet.json`, two RPC providers, no signing key, and zero
+  active alerts.
 
 ## Stage 3.4 — indexer, API, and public UI
 
@@ -112,8 +115,23 @@ fail-closed before contract deployment. No launch transaction is enabled.
 - [x] Obtain and record the green indexer CI run.
 - [x] Deploy the read-only indexer with no factory configuration.
 - [x] Deploy the public website after production API validation.
-- [ ] Fill the read-only indexer with the verified factory address and deployment
-  block, then validate its public API against direct contract reads.
+- [x] Fill the read-only indexer with the verified factory address and deployment
+  block, then validate its public API against direct contract reads. Confirmed
+  2026-08-01: the public API reports the correct factory, `blocks_behind: 0`,
+  `confidence: high`, `factory_paused: true`, and zero launches, matching direct
+  contract reads taken the same day. <!-- state-claim: historical, a dated observation -->
+- [x] Move the indexer and keeper start block from the factory deployment block
+  25105648 to the first deployment 25082132, so `PositionLocker.RegistrarBound`
+  at block 25102641 stops falling outside the scan range. Done 2026-08-02: the
+  indexer reports `deployment_block: 25082132` and `config/keeper.mainnet.json`
+  matches. The cursor was not reset, so that one event stays unindexed and
+  remains checkable through `authorizedRegistrar()`, as planned.
+- [ ] Restore the indexer. As of 2026-08-02 it is stalled at block 25352711 with
+  a request timeout, 109 blocks before canary launch 1, and has never indexed the
+  launch. Direct reads and Death Watch are correct; the derived layer is empty.
+  This blocks launch 2. Diagnosis in `docs/indexer-stall-2026-08-02.md`: the worker's RPC
+  requests are all timing out, and it is the last component still hard-coded to the shared
+  public endpoint. See also `docs/stage-5-launch-1-review.md`.
 
 ## Stage 4 — independent review and deployment preparation
 
@@ -125,6 +143,10 @@ time, independently verified, and left paused. Evidence:
   fails if reviewed contract sources drift:
   `docs/independent-review-package.md`.
 - [ ] Independent smart-contract audit/review against one tagged commit.
+  **Deferred by owner decision on 2026-08-02**, extending the canary waiver to the
+  public factory. See `docs/owner-decisions-2026-08-02.md`, including what makes
+  this materially different from the canary waiver and the trigger the owner still
+  owes: audit at a TVL threshold, a launch count, or a date.
 - [ ] Remediation and focused re-review of every contract change.
 - [x] Record the owner's explicit 2026-07-29 risk acceptance to proceed without
   independent third-party review for the capped three-launch canary only.
@@ -165,13 +187,14 @@ time, independently verified, and left paused. Evidence:
 
 ## Stage 5 — capped mainnet canary
 
-Status: deployed, verified, operationally integrated, and paused. The production
-keeper is healthy, the live index is current while historical backfill proceeds,
-and the public launchpad API agrees with the zero-launch on-chain state. Factory
-resume and the first canary launch remain separately blocked pending explicit
-owner approval.
+Status: **in progress.** The factory was resumed on 2026-08-01 and canary launch 1
+minted DCT1; every on-chain invariant holds and the keeper is healthy. The
+indexer stalled at the same time and has never seen the launch, so the derived
+layer disagrees with the chain. Two launches remain under the contract cap, each
+needing its own owner approval. Review and open blockers:
+`docs/stage-5-launch-1-review.md`.
 
-- [x] Deploy contracts while the factory remains paused.
+- [x] Deploy contracts while the factory remains paused. <!-- state-claim: historical, completed 2026-08-01 -->
 - [x] Read-only post-deployment verifier for bytecode, constructor values, roles,
   dependencies, bindings, caps, and the paused state, through two providers:
   `tools/deployment/verify-deployment.mjs`.
@@ -188,16 +211,45 @@ owner approval.
 - [x] Re-run the complete local safety suite after operational integration:
   frozen review identity, deployment tooling, canary observer, Death Watch,
   contracts, integration events, rewards operations, and keeper tests.
-- Separately approve factory resume.
-- Execute at most three 0.01 ETH launches from the approved creator.
-- Review each launch with the observer before permitting the next one.
-- Compare indexer ingestion and the public API against direct contract reads.
+- [x] Separately approve factory resume. Done 2026-08-01.
+- [x] Localhost fork rehearsal of a prepared plan, judged by the observer:
+  `tools/canary/fork-rehearsal.mjs`. Built after launch 1, because a plan-value
+  bug reached a real wallet without it.
+- [x] Chain-isolated wallet comparison harness for a canary plan:
+  `tools/canary/wallet-compare.mjs`. The interactive wallet run is still owed.
+- [ ] Execute at most three 0.01 ETH launches from the approved creator. One
+  done; launches 2 and 3 each need their own approval.
+- [ ] Complete the GM commitment for launch 1, or let it default deliberately.
+  Three check-ins, one per day, each inside a 12-hour grace window.
+- [x] Review launch 1 with the observer before permitting the next one:
+  `docs/stage-5-launch-1-review.md`.
+- [ ] Compare indexer ingestion and the public API against direct contract reads.
+  Cannot be performed while the indexer is stalled.
+- [ ] Confirm Telegram delivery of a real production alert, not only the setup
+  test.
 
 ## Stage 6 — launcher-first product release
 
-Status: product direction frozen; implementation and live transactions are
-blocked until the Stage 5 canary passes and the owner gives separate production
-approval.
+Status: **the pages are built** and run locally from `web/` — homepage, guided
+launch flow, per-launch detail, and discovery. They read the chain directly and
+none of them can send a transaction. Live transactions remain blocked until the
+canary passes, factory #2 exists, and the owner gives separate approval.
+
+Built 2026-08-02/03:
+
+- [x] Homepage leading with launch and discovery, NFT game kept in the primary
+  navigation: `web/index.html`.
+- [x] Guided launch flow, four steps, with the creator's downside stated before
+  they sign: `web/launch-flow/`.
+- [x] Per-launch detail page with commitment state, permanent-lock proof read
+  from the position manager, and freshness: `web/launch-detail/`.
+- [x] Discovery list ordered by who is closest to losing their allocation:
+  `web/discovery/`.
+- [x] Honest pending, reverted, indexing, and unreachable states throughout.
+- [x] Images shrunk in the browser before storage, and an IPFS caching route for
+  the site: `api/img/[cid].js` in the website repository.
+- [ ] The upload itself, which needs the Filebase credentials wired up.
+- [ ] Wiring the launch button to factory #2, which does not exist.
 
 - Make the memecoin launchpad the default DoomStreak homepage.
 - Replace the mixed commitment-collection page with one focused coin-launch
@@ -233,6 +285,12 @@ Status: designed, not committed. Full detail and open questions in
 Factory #1 can only ever perform three launches of exactly 0.01 ETH, because the
 canary caps are contract constants enforced by the constructor. A second factory
 is therefore required for public launching regardless of these mechanics.
+
+**Venue decided 2026-08-02: factory #2 targets Uniswap v3.** v4 is evaluated
+again once the v3 launchpad works. The three v4 gates were answered the same day
+and all pass — `docs/v4-venue-gates-2026-08-02.md` — so this is a deferral, not a
+rejection. The bonding-curve item below depends on that later work and is
+deferred with it.
 
 - [x] Death Watch engine and Telegram broadcast, reading the chain directly with
   no indexer dependency: `docs/death-watch.md`.

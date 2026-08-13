@@ -1,0 +1,135 @@
+# Owner decisions, 2026-08-02
+
+Four decisions taken during the canary. Recorded because three of them change the
+delivery sequence and one overrides a documented gate.
+
+**None of these is an authorization to transact.** Every launch, deployment, and
+broadcast still requires its own explicit owner approval given immediately before
+the action.
+
+## 1. Launch 1's GM streak — intended to survive, actually defaulted
+
+**Outcome, recorded 2026-08-07.** The intent was to complete all three check-ins.
+Check-ins 1 and 2 were made; check-in 3's window (2026-08-04T21:12:39Z to
+2026-08-05T09:12:39Z) closed unsigned. The streak defaulted.
+
+State on chain at the time of writing:
+
+- 400,000,000 DCT1 released to the creator across the two honoured check-ins, and
+  held in the creator wallet. Honoured check-ins are never clawed back — confirmed
+  on mainnet, which is the single most important property this proved.
+- 200,000,000 DCT1 still in escrow, destined for DoomRewards.
+- Escrow status is still `Active` because `finalizeDefault()` has not been called;
+  the owner chose to leave it as-is. The window is closed, so no further check-in
+  is possible; the 200,000,000 moves to DoomRewards whenever anyone finalises.
+
+This is not a failure of the system. It is the **default path**, exercised on
+mainnet — which the note below correctly said would otherwise go unproven. Launch
+1 therefore tested both branches: two honoured releases and a default. That is a
+more complete canary than a clean survival would have been.
+
+Original note, kept because its reasoning held: the default path was covered only
+by unit and fork tests, not mainnet. It is now covered on mainnet by this launch.
+
+## 2. Factory #2 targets Uniswap v3, not v4
+
+v4 is deferred until the v3 public launchpad is working. The three verification
+gates were answered the same day in `docs/v4-venue-gates-2026-08-02.md`: v4 is
+deployed and active on chain 4663, and its core licence becomes MIT on
+2027-06-15. Nothing in those answers forces the decision now, and deferring costs
+nothing that cannot be recovered.
+
+Consequence: Stage 6.5's v4-dependent mechanics — the bonding curve in particular
+— are deferred with it. The v3 factory #2 can still carry permanent liquidity,
+the GM commitment, creator reputation, and Death Watch.
+
+## 3. The independent audit is deferred, not cancelled
+
+> I want to waive the audit and launch it. I will do the audit later on.
+
+This extends the 2026-07-29 waiver in `docs/stage-4-owner-risk-acceptance.md`,
+which explicitly did **not** cover a public or replacement factory. It now does,
+by the owner's decision.
+
+What is different this time, stated once so the record is honest:
+
+- The canary waiver covered 0.03 ETH of the owner's own money behind a
+  constructor-enforced cap. A public factory has no cap and holds **other
+  people's** liquidity, permanently, with no withdrawal path by design.
+- The same properties that make the product trustworthy — permanent locks, no
+  release path, irreversible bindings — mean a contract bug cannot be corrected
+  after the fact. There is no admin escape hatch to fall back on, because that
+  was the point.
+- `docs/internal-audit-2026-07-28.md` is a first-party review and is not a
+  substitute. Neither is any AI review, including this one.
+- M-1 from that review is unremediated by design: permissionless pool
+  pre-creation can grief a launch, mitigated only to a diagnostic revert. It is
+  recorded as an architecture requirement for factory #2 and should be closed
+  there rather than inherited.
+
+The owner has been told this and has decided.
+
+**Trigger, chosen 2026-08-02: a fixed number of public launches.** New launches
+stop until the audit is complete once the public factory has produced **20
+launches**. Twenty is a proposal, not the owner's own number — change it here if
+it is wrong, and treat this paragraph as the authority once it is settled.
+
+The weakness of a count-based trigger, stated so nobody is surprised by it later:
+twenty small launches carry far less risk than twenty large ones, so the trigger
+can fire long after the money at risk justified an audit. If a single launch ever
+locks an unusually large amount, that is a reason to audit early regardless of
+the count.
+
+## 4. The minimum launch liquidity is deferred until the canary ends
+
+Factory #2 needs a minimum liquidity amount per launch. The analysis in
+`docs/launchpad-v2-mechanics.md` says a pool below roughly 0.05 ETH is barely
+tradeable: at 0.01 ETH a 0.005 ETH buy moves the price about 33%, against about
+9% at 0.05 ETH.
+
+The owner chose to decide after watching the canary pools behave with real
+trades. That is a reasonable way to settle it, and it has a deadline attached:
+**this must be answered before factory #2 is specified**, because the minimum is
+a constructor constant and cannot be changed afterwards.
+
+Watch during the canary: how far the DCT1 price moves on real buys, whether
+anyone trades it at all, and whether 0.01 ETH looks like a working market or a
+broken one.
+
+## 5. Image storage: Filebase free plan, with images shrunk in the browser
+
+Token images go to the owner's existing Filebase account. The free plan gives 5 GB
+of storage, 500 IPFS pins, and 5 GB of bandwidth a month, and **3.83 GB of the
+storage is already in use by something else**.
+
+The binding limits, in order of which bites first:
+
+1. **Bandwidth, 5 GB a month.** A discovery page full of logos costs megabytes per
+   visit. Images must be served through the site's own hosting, with Filebase as
+   the permanent record, not fetched from the IPFS gateway on every page view.
+2. **500 pins**, which caps the launchpad at 500 tokens before a paid plan.
+3. **Storage**, which is the least pressing: at 200 KB an image, 500 tokens need
+   about 100 MB against the 1.17 GB still free.
+
+Images are therefore scaled to a 512-pixel long edge and compressed to roughly
+200 KB in the creator's browser before anything is uploaded, which stretches the
+same bandwidth allowance about ten times further. Measured on a worst-case test
+image of pure noise: 1.6 MB became 198 KB. SVG is stored untouched, because
+rasterising a vector to fit a byte budget makes it worse at every size.
+
+Still worth checking: what is using the other 3.83 GB.
+
+## 6. The prototype pages stay local until the canary ends
+
+They live in this repository and are served by `node web/serve.mjs` on the
+owner's machine. They are not deployed anywhere and the public site is untouched.
+
+The reason is not caution about the code: the pages describe a factory that
+cannot serve the public, so a public copy would show a launch flow nobody can
+use. Revisit once factory #2 exists.
+
+## 7. Stage 6 begins after the canary
+
+The launcher-first product release starts once the canary is complete and the
+blockers in `docs/stage-5-launch-1-review.md` are cleared. Preparatory work that
+does not depend on factory #2 may begin during the canary.

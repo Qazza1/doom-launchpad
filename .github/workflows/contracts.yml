@@ -2,6 +2,8 @@ name: contracts
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 permissions:
@@ -16,10 +18,13 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: "24"
+      # The canary tests moved to the foundry job: they read selectors out of the compiled artifact
+      # rather than hard-coding them, so they need an out/ directory this job does not build. They
+      # were failing here from the day they were added.
       - name: Confirm Stage 4 manifest remains fail-closed
         run: |
+          node --test tools/lib/test/*.test.mjs
           node --test tools/deployment/test/*.test.mjs
-          node --test tools/canary/test/*.test.mjs
           node --test tools/deathwatch/test/*.test.mjs
           node tools/deployment/verify-manifest.mjs config/stage4-deployment-manifest.json
 
@@ -137,11 +142,59 @@ jobs:
         env:
           DOOM_PRODUCTION_INDEXER_ABI: production-indexer/doom-launchpad-abis.js
         run: node --test tools/integration/test/*.test.mjs
+      # Same reason: both read function selectors from the compiled artifacts, so that a renamed or
+      # re-typed function fails the build instead of silently reading the wrong storage slot.
+      - name: Canary workflow and public page tests
+        run: |
+          node --test tools/canary/test/*.test.mjs
+          node --test web/launch-flow/test/*.test.mjs
+          node --test web/launch-detail/test/*.test.mjs
+          node --test web/discovery/test/*.test.mjs
+          node --test web/lib/test/*.test.mjs
       - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: foundry-build-log
           path: foundry-build.log
+          if-no-files-found: ignore
+
+  v2-foundry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.7.1
+      - name: Confirm V2 sources match the frozen candidate
+        run: node tools/v2/review-package.mjs --verify config/v2-review-artifact.json --ref HEAD
+      - name: Install pinned Solidity dependencies
+        run: |
+          forge install --no-git OpenZeppelin/openzeppelin-contracts@v5.6.1
+          forge install --no-git foundry-rs/forge-std@v1.16.1
+          forge install --no-git uniswap-v3-core=Uniswap/v3-core@v1.0.0
+          forge install --no-git uniswap-v3-periphery=Uniswap/v3-periphery@v1.0.0
+      - run: forge fmt --root v2 --check
+      - name: Build V2 and report contract sizes
+        run: |
+          set +e
+          forge build --root v2 --sizes > v2-foundry-build.log 2>&1
+          status=$?
+          cat v2-foundry-build.log
+          if [ "$status" -ne 0 ]; then
+            message="$(tail -n 20 v2-foundry-build.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g; s/::/: :/g')"
+            echo "::error title=V2 Foundry build failed::$message"
+            exit "$status"
+          fi
+      - name: V2 unit, fuzz, invariant, and integration tests
+        env:
+          RUN_ROBINHOOD_V2_FORK_TESTS: "false"
+        run: forge test --root v2 -vv
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: v2-foundry-build-log
+          path: v2-foundry-build.log
           if-no-files-found: ignore
 
   static-analysis:
@@ -177,6 +230,18 @@ jobs:
             echo "::error title=Slither high-severity gate failed::$message"
             exit "$status"
           fi
+      - name: V2 Slither high-severity gate
+        run: |
+          set +e
+          cd v2
+          slither . --filter-paths "(lib|test|script)" --exclude reentrancy-balance --fail-high > ../v2-slither-gate.log 2>&1
+          status=$?
+          cat ../v2-slither-gate.log
+          if [ "$status" -ne 0 ]; then
+            message="$(tail -n 30 ../v2-slither-gate.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g; s/::/: :/g')"
+            echo "::error title=V2 Slither high-severity gate failed::$message"
+            exit "$status"
+          fi
       - name: Aderyn 0.6.8
         run: npx --yes @cyfrin/aderyn@0.6.8 .
       - uses: actions/upload-artifact@v6
@@ -187,5 +252,6 @@ jobs:
             slither-report.json
             slither-full.log
             slither-gate.log
+            v2-slither-gate.log
             report.md
           if-no-files-found: ignore

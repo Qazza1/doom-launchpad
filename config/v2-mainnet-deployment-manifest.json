@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "status": "draft_fail_closed",
+  "network": {
+    "name": "Robinhood Chain Mainnet",
+    "chainId": 4663,
+    "explorer": "https://explorer.mainnet.chain.robinhood.com",
+    "rpcEnvironmentVariable": "ROBINHOOD_RPC_URL",
+    "fallbackRpcEnvironmentVariable": "ROBINHOOD_FALLBACK_RPC_URL"
+  },
+  "source": {
+    "candidateCommit": "df47b27804e7add005261730fa81cb83c9b068e8",
+    "contractDigest": "ce824376a4639f5c8882d7723668576ebf5b1f9e21b596aba605463614164d24",
+    "compiler": "0.8.36",
+    "foundry": "1.7.1",
+    "evmVersion": "cancun",
+    "viaIr": true
+  },
+  "safety": {
+    "broadcast": false,
+    "deploymentAuthorized": false,
+    "factoryResumeAuthorized": false,
+    "factoryMustRemainPaused": true,
+    "privateKeysAllowedInManifest": false
+  },
+  "auditPolicy": {
+    "independentAuditTiming": "after_initial_beta_launch",
+    "ownerAcceptedUnauditedBetaRisk": true,
+    "decisionRecordedDate": "2026-08-13",
+    "auditRequiredAfterInitialLaunch": true,
+    "auditRequiredBeforeReplacementFactory": true,
+    "auditRequiredBeforeContinuationBeyondCap": true,
+    "decisionDoesNotAuthorizeDeploymentOrResume": true
+  },
+  "roles": {
+    "deployer": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "operator": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "initialApprovedCreator": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "treasury": "0x9038C3AB7caE02a8aae730E705fdF7a15945eb7E",
+    "emergencyGuardian": "0x3EeF0a7Ee9420a1035a4541582B384bc4405A439"
+  },
+  "dependencies": {
+    "wrappedNative": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+    "uniswapV3Factory": "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
+    "nonfungiblePositionManager": "0x73991a25C818Bf1f1128dEAaB1492D45638DE0D3",
+    "doomRewards": "0x615f6E6B0AEA7Ac94F4391424aF601F9290dd9dC"
+  },
+  "economics": {
+    "launchFeeWei": "1000000000000000",
+    "graduationTargetWei": "50000000000000000",
+    "poolFee": 10000,
+    "tickSpacing": 200,
+    "maximumLaunches": 100,
+    "curveTokenBps": 3000,
+    "graduationTokenBps": 1000,
+    "gmEscrowTokenBps": 6000
+  },
+  "transferPolicy": {
+    "ownerApproved": true,
+    "preGraduation": "bootstrap_curve_and_graduation_paths_only",
+    "postGraduation": "permanently_unrestricted_after_locked_position_registration"
+  },
+  "deploymentOrder": [
+    "DoomLaunchDeployerV2",
+    "PositionLockerV2",
+    "V3GraduationManagerV2",
+    "PositionLockerV2.bindRegistrar",
+    "DoomLaunchFactoryV2",
+    "DoomLaunchDeployerV2.bindFactory",
+    "V3GraduationManagerV2.bindFactory"
+  ],
+  "outputs": {
+    "curveDeployer": null,
+    "positionLocker": null,
+    "graduationManager": null,
+    "launchFactory": null
+  },
+  "gates": {
+    "internalTestsPassed": true,
+    "dualRpcForkWiringPassedBeforeCredentialRotation": true,
+    "primaryRpcCredentialRotated": true,
+    "fallbackRpcCredentialRotated": false,
+    "fallbackCredentialRemovedFromRailway": true,
+    "fallbackCredentialResidualRiskAccepted": true,
+    "postPrimaryRotationDualRpcForkPassed": true,
+    "independentReviewComplete": false,
+    "ownerAuditDeferralDecisionRecorded": true,
+    "bytecodeSizesWithinLimits": true,
+    "rabbyNoBroadcastReviewComplete": false,
+    "explicitBroadcastApproval": false
+  }
+}

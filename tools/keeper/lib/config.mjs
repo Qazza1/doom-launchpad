@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { parseJson } from "../../lib/json-file.mjs";
 import { getAddress } from "viem";
 
 const POSITIVE_INTEGER_FIELDS = [
@@ -14,7 +15,7 @@ const POSITIVE_INTEGER_FIELDS = [
 ];
 
 export async function readKeeperConfig(path) {
-  const input = JSON.parse(await readFile(path, "utf8"));
+  const input = parseJson(await readFile(path, "utf8"), path);
   if (input?.schema !== "doom.keeper-config.v1") throw new Error("Unsupported keeper config schema");
   if (typeof input.enabled !== "boolean") throw new Error("enabled must be boolean");
   if (!Number.isSafeInteger(input.chainId) || input.chainId <= 0) throw new Error("chainId must be a positive integer");

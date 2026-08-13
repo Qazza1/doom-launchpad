@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DoomStreak — launch a coin that has to survive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/assets/doomstreak.css">
+  <style>
+    /* Page-specific composition only. Anything reusable belongs in the design system. */
+    .hero { padding: calc(var(--step) * 6) 0 calc(var(--step) * 4); }
+    .hero .cta { display: flex; gap: calc(var(--step) * 1.5); flex-wrap: wrap; margin-top: calc(var(--step) * 3); }
+    .section-gap { margin: calc(var(--step) * 5) 0 calc(var(--step) * 2); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav">
+    <div class="brand"><a href="./"><img src="/assets/img/3ce1b327f332.png" alt="DoomStreak"></a></div>
+    <a href="./launch-flow/" class="primary">LAUNCH</a>
+    <a href="./discovery/">LAUNCHES</a>
+    <a href="https://www.doomstreak.xyz/">ANALYTICS</a>
+    <a href="https://www.doomstreak.xyz/#nft">NFT GAME</a>
+  </div>
+
+  <div class="hero">
+    <h1>LAUNCH A COIN<br>THAT HAS TO <span class="hi">SURVIVE</span></h1>
+    <p class="lede">
+      You get nothing at launch. The liquidity locks forever. Check in three days
+      running and the allocation is yours — miss one and it goes to the vault.
+    </p>
+    <div class="cta">
+      <a class="btn" href="./launch-flow/">LAUNCH A COIN</a>
+      <a class="btn ghost" href="./discovery/">WATCH THE STREAKS</a>
+    </div>
+  </div>
+
+  <div class="notice" id="banner">Reading the chain…</div>
+
+  <div class="grid stats section-gap" id="stats"></div>
+
+  <p class="label">ON THE CLOCK</p>
+  <ul class="list" id="feed"></ul>
+
+  <div class="grid auto section-gap">
+    <div class="card">
+      <h3>THE NFT GAME</h3>
+      <p>
+        The original DoomStreak commitment game. Still running, still what funds this,
+        and holders get rewards and gated tools as the launchpad grows.
+      </p>
+      <a class="btn cool" href="https://www.doomstreak.xyz/#nft">OPEN THE GAME</a>
+    </div>
+    <div class="card">
+      <h3>ANALYTICS</h3>
+      <p>
+        Risk scores, creator history, liquidity and freshness for tokens across
+        Robinhood Chain — not only the ones launched here.
+      </p>
+      <a class="btn cool" href="https://www.doomstreak.xyz/">OPEN ANALYTICS</a>
+    </div>
+  </div>
+
+  <div class="meta" id="meta"></div>
+</div>
+<script type="module" src="./home.js"></script>
+</body>
+</html>

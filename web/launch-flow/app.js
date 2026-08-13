@@ -1,0 +1,333 @@
+import {
+  checkInSchedule,
+  describeLaunch,
+  loadEconomics,
+  splitFee,
+  splitSupply,
+  validateTokenInputs,
+} from "./economics.mjs";
+import {
+  MAX_STORED_BYTES,
+  describeBytes,
+  describeSaving,
+  planResize,
+} from "../lib/image-resize.mjs";
+import { SELECTORS } from "./selectors.mjs";
+
+/// Stage 6 guided launch flow, prototype.
+///
+/// Two rules this file exists to honour:
+///   1. Every number shown comes from the frozen configuration or the chain. Nothing is typed into
+///      the interface, so the interface cannot promise something the contracts do not do.
+///   2. There is no send path. The public factory does not exist yet, and the deployed one is
+///      limited by its own code to three test launches. The button says why it is disabled instead
+///      of pretending to work.
+
+const RPC_URL = "https://rpc.mainnet.chain.robinhood.com";
+const FACTORY = "0xDC0DF0Ba9e519D1E082F8B45307450F418eED9dE";
+const CHAIN_ID = 4663;
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
+
+const $ = selector => document.querySelector(selector);
+const $$ = selector => Array.from(document.querySelectorAll(selector));
+
+const state = {
+  step: 1,
+  economics: null,
+  limits: { minWholeSupply: 1_000_000n, maxWholeSupply: 1_000_000_000_000_000n },
+  nativeLiquidityWei: 10_000_000_000_000_000n,
+  chain: null,
+  inputs: { name: "", symbol: "", wholeSupply: "1000000000" },
+  image: null,
+};
+
+const number = value => Number(value).toLocaleString("en-US");
+const bigNumber = value => BigInt(value).toLocaleString("en-US");
+const percent = bps => `${bps / 100}%`;
+const eth = wei => {
+  const whole = BigInt(wei) / 10n ** 18n;
+  const fraction = (BigInt(wei) % 10n ** 18n).toString().padStart(18, "0").replace(/0+$/, "");
+  return fraction ? `${whole}.${fraction}` : `${whole}`;
+};
+const when = seconds => new Date(seconds * 1000).toUTCString().replace("GMT", "UTC");
+
+async function rpc(method, params = []) {
+  const response = await fetch(RPC_URL, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+  });
+  const body = await response.json();
+  if (body.error) throw new Error(body.error.message || "RPC error");
+  return body.result;
+}
+
+/// Asks the chain whether a launch is even possible, rather than assuming. A prototype that claimed
+/// it could launch and then failed at the wallet would be worse than one that says so up front.
+async function readCapability() {
+  const banner = $("#capability");
+  try {
+    const chainId = Number(await rpc("eth_chainId"));
+    if (chainId !== CHAIN_ID) throw new Error(`endpoint is on chain ${chainId}`);
+    const call = data => rpc("eth_call", [{ to: FACTORY, data }, "latest"]);
+    const [paused, count, max] = await Promise.all([
+      call(SELECTORS["launchesPaused()"]),
+      call(SELECTORS["launchCount()"]),
+      call(SELECTORS["maxLaunches()"]),
+    ]);
+    state.chain = {
+      paused: BigInt(paused) === 1n,
+      launchCount: BigInt(count),
+      maxLaunches: BigInt(max),
+    };
+    banner.innerHTML =
+      `<b>Prototype — cannot launch.</b> The deployed factory has used `
+      + `${state.chain.launchCount} of ${state.chain.maxLaunches} launches and accepts only its test `
+      + "account. The public factory does not exist yet.";
+  } catch (error) {
+    // Failing to read the chain is itself a state worth showing honestly.
+    banner.innerHTML =
+      `<b>Prototype — cannot launch.</b> The chain could not be reached to check current limits `
+      + `(${error.message}). The figures below come from the frozen configuration.`;
+  }
+}
+
+function setStep(step) {
+  state.step = step;
+  for (const panel of $$("section.card")) {
+    panel.hidden = Number(panel.dataset.panel) !== step;
+  }
+  for (const pip of $$(".pip")) {
+    const index = Number(pip.dataset.step);
+    pip.dataset.state = index === step ? "active" : index < step ? "done" : "";
+  }
+  if (step === 3) renderReview();
+  if (step === 4) renderConfirm();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function readInputs() {
+  state.inputs = {
+    name: $("#name").value,
+    symbol: $("#symbol").value,
+    wholeSupply: $("#supply").value,
+  };
+  return state.inputs;
+}
+
+function showValidation() {
+  const { errors } = validateTokenInputs(readInputs(), state.limits);
+  $("#nameError").textContent = errors.name ?? "";
+  $("#symbolError").textContent = errors.symbol ?? "";
+  $("#supplyError").textContent = errors.wholeSupply ?? "";
+  $("#toReview").disabled = Object.keys(errors).length > 0;
+  return Object.keys(errors).length === 0;
+}
+
+function rows(table, entries) {
+  table.replaceChildren();
+  for (const [label, value, kind] of entries) {
+    const tr = document.createElement("tr");
+    if (kind === "total") tr.className = "total";
+    const th = document.createElement("th");
+    th.textContent = label;
+    const td = document.createElement("td");
+    if (kind === "note") td.className = "note";
+    td.textContent = value;
+    tr.append(th, td);
+    table.append(tr);
+  }
+}
+
+function renderReview() {
+  const { supply } = validateTokenInputs(readInputs(), state.limits);
+  const economics = state.economics;
+  const split = splitSupply(supply, economics);
+  const fee = splitFee(state.nativeLiquidityWei, economics);
+  const schedule = checkInSchedule(Math.floor(Date.now() / 1000), economics);
+
+  rows($("#reviewTable"), [
+    ["Token", `${state.inputs.name.trim()} (${state.inputs.symbol.trim().toUpperCase()})`],
+    ["Total supply", `${bigNumber(supply)} tokens`],
+    [`You receive at launch (${percent(economics.creatorLiquidBps)})`, `${bigNumber(split.creator)} tokens`],
+    [`Permanent liquidity (${percent(economics.liquidityBps)})`, `${bigNumber(split.liquidity)} tokens`],
+    [`Held in escrow (${percent(economics.gmEscrowBps)})`, `${bigNumber(split.escrow)} tokens`],
+    [`Released per check-in`, `${bigNumber(split.perCheckIn)} tokens`],
+    ["Liquidity you provide", `${eth(state.nativeLiquidityWei)} ETH`],
+    [`Creation fee (${percent(economics.creationFeeBps)})`, `${eth(fee.fee)} ETH`],
+    ["Total your wallet will send", `${eth(fee.total)} ETH`, "total"],
+  ]);
+
+  const list = $("#warnings");
+  list.replaceChildren();
+  // Short, but nothing dropped. Each line is a fact a creator can be angry about later if it was
+  // not said before they signed.
+  const points = [
+    `You get ${bigNumber(split.creator)} tokens at launch. Nothing now, nothing vesting.`,
+    `${eth(state.nativeLiquidityWei)} ETH and ${bigNumber(split.liquidity)} tokens are locked forever. `
+      + "No release function exists — not for you, not for us.",
+    `${economics.requiredCheckIns} check-ins, one every ${economics.cadenceSeconds / 3600}h, each with a `
+      + `${economics.gracePeriodSeconds / 3600}h window. First: ${when(schedule[0].opensAt)}.`,
+    `Each releases ${bigNumber(split.perCheckIn)} tokens. Miss one and the rest goes to the rewards `
+      + "vault permanently; anyone can trigger it. Check-ins already made are kept.",
+    `Your income is fees, not your bag: ${economics.eligibleWethFeeSplitBps.creator / 100}% of ETH-side `
+      + "trading fees while the streak lives. Dumping into your own thin pool returns less than you put "
+      + "in and kills the fee stream.",
+  ];
+  for (const point of points) {
+    const item = document.createElement("li");
+    item.textContent = point;
+    list.append(item);
+  }
+}
+
+function renderConfirm() {
+  const { supply } = validateTokenInputs(readInputs(), state.limits);
+  const fee = splitFee(state.nativeLiquidityWei, state.economics);
+  rows($("#confirmTable"), [
+    ["Network", `Robinhood Chain (${CHAIN_ID})`],
+    ["Contract", FACTORY],
+    ["Function", "launch((string,string,uint256,uint256))"],
+    ["Value", `${eth(fee.total)} ETH`],
+    ["Token", `${state.inputs.name.trim()} (${state.inputs.symbol.trim().toUpperCase()})`],
+    ["Supply", `${bigNumber(supply)} tokens`],
+  ]);
+
+  const button = $("#launch");
+  button.disabled = true;
+  $("#launchWhy").textContent =
+    "Disabled on purpose: the public factory does not exist yet, and the deployed one accepts only "
+    + "its approved test account.";
+}
+
+/// The design system's colours carry fixed meanings, so the shared status names are translated at
+/// the edge of the page rather than each page inventing a palette.
+const TONES = { success: "good", pending: "warn", error: "bad", partial: "info", muted: "muted" };
+
+function showState(name) {
+  const description = {
+    pending: describeLaunch({ receiptStatus: null }),
+    reverted: describeLaunch({ receiptStatus: 0 }),
+    indexing: describeLaunch({ receiptStatus: 1, confirmations: 40, indexed: false, indexerHealthy: false }),
+    listed: describeLaunch({ receiptStatus: 1, confirmations: 12, indexed: true }),
+  }[name];
+  const panel = $("#status");
+  panel.dataset.tone = TONES[description.tone] ?? "muted";
+  panel.querySelector("b").textContent = description.label;
+  panel.querySelector("p").textContent = description.detail;
+}
+
+/// Draws the image at the planned size and steps the quality down until it fits. Everything happens
+/// in the browser: the creator's original never leaves their machine, and what would be stored is a
+/// fraction of the size.
+async function shrink(file, plan) {
+  const bitmap = await createImageBitmap(file);
+  const canvas = document.createElement("canvas");
+  canvas.width = plan.targetWidth;
+  canvas.height = plan.targetHeight;
+  const context = canvas.getContext("2d");
+  context.drawImage(bitmap, 0, 0, plan.targetWidth, plan.targetHeight);
+  bitmap.close?.();
+
+  // JPEG unless the image might rely on transparency, because PNG ignores the quality argument.
+  const type = file.type === "image/png" ? "image/webp" : "image/jpeg";
+  let smallest = null;
+  for (const quality of plan.qualities) {
+    const blob = await new Promise(done => canvas.toBlob(done, type, quality));
+    if (!blob) continue;
+    if (!smallest || blob.size < smallest.size) smallest = blob;
+    if (blob.size <= MAX_STORED_BYTES) return blob;
+  }
+  // Nothing on the ladder fit. Keep the smallest attempt and let the page say so.
+  return smallest;
+}
+
+function wireImage() {
+  const input = $("#image");
+  $("#drop").addEventListener("click", () => input.click());
+  input.addEventListener("change", async () => {
+    const file = input.files?.[0];
+    const error = $("#imageError");
+    const preview = $("#preview");
+    error.textContent = "";
+    if (!file) return;
+    if (file.size > MAX_IMAGE_BYTES) {
+      error.textContent = `That file is ${describeBytes(file.size)}. The limit is 2 MB.`;
+      input.value = "";
+      return;
+    }
+
+    preview.src = URL.createObjectURL(file);
+    preview.hidden = false;
+    $("#dropText").textContent = `${file.name} — checking size…`;
+
+    try {
+      const bitmap = await createImageBitmap(file);
+      const plan = planResize({
+        width: bitmap.width,
+        height: bitmap.height,
+        bytes: file.size,
+        type: file.type,
+      });
+      bitmap.close?.();
+
+      if (plan.action === "reject") {
+        error.textContent = plan.reason;
+        input.value = "";
+        preview.hidden = true;
+        $("#dropText").textContent = "Click to choose a PNG, JPG, or SVG. 2 MB maximum.";
+        return;
+      }
+      if (plan.action === "keep") {
+        state.image = { blob: file, bytes: file.size };
+        $("#dropText").textContent = `${file.name} — ${describeBytes(file.size)}, stored as is.`;
+        return;
+      }
+
+      const blob = await shrink(file, plan);
+      state.image = { blob, bytes: blob.size };
+      preview.src = URL.createObjectURL(blob);
+      const note = blob.size > MAX_STORED_BYTES
+        ? ` Still above ${describeBytes(MAX_STORED_BYTES)}; this is as small as it goes without visible damage.`
+        : "";
+      $("#dropText").textContent =
+        `${file.name} — ${describeSaving({ before: file.size, after: blob.size })}${note}`;
+    } catch {
+      // A file the browser cannot decode is not a resizing problem, it is a bad file.
+      error.textContent = "That file could not be read as an image.";
+      input.value = "";
+      preview.hidden = true;
+    }
+  });
+}
+
+async function start() {
+  const response = await fetch("/config/robinhood-mainnet-canary.decisions.json");
+  const decisions = await response.json();
+  state.economics = loadEconomics(decisions);
+  state.nativeLiquidityWei = BigInt(decisions.pilotLimits.maxNativeLiquidityPerLaunchWei);
+
+  wireImage();
+  for (const button of $$("[data-go]")) {
+    button.addEventListener("click", () => {
+      const target = Number(button.dataset.go);
+      if (target > 2 && !showValidation()) {
+        setStep(2);
+        return;
+      }
+      setStep(target);
+    });
+  }
+  for (const field of ["#name", "#symbol", "#supply"]) {
+    $(field).addEventListener("input", showValidation);
+  }
+  for (const button of $$(".statepick button")) {
+    button.addEventListener("click", () => showState(button.dataset.state));
+  }
+  showValidation();
+  setStep(1);
+  await readCapability();
+}
+
+start();

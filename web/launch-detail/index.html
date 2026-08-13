@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DoomStreak — launch detail</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/assets/doomstreak.css">
+  <style>
+    /* Page composition only. */
+    .sub { margin: 0 0 calc(var(--step) * 3); color: var(--muted); font-size: 13px; }
+    .bar {
+      height: 14px; margin: calc(var(--step) * 2) 0 calc(var(--step)); border-radius: var(--radius-pill);
+      background: var(--card2); border: var(--edge-thin); overflow: hidden;
+    }
+    .bar i { display: block; height: 100%; background: var(--lime); }
+    .steps3 { display: flex; gap: calc(var(--step)); }
+    .steps3 div {
+      flex: 1; padding: 10px; text-align: center; border: var(--edge-thin); border-radius: var(--radius-sm);
+      background: var(--card2); color: var(--muted);
+      font-family: var(--font-display); font-size: 15px; letter-spacing: 1px;
+    }
+    .steps3 div[data-done="yes"] { background: var(--lime); color: #0d0221; }
+    .steps3 div[data-now="yes"] { background: var(--yellow); color: #0d0221; }
+    .say { margin: calc(var(--step) * 1.5) 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .wide { grid-column: 1 / -1; }
+    #error { display: none; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav">
+    <div class="brand"><a href="../"><img src="/assets/img/3ce1b327f332.png" alt="DoomStreak"></a></div>
+    <a href="../launch-flow/" class="primary">LAUNCH</a>
+    <a href="../discovery/">LAUNCHES</a>
+    <a href="https://www.doomstreak.xyz/">ANALYTICS</a>
+    <a href="https://www.doomstreak.xyz/#nft">NFT GAME</a>
+  </div>
+
+  <h1 id="title" style="margin-top:calc(var(--step)*5)">LOADING<span class="hi">…</span></h1>
+  <p class="sub addr" id="subtitle">Reading the chain.</p>
+
+  <div class="notice bad" id="error"></div>
+
+  <div class="grid auto" id="content" hidden>
+    <div class="card wide">
+      <p class="label">THE COMMITMENT</p>
+      <span class="badge" id="gmBadge">—</span>
+      <div class="bar"><i id="gmBar" style="width:0%"></i></div>
+      <div class="steps3" id="gmSteps"></div>
+      <p class="say" id="gmDetail"></p>
+    </div>
+
+    <div class="card">
+      <p class="label">PERMANENT LIQUIDITY</p>
+      <span class="badge" id="lockBadge">—</span>
+      <p class="say" id="lockDetail"></p>
+      <table id="lockTable" style="margin-top:calc(var(--step)*2)"></table>
+    </div>
+
+    <div class="card">
+      <p class="label">ALLOCATION</p>
+      <table id="allocTable"></table>
+      <p class="say" id="allocCheck"></p>
+    </div>
+
+    <div class="card">
+      <p class="label">MONEY IN, FEES OUT</p>
+      <table id="feeTable"></table>
+    </div>
+
+    <div class="card">
+      <p class="label">ADDRESSES</p>
+      <table id="addressTable"></table>
+    </div>
+  </div>
+
+  <div class="meta" id="freshLine"></div>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
