@@ -119,6 +119,14 @@ checks the chain, current head, pending deployer nonce, deployer balance, and
 bytecode fingerprints for all four external dependencies without running a
 full fork test.
 
+To execute the unsigned plan only on an auto-impersonated localhost fork and
+measure gas, run `node tools\v2\localhost-preview.mjs`. The tool funds the
+deployer with a unique local sentinel balance, sends the seven payloads only to
+`127.0.0.1`, validates every receipt and postcondition, and writes a sanitized
+ignored report. It loads no signer or private key and performs no upstream
+write. The resulting funding figure is a snapshot and must be refreshed before
+any real deployment approval.
+
 The fail-closed deployment worksheet is
 `../config/v2-mainnet-deployment-manifest.json`. It intentionally contains no
 private key, RPC URL, transaction signature, or broadcast switch.

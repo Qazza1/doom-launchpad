@@ -89,6 +89,9 @@
     "dualRpcNoBroadcastDeploymentRehearsalPassed": true,
     "dualRpcNoBroadcastDeploymentRehearsalRecordedAt": "2026-08-13",
     "dualRpcNoBroadcastDeploymentRehearsalEvidence": "docs/v2-no-broadcast-rehearsal-2026-08-13.md",
+    "localhostExactPayloadPreviewPassed": true,
+    "localhostExactPayloadPreviewRecordedAt": "2026-08-13",
+    "localhostExactPayloadPreviewEvidence": "docs/v2-no-broadcast-rehearsal-2026-08-13.md",
     "rabbyNoBroadcastReviewComplete": false,
     "explicitBroadcastApproval": false
   }
