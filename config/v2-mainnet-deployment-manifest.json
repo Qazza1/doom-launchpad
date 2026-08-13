@@ -92,7 +92,11 @@
     "localhostExactPayloadPreviewPassed": true,
     "localhostExactPayloadPreviewRecordedAt": "2026-08-13",
     "localhostExactPayloadPreviewEvidence": "docs/v2-no-broadcast-rehearsal-2026-08-13.md",
-    "rabbyNoBroadcastReviewComplete": false,
+    "rabbyNoBroadcastReviewComplete": true,
+    "rabbyNoBroadcastReviewRecordedAt": "2026-08-13",
+    "rabbyNoBroadcastReviewEvidence": "docs/v2-no-broadcast-rehearsal-2026-08-13.md",
+    "rabbyPreviewChainId": 4663666,
+    "rabbyPreviewSignaturesValidOnMainnet": false,
     "explicitBroadcastApproval": false
   }
 }
