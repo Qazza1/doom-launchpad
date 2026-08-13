@@ -2,6 +2,8 @@ name: contracts
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 permissions:
@@ -232,7 +234,7 @@ jobs:
         run: |
           set +e
           cd v2
-          slither . --filter-paths "(../lib|test|script)" --exclude reentrancy-balance --fail-high > ../v2-slither-gate.log 2>&1
+          slither . --filter-paths "(lib|test|script)" --exclude reentrancy-balance --fail-high > ../v2-slither-gate.log 2>&1
           status=$?
           cat ../v2-slither-gate.log
           if [ "$status" -ne 0 ]; then
