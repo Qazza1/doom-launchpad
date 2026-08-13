@@ -1,9 +1,10 @@
 import { spawn } from "node:child_process";
 import { access, mkdir, rename, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
-import { dirname, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { initialDaemonHealth, parseIntervalSeconds, recordCheckResult } from "./lib/daemon.mjs";
+import { addPolicyHealth, initialDaemonHealth, parseIntervalSeconds, recordCheckResult } from "./lib/daemon.mjs";
+import { readKeeperConfig } from "./lib/config.mjs";
 import { loadKeeperEnv, requireEnvironment } from "./lib/env.mjs";
 import { sendTelegramAlert } from "./lib/telegram.mjs";
 
@@ -35,7 +36,13 @@ if (!Number.isSafeInteger(port) || port < 1 || port > 65535) throw new Error("PO
 
 const keeperDirectory = dirname(fileURLToPath(import.meta.url));
 const monitorPath = resolve(keeperDirectory, "monitor.mjs");
-let health = initialDaemonHealth(Math.floor(Date.now() / 1000), intervalSeconds);
+const keeperConfig = await readKeeperConfig(configPath);
+let health = addPolicyHealth(initialDaemonHealth(Math.floor(Date.now() / 1000), intervalSeconds), {
+  configFile: basename(configPath),
+  chainId: keeperConfig.chainId,
+  factory: keeperConfig.contracts.factory,
+  expectedFactoryPaused: keeperConfig.expectedFactoryPaused,
+});
 let stopping = false;
 let child = null;
 let resolveWait = null;

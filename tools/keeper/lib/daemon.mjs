@@ -21,6 +21,28 @@ export function initialDaemonHealth(startedAt, intervalSeconds) {
   };
 }
 
+export function addPolicyHealth(health, { configFile, chainId, factory, expectedFactoryPaused }) {
+  if (typeof configFile !== "string" || configFile.length === 0) {
+    throw new Error("configFile must be a non-empty filename");
+  }
+  if (!Number.isSafeInteger(chainId) || chainId <= 0) {
+    throw new Error("chainId must be a positive integer");
+  }
+  if (typeof factory !== "string" || !/^0x[0-9a-fA-F]{40}$/.test(factory)) {
+    throw new Error("factory must be an address");
+  }
+  if (typeof expectedFactoryPaused !== "boolean") {
+    throw new Error("expectedFactoryPaused must be boolean");
+  }
+  return {
+    ...health,
+    config_file: configFile,
+    chain_id: chainId,
+    factory,
+    expected_factory_paused: expectedFactoryPaused,
+  };
+}
+
 export function recordCheckResult(health, { startedAt, completedAt, exitCode, nextRunAt }) {
   const passed = exitCode === 0;
   return {
