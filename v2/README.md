@@ -69,7 +69,10 @@ API key is ever printed in a terminal, log, issue, or task transcript.
 
 ## Fail-closed deployment order
 
-No broadcast script is included in this candidate.
+No broadcast script is included in this candidate. The simulation-only
+`script/DeployRobinhoodV2Rehearsal.s.sol` reproduces the exact sequence on a
+local fork, deliberately never calls `vm.startBroadcast`, and therefore cannot
+sign or submit a mainnet transaction even if `--broadcast` is supplied.
 
 1. Deploy `DoomLaunchDeployerV2(operator)`.
 2. Deploy `PositionLockerV2` with the canonical position manager, wrapped
@@ -86,6 +89,35 @@ No broadcast script is included in this candidate.
    constructor arguments, role addresses, bindings, and constants.
 9. Keep the factory paused until independent review, fork testing, manifest
    approval, and explicit authorization to resume.
+
+Validate the fail-closed manifest and run the simulation against either RPC:
+
+```powershell
+node tools\v2\verify-manifest.mjs config\v2-mainnet-deployment-manifest.json
+$env:ROBINHOOD_V2_REHEARSAL_ACK = "true"
+..\.tools\foundry-v1.7.1\forge.exe script script\DeployRobinhoodV2Rehearsal.s.sol:DeployRobinhoodV2Rehearsal --root v2 --rpc-url $env:ROBINHOOD_RPC_URL -vv
+```
+
+The command must not include a private key, sender, or broadcast flag. Repeat
+it with `ROBINHOOD_FALLBACK_RPC_URL` before preparing a wallet transaction plan.
+
+After both providers agree on the deployer's pending nonce, an unsigned exact
+payload plan can be generated with:
+
+```powershell
+node tools\v2\network-preflight.mjs
+node tools\v2\transaction-plan.mjs --nonce <confirmed-pending-nonce>
+```
+
+The planner predicts all four CREATE addresses, threads them through the later
+constructors and three irreversible bindings, and rejects any nonzero value,
+wrong sender, wrong chain, skipped nonce, or stale dependency. Its JSON output
+is ignored by Git and contains no signer or RPC credential.
+
+The lightweight preflight uses eight read-only RPC requests per provider. It
+checks the chain, current head, pending deployer nonce, deployer balance, and
+bytecode fingerprints for all four external dependencies without running a
+full fork test.
 
 The fail-closed deployment worksheet is
 `../config/v2-mainnet-deployment-manifest.json`. It intentionally contains no

@@ -26,7 +26,9 @@ jobs:
           node --test tools/lib/test/*.test.mjs
           node --test tools/deployment/test/*.test.mjs
           node --test tools/deathwatch/test/*.test.mjs
+          node --test tools/v2/test/*.test.mjs
           node tools/deployment/verify-manifest.mjs config/stage4-deployment-manifest.json
+          node tools/v2/verify-manifest.mjs config/v2-mainnet-deployment-manifest.json
 
   review-artifact:
     runs-on: ubuntu-latest
