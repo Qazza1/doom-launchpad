@@ -78,7 +78,18 @@
     "managerNetworkValid": true,
     "factoryConfigurationValid": true,
     "factoryPaused": true,
-    "factoryLaunchCount": 0
+    "factoryLaunchCount": 0,
+    "blockscoutSourceVerification": {
+      "verifiedAt": "2026-08-13T20:39:40.294Z",
+      "method": "privacy_sanitized_standard_input",
+      "compilerVersion": "v0.8.36+commit.8a079791",
+      "allContractsVerified": true,
+      "allContractsFullyVerified": false,
+      "allContractsPartiallyVerified": true,
+      "localUserPathsPublished": false,
+      "factoryPausedDuringVerification": true,
+      "evidence": "docs/v2-blockscout-verification-2026-08-13.md"
+    }
   },
   "safety": {
     "factoryMustRemainPaused": true,

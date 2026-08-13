@@ -46,6 +46,10 @@ key or Telegram credential, but owner approval is still required before public
 submission. After approval, submit the four contracts separately and confirm
 that Blockscout marks each one verified before activation.
 
+Completed 2026-08-13 with privacy-sanitized relative remappings. Blockscout
+marks all four contracts verified and partially verified; none is claimed as a
+full metadata match. Evidence: `docs/v2-blockscout-verification-2026-08-13.md`.
+
 ## Phase 3 — activation (separate authorization)
 
 Before asking for authorization, confirm through two independent RPC providers:

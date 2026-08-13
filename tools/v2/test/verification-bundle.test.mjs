@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   localPathRemappingCount,
+  sanitizeLocalRemappings,
   validateArtifactAgainstPlan,
   validateCompilerInput,
   validateDeploymentEvidence,
@@ -71,6 +72,20 @@ test("compiler input stays pinned and contains no operational secrets", () => {
 test("exact local compiler paths are counted for owner privacy review", () => {
   const input = compilerInput();
   input.settings.remappings.push("forge-std/=C:/Users/owner/repo/lib/forge-std/src/");
+  assert.equal(localPathRemappingCount(input), 1);
+});
+
+test("local build remappings can be replaced without exposing the owner path", () => {
+  const input = compilerInput();
+  input.settings.remappings.push(
+    "forge-std/=C:/Users/owner/repo/lib/forge-std/src/",
+    "unchanged/=https://example.test/dependency/",
+  );
+  const sanitized = sanitizeLocalRemappings(input);
+  assert.equal(localPathRemappingCount(sanitized), 0);
+  assert.ok(sanitized.settings.remappings.includes("forge-std/=../lib/forge-std/src/"));
+  assert.ok(sanitized.settings.remappings.includes("unchanged/=https://example.test/dependency/"));
+  assert.notEqual(sanitized, input);
   assert.equal(localPathRemappingCount(input), 1);
 });
 

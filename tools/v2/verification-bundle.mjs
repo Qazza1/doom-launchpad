@@ -91,7 +91,23 @@ export function validateCompilerInput(input, contractName) {
 }
 
 export function localPathRemappingCount(input) {
-  return (input?.settings?.remappings || []).filter(value => /[A-Za-z]:[\\/]/.test(value)).length;
+  return (input?.settings?.remappings || []).filter(value => /^[^=]*=[A-Za-z]:[\\/]/.test(value)).length;
+}
+
+export function sanitizeLocalRemappings(input) {
+  const sanitized = structuredClone(input);
+  sanitized.settings.remappings = (sanitized.settings.remappings || []).map(value => {
+    const separator = value.indexOf("=");
+    if (separator < 0) return value;
+    const prefix = value.slice(0, separator + 1);
+    const target = value.slice(separator + 1).replaceAll("\\", "/");
+    const marker = "/lib/";
+    const libraryIndex = target.toLowerCase().indexOf(marker);
+    return /^[A-Za-z]:\//.test(target) && libraryIndex >= 0
+      ? `${prefix}../lib/${target.slice(libraryIndex + marker.length)}`
+      : value;
+  });
+  return sanitized;
 }
 
 export function validateArtifactAgainstPlan(artifact, transaction) {
