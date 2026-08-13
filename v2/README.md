@@ -127,6 +127,15 @@ ignored report. It loads no signer or private key and performs no upstream
 write. The resulting funding figure is a snapshot and must be refreshed before
 any real deployment approval.
 
+For the final wallet-rendering rehearsal, set `DOOM_PREVIEW_PLAN=v2` and run
+`node tools\deployment\rabby-preview-server.mjs`. The server forks mainnet onto
+the deliberately nonexistent chain ID `4663666`, applies a unique sentinel
+balance, raises the preview nonce above wallet caches, and verifies the mined
+wallet transaction byte-for-byte against the seven-step V2 plan. It refuses
+Robinhood mainnet (`4663`) and the real Robinhood testnet (`46630`). Preview
+signatures are EIP-155-bound to the isolated chain and cannot be replayed on
+mainnet.
+
 The fail-closed deployment worksheet is
 `../config/v2-mainnet-deployment-manifest.json`. It intentionally contains no
 private key, RPC URL, transaction signature, or broadcast switch.

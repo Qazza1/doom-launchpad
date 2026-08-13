@@ -16,6 +16,7 @@ import {
   validateReceipt,
   validateSentinelBalance,
   validateStepSubmission,
+  selectPreviewMode,
 } from "../rabby-preview-server.mjs";
 
 const locker = "0xdaE01c32131fF283f403b4C1fD71018Fa31cfAC0";
@@ -80,6 +81,12 @@ test("the preview nonce starts above any cached wallet counter", () => {
   assert.equal(choosePreviewNonce(7), PREVIEW_NONCE_FLOOR + 7);
   assert.ok(choosePreviewNonce(0) > 100, "the floor must clear a realistic session cache");
   assert.ok(choosePreviewNonce(11) > 11);
+});
+
+test("the preview explicitly selects the V1 or V2 planner", () => {
+  assert.equal(selectPreviewMode("v1").mode, "v1");
+  assert.equal(selectPreviewMode("v2").mode, "v2");
+  assert.throws(() => selectPreviewMode("v3"), /must be v1 or v2/);
 });
 
 test("the sentinel balance proves the connected network is the preview fork", () => {

@@ -4,7 +4,8 @@ import { createServer } from "node:http";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { findFoundryBinaries } from "./localhost-preview.mjs";
-import { buildPlan } from "./transaction-plan.mjs";
+import { buildPlan as buildV1Plan } from "./transaction-plan.mjs";
+import { buildPlan as buildV2Plan } from "../v2/transaction-plan.mjs";
 
 export const PRODUCTION_CHAIN_ID = 4663;
 /// The preview fork deliberately runs on a different chain ID. Rabby signs real transactions here,
@@ -34,6 +35,12 @@ const directory = dirname(fileURLToPath(import.meta.url));
 const outputRoot = resolve(directory, "output");
 const strip = hex => (hex.startsWith("0x") ? hex.slice(2) : hex);
 const lower = value => String(value ?? "").toLowerCase();
+
+export function selectPreviewMode(value = "v1") {
+  if (value === "v1") return { mode: "v1", buildPlan: buildV1Plan };
+  if (value === "v2") return { mode: "v2", buildPlan: buildV2Plan };
+  throw new Error("DOOM_PREVIEW_PLAN must be v1 or v2");
+}
 
 /// Refuses to rehearse on the production chain ID. This is the single guard that makes signing with
 /// the real deployer key safe, so it is checked before Anvil starts and again before every step.
@@ -210,6 +217,8 @@ export async function startServer() {
   }
   assertIsolatedChain(PREVIEW_CHAIN_ID);
 
+  const { mode, buildPlan } = selectPreviewMode(process.env.DOOM_PREVIEW_PLAN || "v1");
+
   const foundry = findFoundryBinaries();
   const pendingNonce = Number(
     await rpc(upstream, "eth_getTransactionCount", [DEPLOYER, "pending"]),
@@ -280,6 +289,7 @@ export async function startServer() {
         }
         if (request.method === "GET" && request.url === "/plan") {
           sendJson(response, 200, {
+            mode,
             deployer: DEPLOYER,
             previewChainId: PREVIEW_CHAIN_ID,
             previewRpcUrl: PREVIEW_RPC_URL,
@@ -417,7 +427,7 @@ export async function startServer() {
             sendJson(response, 409, { ok: false, error: "the sequence is incomplete" });
             return;
           }
-          const report = await finalize(plan, completed);
+          const report = await finalize(plan, completed, mode);
           sendJson(response, 200, { ok: true, ...report });
           return;
         }
@@ -433,6 +443,7 @@ export async function startServer() {
     });
 
     console.log(`Rabby transaction preview ready: ${baseUrl}`);
+    console.log(`Deployment plan: ${mode.toUpperCase()} (${plan.transactions.length} steps)`);
     console.log(`Preview chain: ${PREVIEW_CHAIN_ID} at ${PREVIEW_RPC_URL}`);
     console.log(`Upstream pending nonce: ${pendingNonce}`);
     console.log(
@@ -461,7 +472,7 @@ export async function startServer() {
   }
 }
 
-async function finalize(plan, completed) {
+async function finalize(plan, completed, mode) {
   const created = Object.fromEntries(
     plan.transactions
       .filter(transaction => transaction.kind === "CREATE")
@@ -470,8 +481,9 @@ async function finalize(plan, completed) {
   // Selectors are read from the compiled artifacts rather than written by hand, so a renamed or
   // re-typed getter fails loudly instead of silently reading the wrong slot.
   const selector = async (contract, signature) => {
+    const artifactRoot = mode === "v2" ? "../../v2/out" : "../../out";
     const artifact = JSON.parse(
-      await readFile(resolve(directory, "../../out", `${contract}.sol`, `${contract}.json`), "utf8"),
+      await readFile(resolve(directory, artifactRoot, `${contract}.sol`, `${contract}.json`), "utf8"),
     );
     const identifier = artifact.methodIdentifiers?.[signature];
     if (!identifier) throw new Error(`${contract} has no ${signature}`);
@@ -480,24 +492,42 @@ async function finalize(plan, completed) {
   const call = async (contract, address, signature) =>
     rpc(PREVIEW_RPC_URL, "eth_call", [{ to: address, data: await selector(contract, signature) }, "latest"]);
 
-  const [paused, registrar, boundFactory, networkValid] = await Promise.all([
-    call("DoomLaunchFactory", created.DoomLaunchFactory, "launchesPaused()"),
-    call("PositionLocker", created.PositionLocker, "authorizedRegistrar()"),
-    call("V3LiquidityManager", created.V3LiquidityManager, "authorizedFactory()"),
-    call("V3LiquidityManager", created.V3LiquidityManager, "isNetworkConfigurationValid()"),
-  ]);
-
   const asAddress = word => (word ? `0x${word.slice(-40)}` : null);
-  const postconditions = {
-    factoryPaused: paused ? BigInt(paused) === 1n : null,
-    registrarBoundToManager: lower(asAddress(registrar)) === lower(created.V3LiquidityManager),
-    managerBoundToFactory: lower(asAddress(boundFactory)) === lower(created.DoomLaunchFactory),
-    networkConfigurationValid: networkValid ? BigInt(networkValid) === 1n : null,
-  };
+  let postconditions;
+  if (mode === "v2") {
+    const [paused, registrar, deployerFactory, managerFactory, networkValid] = await Promise.all([
+      call("DoomLaunchFactoryV2", created.DoomLaunchFactoryV2, "launchesPaused()"),
+      call("PositionLockerV2", created.PositionLockerV2, "authorizedRegistrar()"),
+      call("DoomLaunchDeployerV2", created.DoomLaunchDeployerV2, "authorizedFactory()"),
+      call("V3GraduationManagerV2", created.V3GraduationManagerV2, "authorizedFactory()"),
+      call("V3GraduationManagerV2", created.V3GraduationManagerV2, "isNetworkConfigurationValid()"),
+    ]);
+    postconditions = {
+      factoryPaused: paused ? BigInt(paused) === 1n : null,
+      registrarBoundToManager: lower(asAddress(registrar)) === lower(created.V3GraduationManagerV2),
+      deployerBoundToFactory: lower(asAddress(deployerFactory)) === lower(created.DoomLaunchFactoryV2),
+      managerBoundToFactory: lower(asAddress(managerFactory)) === lower(created.DoomLaunchFactoryV2),
+      networkConfigurationValid: networkValid ? BigInt(networkValid) === 1n : null,
+    };
+  } else {
+    const [paused, registrar, boundFactory, networkValid] = await Promise.all([
+      call("DoomLaunchFactory", created.DoomLaunchFactory, "launchesPaused()"),
+      call("PositionLocker", created.PositionLocker, "authorizedRegistrar()"),
+      call("V3LiquidityManager", created.V3LiquidityManager, "authorizedFactory()"),
+      call("V3LiquidityManager", created.V3LiquidityManager, "isNetworkConfigurationValid()"),
+    ]);
+    postconditions = {
+      factoryPaused: paused ? BigInt(paused) === 1n : null,
+      registrarBoundToManager: lower(asAddress(registrar)) === lower(created.V3LiquidityManager),
+      managerBoundToFactory: lower(asAddress(boundFactory)) === lower(created.DoomLaunchFactory),
+      networkConfigurationValid: networkValid ? BigInt(networkValid) === 1n : null,
+    };
+  }
 
   const report = {
     schemaVersion: 1,
-    status: "rabby_transaction_preview_passed",
+    status: mode === "v2" ? "v2_rabby_transaction_preview_passed" : "rabby_transaction_preview_passed",
+    deploymentPlan: mode,
     generatedAt: new Date().toISOString(),
     safety: {
       signerLoaded: false,
@@ -534,7 +564,7 @@ async function finalize(plan, completed) {
   };
   await mkdir(outputRoot, { recursive: true });
   await writeFile(
-    resolve(outputRoot, "rabby-preview-report.json"),
+    resolve(outputRoot, mode === "v2" ? "v2-rabby-preview-report.json" : "rabby-preview-report.json"),
     `${JSON.stringify(report, null, 2)}\n`,
     "utf8",
   );
