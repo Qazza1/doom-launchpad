@@ -1,3 +1,5 @@
+import { evaluateKeeperStateV2 } from "./rules-v2.mjs";
+
 function alert(id, severity, title, summary, details, action) {
   return { id, severity, title, summary, details, action };
 }
@@ -22,6 +24,7 @@ function addComponentMismatches(alerts, componentName, componentState) {
 }
 
 export function evaluateKeeperState(state, config) {
+  if (config.schema === "doom.keeper-config.v2") return evaluateKeeperStateV2(state, config);
   const alerts = [];
   const now = state.observedAt;
   const thresholds = config.thresholds;

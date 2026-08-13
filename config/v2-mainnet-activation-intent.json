@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "status": "draft_unauthorized",
+  "chainId": 4663,
+  "from": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+  "to": "0x142760D2C865537c063492933FB71ddefA2372C6",
+  "value": "0x0",
+  "function": "resumeLaunches()",
+  "data": "0xd255d203",
+  "nonce": null,
+  "gasLimit": null,
+  "preconditions": {
+    "factoryRuntimeMatchesDeploymentRecord": true,
+    "factoryConfigurationValid": true,
+    "factoryPaused": true,
+    "factoryLaunchCount": "0",
+    "approvedCreator": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "approvedCreatorAllowed": true,
+    "indexerV2Healthy": true,
+    "keeperPausedPolicyHealthy": true,
+    "frontendTransactionsEnabled": false
+  },
+  "postconditions": {
+    "factoryPaused": false,
+    "factoryLaunchCount": "0",
+    "noTokenLaunch": true,
+    "keeperPolicy": "config/keeper-v2-live.mainnet.json"
+  },
+  "safety": {
+    "authorizationGranted": false,
+    "signed": false,
+    "broadcast": false,
+    "tokenLaunchAuthorized": false,
+    "fundingTransferAuthorized": false
+  },
+  "warning": "Intent template only. Nonce and gas must be confirmed through two RPC providers after separate owner authorization. Activation does not authorize a token launch."
+}

@@ -16,7 +16,9 @@ const POSITIVE_INTEGER_FIELDS = [
 
 export async function readKeeperConfig(path) {
   const input = parseJson(await readFile(path, "utf8"), path);
-  if (input?.schema !== "doom.keeper-config.v1") throw new Error("Unsupported keeper config schema");
+  if (!["doom.keeper-config.v1", "doom.keeper-config.v2"].includes(input?.schema)) {
+    throw new Error("Unsupported keeper config schema");
+  }
   if (typeof input.enabled !== "boolean") throw new Error("enabled must be boolean");
   if (!Number.isSafeInteger(input.chainId) || input.chainId <= 0) throw new Error("chainId must be a positive integer");
   if (typeof input.expectedFactoryPaused !== "boolean") throw new Error("expectedFactoryPaused must be boolean");

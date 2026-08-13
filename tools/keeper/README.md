@@ -38,12 +38,18 @@ storage so restarts do not resend every active alert.
 
 ```bash
 npm run daemon --prefix tools/keeper -- \
-  --config config/keeper.mainnet.json \
-  --state /data/keeper-alerts.json
+  --config config/keeper-v2.mainnet.json \
+  --state /data/keeper-v2-alerts.json
 ```
 
 Set `KEEPER_INTERVAL_SECONDS=60` and mount the Railway volume at `/data`.
 The repository includes `Dockerfile.keeper`; set Railway's
 `RAILWAY_DOCKERFILE_PATH` variable to that filename.
+The image defaults to the fail-closed paused policy through
+`KEEPER_CONFIG_PATH=config/keeper-v2.mainnet.json`. Only when the factory is
+separately authorized to resume, change it to
+`config/keeper-v2-live.mainnet.json`; the live policy then raises a critical
+alert if the factory becomes paused unexpectedly. `KEEPER_STATE_PATH` defaults
+to `/data/keeper-v2-alerts.json`.
 Set `KEEPER_STARTUP_NOTIFY=1` for one persistent-volume-deduplicated Telegram
 message proving that the production host can reach the bot.

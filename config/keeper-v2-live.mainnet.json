@@ -1,0 +1,43 @@
+{
+  "schema": "doom.keeper-config.v2",
+  "enabled": true,
+  "chainId": 4663,
+  "networkName": "Robinhood Chain Mainnet",
+  "explorerUrl": "https://robinhoodchain.blockscout.com",
+  "rpcUrlEnvironmentVariable": "ROBINHOOD_RPC_URL",
+  "fallbackRpcUrlEnvironmentVariable": "ROBINHOOD_FALLBACK_RPC_URL",
+  "factoryDeploymentBlock": "35548791",
+  "contracts": {
+    "factory": "0x142760D2C865537c063492933FB71ddefA2372C6",
+    "curveDeployer": "0x7Da8f0317341DB59650939036145c057Cc71bFB0",
+    "positionLocker": "0x9Cf65eD04eBA45F68241591ba8a7D6BAa8E86cFB",
+    "graduationManager": "0x72b094f084915F6d868177b68925cA9D5e6f2A01",
+    "doomRewards": "0x615f6E6B0AEA7Ac94F4391424aF601F9290dd9dC",
+    "wrappedNative": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+    "uniswapV3Factory": "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
+    "nonfungiblePositionManager": "0x73991a25C818Bf1f1128dEAaB1492D45638DE0D3"
+  },
+  "expectedCanaryLimits": {
+    "maxLaunches": "100",
+    "launchFee": "1000000000000000",
+    "graduationTarget": "50000000000000000"
+  },
+  "expectedRoles": {
+    "operator": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "emergencyGuardian": "0x3EeF0a7Ee9420a1035a4541582B384bc4405A439",
+    "approvedCreator": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "treasury": "0x9038C3AB7caE02a8aae730E705fdF7a15945eb7E"
+  },
+  "expectedFactoryPaused": false,
+  "thresholds": {
+    "rpcStaleSeconds": 180,
+    "rpcFutureToleranceSeconds": 60,
+    "gmReminderLeadSeconds": 3600,
+    "gmCriticalLeadSeconds": 900,
+    "feeCollectionReminderSeconds": 86400,
+    "feeLogLookbackBlocks": 100000,
+    "warningRepeatSeconds": 1800,
+    "criticalRepeatSeconds": 300,
+    "infoRepeatSeconds": 21600
+  }
+}

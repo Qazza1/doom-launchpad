@@ -8,7 +8,8 @@ RUN npm ci --prefix tools/keeper --omit=dev
 COPY tools/keeper ./tools/keeper
 # The keeper parses its config through the shared BOM-safe reader.
 COPY tools/lib ./tools/lib
-COPY config/keeper.mainnet.json \
+COPY config/keeper-v2.mainnet.json \
+  config/keeper-v2-live.mainnet.json \
   config/robinhood-mainnet-stage4-deployment.json \
   config/stage4-deployment-manifest.json \
   ./config/
@@ -16,6 +17,8 @@ COPY config/keeper.mainnet.json \
 RUN npm test --prefix tools/keeper
 
 ENV NODE_ENV=production
+ENV KEEPER_CONFIG_PATH=config/keeper-v2.mainnet.json
+ENV KEEPER_STATE_PATH=/data/keeper-v2-alerts.json
 EXPOSE 8080
 
-CMD ["node", "tools/keeper/daemon.mjs", "--config", "config/keeper.mainnet.json", "--state", "/data/keeper-alerts.json"]
+CMD ["node", "tools/keeper/daemon.mjs"]

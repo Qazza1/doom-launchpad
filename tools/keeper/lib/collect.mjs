@@ -1,5 +1,6 @@
 import { getAddress, zeroAddress } from "viem";
 import { erc20Abi, escrowAbi, factoryAbi, feesCollectedEvent, lockerAbi, rewardsAbi } from "./abis.mjs";
+import { collectKeeperStateV2 } from "./collect-v2.mjs";
 
 async function hasCode(client, address) {
   const code = await client.getBytecode({ address });
@@ -15,6 +16,7 @@ export function shouldScanFeeLogs(lockerHasCode, launchCount) {
 }
 
 export async function collectKeeperState(client, config, observedAt = Math.floor(Date.now() / 1000)) {
+  if (config.schema === "doom.keeper-config.v2") return collectKeeperStateV2(client, config, observedAt);
   const chainId = await client.getChainId();
   const head = await client.getBlock({ blockTag: "latest" });
   const factoryAddress = config.contracts.factory;

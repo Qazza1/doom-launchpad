@@ -21,8 +21,14 @@ function parseArgs(argv) {
 
 const args = parseArgs(process.argv.slice(2));
 const invocationDirectory = process.env.INIT_CWD ?? process.cwd();
-const configPath = resolve(invocationDirectory, args.config ?? "config/keeper.mainnet.json");
-const statePath = resolve(invocationDirectory, args.state ?? "tools/keeper/state/alerts.json");
+const configPath = resolve(
+  invocationDirectory,
+  process.env.KEEPER_CONFIG_PATH?.trim() || args.config || "config/keeper.mainnet.json",
+);
+const statePath = resolve(
+  invocationDirectory,
+  process.env.KEEPER_STATE_PATH?.trim() || args.state || "tools/keeper/state/alerts.json",
+);
 const intervalSeconds = parseIntervalSeconds(process.env.KEEPER_INTERVAL_SECONDS);
 const port = Number(process.env.PORT || "8080");
 if (!Number.isSafeInteger(port) || port < 1 || port > 65535) throw new Error("PORT must be valid");
