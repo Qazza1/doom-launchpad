@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "status": "public_v2_mainnet_deployment_verified_paused",
+  "deployedAt": "2026-08-14",
+  "chainId": 4663,
+  "deployer": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+  "planSha256": "4b2d303c4a07d895ca90022b65fb5d1dedcef8af914990f0047fcc67edb77d16",
+  "sourceCommit": "9e719510bf33ee3cc74f8a804ace8aaa142ab935",
+  "contractDigest": "579d73e65cd946fec21d37d8e2f395cc9bec75beeb63fe327d0acc1d42a23584",
+  "addresses": {
+    "curveDeployer": "0x76C68Fbbe105a8928A17D1353d905d42eec2F7F0",
+    "positionLocker": "0x4f3Bab944c96aa77AAcCF41AAeB73E6840B4729A",
+    "graduationManager": "0xb146da3E348c7dd0ea14BeB390F880a2d911Ce0B",
+    "launchFactory": "0x8f8c948A6558C79531317b4AD7CfdBa4e9728f24"
+  },
+  "deploymentBlock": 36216119,
+  "transactions": [
+    {
+      "nonce": 19,
+      "label": "Deploy DoomLaunchDeployerV2",
+      "transactionHash": "0x541fc66f6c2cb1a5c216edc96cae032a1eca259718242035f29fbcb4ff7765b4",
+      "blockNumber": 36210564,
+      "gasUsed": "5009223",
+      "status": "verified_success"
+    },
+    {
+      "nonce": 20,
+      "label": "Deploy PositionLockerV2",
+      "transactionHash": "0x9a314ec23f7ae19c9ffea0bebb7ca74d7344bb0237dc6e220d85b7a3d274700d",
+      "blockNumber": 36211910,
+      "gasUsed": "1657651",
+      "status": "verified_success"
+    },
+    {
+      "nonce": 21,
+      "label": "Deploy V3GraduationManagerV2",
+      "transactionHash": "0xb9164591f8cba9a492da6eb78c3105411957dfddbf76868f5f76424f36282012",
+      "blockNumber": 36213009,
+      "gasUsed": "2237657",
+      "status": "verified_success"
+    },
+    {
+      "nonce": 22,
+      "label": "PositionLockerV2.bindRegistrar(address)",
+      "transactionHash": "0xac28263610fa81e75ee368c7e14dc8675029142fe1e1ed5c87473ac9ed9cfb7f",
+      "blockNumber": 36215166,
+      "gasUsed": "49769",
+      "status": "verified_success"
+    },
+    {
+      "nonce": 23,
+      "label": "Deploy DoomPublicLaunchFactoryV2",
+      "transactionHash": "0x801a3c2f61d42883d2315213005fb09ea973aa6906a760fc5aa3a0a7ff3336ca",
+      "blockNumber": 36216119,
+      "gasUsed": "1648593",
+      "status": "verified_success"
+    },
+    {
+      "nonce": 24,
+      "label": "DoomLaunchDeployerV2.bindFactory(address)",
+      "transactionHash": "0x37f5fc191a082f51c46f4620e9172a9df666307bc325414d5784c5274e805261",
+      "blockNumber": 36217642,
+      "gasUsed": "49066",
+      "status": "verified_success"
+    },
+    {
+      "nonce": 25,
+      "label": "V3GraduationManagerV2.bindFactory(address)",
+      "transactionHash": "0x953058a5804111d07082d0c7af4b67e3af2ad7efba08563a19f4452aa6d90197",
+      "blockNumber": 36218338,
+      "gasUsed": "49138",
+      "status": "verified_success"
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-08-14T11:33:02.872Z",
+    "auditBlock": 36219546,
+    "primaryHead": 36219558,
+    "fallbackHead": 36219558,
+    "pendingNonce": 26,
+    "receiptCount": 7,
+    "providersAgreed": true,
+    "allRuntimeBytecodesMatch": true,
+    "deployerAuthorizedFactory": "0x8f8c948A6558C79531317b4AD7CfdBa4e9728f24",
+    "lockerAuthorizedRegistrar": "0xb146da3E348c7dd0ea14BeB390F880a2d911Ce0B",
+    "managerAuthorizedFactory": "0x8f8c948A6558C79531317b4AD7CfdBa4e9728f24",
+    "managerNetworkValid": true,
+    "factoryConfigurationValid": true,
+    "factoryPaused": true,
+    "factoryLaunchCount": 0,
+    "firstLaunchId": 2,
+    "finalLaunchId": 100,
+    "blockscoutSourceVerification": {
+      "submitted": false,
+      "verified": false
+    }
+  },
+  "safety": {
+    "factoryMustRemainPaused": true,
+    "factoryResumeAuthorized": false,
+    "tokenLaunchAuthorized": false,
+    "mainnetExecutorStopped": true,
+    "independentAuditDeferredUntilAfterPublicLaunch": true
+  }
+}

@@ -43,12 +43,14 @@ test("live monitoring changes only the expected pause state", () => {
   assert.deepEqual({ ...liveConfig, expectedFactoryPaused: true }, config);
 });
 
-test("public successor keeper is fail-closed until exact addresses are recorded", () => {
-  assert.equal(publicConfig.enabled, false);
+test("public successor keeper is pinned to the verified paused deployment", () => {
+  assert.equal(publicConfig.enabled, true);
   assert.equal(publicConfig.creatorPolicy, "permissionless_eoa");
   assert.equal(publicConfig.expectedCanaryLimits.firstLaunchId, "2");
   assert.equal(publicConfig.expectedCanaryLimits.finalLaunchId, "100");
-  assert.deepEqual(publicConfig.contracts, {});
+  assert.equal(publicConfig.factoryDeploymentBlock, "36216119");
+  assert.equal(publicConfig.contracts.factory, "0x8f8c948A6558C79531317b4AD7CfdBa4e9728f24");
+  assert.equal(publicConfig.expectedFactoryPaused, true);
 });
 
 test("permissionless successor does not expect an allowlisted creator", () => {

@@ -22,3 +22,4 @@ tools/canary/output/
 tools/deathwatch/output/
 tools/deathwatch/state/
 tools/v2/output/
+tools/public-v2/output/mainnet-receipts.json
