@@ -10,7 +10,8 @@
     "fallbackRpcEnvironmentVariable": "ROBINHOOD_FALLBACK_RPC_URL"
   },
   "source": {
-    "candidateCommit": null,
+    "candidateCommit": "394e98662486323d867f8ea2c5e13797c7a646f8",
+    "contractDigest": "579d73e65cd946fec21d37d8e2f395cc9bec75beeb63fe327d0acc1d42a23584",
     "compiler": "0.8.36",
     "foundry": "1.7.1",
     "evmVersion": "cancun",

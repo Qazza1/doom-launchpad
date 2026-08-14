@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "status": "frozen_internal_public_candidate",
+  "candidateCommit": "394e98662486323d867f8ea2c5e13797c7a646f8",
+  "contractDigest": "579d73e65cd946fec21d37d8e2f395cc9bec75beeb63fe327d0acc1d42a23584",
+  "contractFileCount": 15,
+  "contractScope": "v2/src/",
+  "frozenAt": "2026-08-14",
+  "independentAuditComplete": false,
+  "independentAuditDeferredByOwner": true,
+  "note": "The digest covers every V2 source including DoomPublicLaunchFactoryV2. CI rejects source drift. This internal freeze is not an independent audit and does not authorize deployment, resume or a token launch."
+}
