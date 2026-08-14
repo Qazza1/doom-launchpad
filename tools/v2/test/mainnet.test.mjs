@@ -7,6 +7,7 @@ import {
   compareMinedProviders,
   validatePreviewStep,
   validateReceiptLedger,
+  validatePublicV2MainnetApproval,
   validateV2MainnetApproval,
 } from "../mainnet-server.mjs";
 
@@ -87,6 +88,13 @@ test("wallet fee policy locks the rehearsal limit and live fee ceiling", () => {
     () => buildWalletFeePolicy({ localGasLimit: "0" }, { feeCeilingWei: "1", maxPriorityFeeWei: "0" }),
     /gas limit/,
   );
+  assert.equal(
+    buildWalletFeePolicy(
+      { gasLimit: "100" },
+      { feeCeilingWei: "2", maxPriorityFeeWei: "1" },
+    ).maximumNetworkFeeWei,
+    "200",
+  );
 });
 
 test("the owner authorization is exact, paused, zero-value-funding, and launch-free", () => {
@@ -109,6 +117,25 @@ test("the owner authorization is exact, paused, zero-value-funding, and launch-f
   const launch = approvalFor(value, body);
   launch.authorization.tokenLaunch = true;
   assert.ok(validateV2MainnetApproval(launch, value, body).some(error => error.includes("launch")));
+});
+
+test("the public owner authorization is exact, paused, and audit-deferral aware", () => {
+  const value = plan();
+  value.startingNonce = 19;
+  value.transactions.forEach((transaction, index) => { transaction.nonce = 19 + index; });
+  value.transactions[4].contract = "DoomPublicLaunchFactoryV2";
+  value.transactions[4].predictedAddress = addresses.DoomLaunchFactoryV2;
+  const body = `${JSON.stringify(value, null, 2)}\n`;
+  const approval = approvalFor(value, body);
+  approval.status = "owner_authorized_exact_paused_public_v2_deployment";
+  approval.startingNonce = 19;
+  approval.endingNonce = 25;
+  approval.validity.pendingNonceMustRemain = 19;
+  approval.authorization.independentAuditDeferredUntilAfterPublicLaunch = true;
+  delete approval.authorization.independentAuditDeferredUntilAfterInitialBetaLaunch;
+  assert.deepEqual(validatePublicV2MainnetApproval(approval, value, body), []);
+  approval.authorization.independentAuditDeferredUntilAfterPublicLaunch = false;
+  assert.ok(validatePublicV2MainnetApproval(approval, value, body).some(error => error.includes("audit-deferral")));
 });
 
 test("every server step requires all earlier receipts and no later receipt", () => {

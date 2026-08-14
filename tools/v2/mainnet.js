@@ -30,9 +30,10 @@ async function assertWallet(provider) {
 
 function render() {
   const tx = locked.transaction;
-  const phrase = `SEND V2 STEP ${locked.step + 1} ${locked.planSha256.slice(0, 12)}`;
+  const deploymentLabel = locked.deploymentLabel || "V2";
+  const phrase = `SEND ${deploymentLabel.toUpperCase()} STEP ${locked.step + 1} ${locked.planSha256.slice(0, 12)}`;
   details.innerHTML = `
-    <h2>Step ${locked.step + 1} of ${locked.totalSteps} — ${tx.label}</h2>
+    <h2>${deploymentLabel} step ${locked.step + 1} of ${locked.totalSteps} — ${tx.label}</h2>
     <p><strong>Plan:</strong> <code>${locked.planSha256}</code></p>
     <p><strong>From:</strong> <code>${tx.from}</code></p>
     <p><strong>To:</strong> <code>${tx.to || "CONTRACT CREATION"}</code></p>
@@ -46,7 +47,7 @@ function render() {
     <p><strong>Required confirmation:</strong> <code>${phrase}</code></p>
     <details><summary>Raw transaction data</summary><pre>${tx.data}</pre></details>`;
   confirmation.dataset.phrase = phrase;
-  submit.textContent = `Send only V2 step ${locked.step + 1} in Rabby`;
+  submit.textContent = `Send only ${deploymentLabel} step ${locked.step + 1} in Rabby`;
   confirmation.addEventListener("input", () => {
     submit.disabled = confirmation.value !== phrase || Boolean(submittedHash);
   });
@@ -69,7 +70,7 @@ async function submitStep() {
       maxPriorityFeePerGas: `0x${BigInt(locked.walletFeePolicy.maxPriorityFeePerGasWei).toString(16)}`,
     };
     if (tx.to) request.to = tx.to;
-    setStatus(`Review MAINNET V2 step ${locked.step + 1} in Rabby. Confirm zero value and nonce ${tx.nonce}.`);
+    setStatus(`Review MAINNET ${locked.deploymentLabel || "V2"} step ${locked.step + 1} in Rabby. Confirm zero value and nonce ${tx.nonce}.`);
     submittedHash = await provider.request({ method: "eth_sendTransaction", params: [request] });
     setStatus(`Submitted ${short(submittedHash)}. Waiting for both providers and receipt verification…`);
     const response = await fetch("/submitted", {
@@ -98,6 +99,6 @@ fetch("/plan", { cache: "no-store" })
   .then(value => {
     locked = value;
     render();
-    setStatus("Locked V2 plan loaded. Connect only the approved Rabby deployer on chain 4663.");
+    setStatus(`Locked ${locked.deploymentLabel || "V2"} plan loaded. Connect only the approved Rabby deployer on chain 4663.`);
   })
   .catch(error => setStatus(error.message || String(error), "error"));

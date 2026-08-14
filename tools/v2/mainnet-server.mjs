@@ -12,27 +12,68 @@ import {
 } from "../deployment/rabby-preview-server.mjs";
 import { compareRuntimeBytecode } from "../deployment/verification-bundle.mjs";
 import { compareReports, inspectProvider, validateEndpointPair } from "./network-preflight.mjs";
-import { CHAIN_ID, DEPLOYER, validateDependencyWiring, validatePlan } from "./transaction-plan.mjs";
+import {
+  CHAIN_ID,
+  DEPLOYER,
+  validateDependencyWiring,
+  validatePlan as validateLegacyPlan,
+} from "./transaction-plan.mjs";
+import {
+  PUBLIC_FACTORY,
+  validatePlan as validatePublicPlan,
+} from "../public-v2/transaction-plan.mjs";
 
 const directory = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(directory, "../..");
-const outputRoot = resolve(directory, "output");
+const publicProfile = process.env.DOOM_PUBLIC_V2_MAINNET === "1";
+const profile = publicProfile ? {
+  name: "Public V2",
+  outputRoot: resolve(directory, "../public-v2/output"),
+  approvalPath: resolve(projectRoot, "config/public-v2-mainnet-deployment-authorization.json"),
+  manifestPath: resolve(projectRoot, "config/public-v2-mainnet-deployment-manifest.json"),
+  receiptName: "mainnet-receipts.json",
+  port: 4183,
+  factoryContract: PUBLIC_FACTORY,
+  previewStatus: "public_v2_dual_rpc_localhost_preview_passed",
+  executionAckVariable: "DOOM_PUBLIC_V2_MAINNET_EXECUTION_ACK",
+  approvalStatus: "owner_authorized_exact_paused_public_v2_deployment",
+  auditAuthorizationKey: "independentAuditDeferredUntilAfterPublicLaunch",
+  contractInputPaths: ["v2/src", "v2/foundry.toml", "config/public-v2-mainnet-deployment-manifest.json"],
+  validatePlan: validatePublicPlan,
+  validateWiring: () => [],
+} : {
+  name: "V2",
+  outputRoot: resolve(directory, "output"),
+  approvalPath: resolve(projectRoot, "config/v2-mainnet-deployment-authorization.json"),
+  manifestPath: resolve(projectRoot, "config/v2-mainnet-deployment-manifest.json"),
+  receiptName: "mainnet-receipts.json",
+  port: 4182,
+  factoryContract: "DoomLaunchFactoryV2",
+  previewStatus: "v2_localhost_preview_passed",
+  executionAckVariable: "DOOM_V2_MAINNET_EXECUTION_ACK",
+  approvalStatus: "owner_authorized_exact_paused_v2_deployment",
+  auditAuthorizationKey: "independentAuditDeferredUntilAfterInitialBetaLaunch",
+  contractInputPaths: ["v2/src", "v2/foundry.toml", "config/v2-mainnet-deployment-manifest.json"],
+  validatePlan: validateLegacyPlan,
+  validateWiring: validateDependencyWiring,
+};
+const outputRoot = profile.outputRoot;
 const planPath = resolve(outputRoot, "transaction-plan.json");
 const previewPath = resolve(outputRoot, "localhost-preview-report.json");
-const receiptPath = resolve(outputRoot, "mainnet-receipts.json");
-const approvalPath = resolve(projectRoot, "config/v2-mainnet-deployment-authorization.json");
+const receiptPath = resolve(outputRoot, profile.receiptName);
+const approvalPath = profile.approvalPath;
 const HOST = "127.0.0.1";
-const PORT = 4182;
+const PORT = profile.port;
 const HASH = /^0x[0-9a-fA-F]{64}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
-const CONTRACT_INPUT_PATHS = ["v2/src", "v2/foundry.toml", "config/v2-mainnet-deployment-manifest.json"];
+const CONTRACT_INPUT_PATHS = profile.contractInputPaths;
 
 const sha256 = value => createHash("sha256").update(value).digest("hex");
 const lower = value => (typeof value === "string" ? value.toLowerCase() : value);
 const quantity = value => Number(BigInt(value));
 
 export function buildWalletFeePolicy(previewTransaction, state) {
-  const gasLimit = BigInt(previewTransaction?.localGasLimit || 0);
+  const gasLimit = BigInt(previewTransaction?.localGasLimit || previewTransaction?.gasLimit || 0);
   const maxFeePerGasWei = BigInt(state?.feeCeilingWei || 0);
   const maxPriorityFeePerGasWei = BigInt(state?.maxPriorityFeeWei || 0);
   if (gasLimit <= 0n) throw new Error("the rehearsed gas limit is missing");
@@ -48,7 +89,7 @@ export function buildWalletFeePolicy(previewTransaction, state) {
   };
 }
 
-export function validateV2MainnetApproval(approval, plan, planBody) {
+function validateMainnetApproval(approval, plan, planBody, options) {
   const errors = [];
   const require = (condition, message) => {
     if (!condition) errors.push(message);
@@ -60,8 +101,8 @@ export function validateV2MainnetApproval(approval, plan, planBody) {
       .map(transaction => [transaction.contract, lower(transaction.predictedAddress)]),
   );
   require(
-    approval?.status === "owner_authorized_exact_paused_v2_deployment",
-    "the exact V2 owner authorization is missing",
+    approval?.status === options.approvalStatus,
+    `the exact ${options.name} owner authorization is missing`,
   );
   require(approval?.chainId === CHAIN_ID, "the owner authorization targets the wrong chain");
   require(lower(approval?.deployer) === lower(DEPLOYER), "the owner authorization has the wrong deployer");
@@ -74,7 +115,10 @@ export function validateV2MainnetApproval(approval, plan, planBody) {
   require(plan?.safety?.signed === false, "the locked plan must remain unsigned");
   require(plan?.safety?.broadcast === false, "the locked plan must remain unbroadcast");
   require(plan?.safety?.factoryMustRemainPaused === true, "the locked plan must keep the factory paused");
-  require(approval?.validity?.pendingNonceMustRemain === 10, "the authorization is not locked to nonce 10");
+  require(
+    approval?.validity?.pendingNonceMustRemain === plan?.startingNonce,
+    `the authorization is not locked to nonce ${plan?.startingNonce}`,
+  );
   require(approval?.validity?.exactPlanDigestRequired === true, "exact plan digest enforcement is missing");
   require(
     approval?.validity?.reauthorizationRequiredAfterNonceOrPayloadDrift === true,
@@ -88,7 +132,7 @@ export function validateV2MainnetApproval(approval, plan, planBody) {
   require(authorization.factoryResume === false, "factory resume must remain unauthorized");
   require(authorization.tokenLaunch === false, "token launch must remain unauthorized");
   require(
-    authorization.independentAuditDeferredUntilAfterInitialBetaLaunch === true,
+    authorization[options.auditAuthorizationKey] === true,
     "the audit-deferral acknowledgement is missing",
   );
   require(
@@ -104,10 +148,28 @@ export function validateV2MainnetApproval(approval, plan, planBody) {
     "the approved graduation manager address differs from the plan",
   );
   require(
-    lower(approval?.predictedAddresses?.launchFactory) === predicted.DoomLaunchFactoryV2,
+    lower(approval?.predictedAddresses?.launchFactory) === predicted[options.factoryContract],
     "the approved launch factory address differs from the plan",
   );
   return errors;
+}
+
+export function validateV2MainnetApproval(approval, plan, planBody) {
+  return validateMainnetApproval(approval, plan, planBody, {
+    name: "V2",
+    approvalStatus: "owner_authorized_exact_paused_v2_deployment",
+    auditAuthorizationKey: "independentAuditDeferredUntilAfterInitialBetaLaunch",
+    factoryContract: "DoomLaunchFactoryV2",
+  });
+}
+
+export function validatePublicV2MainnetApproval(approval, plan, planBody) {
+  return validateMainnetApproval(approval, plan, planBody, {
+    name: "Public V2",
+    approvalStatus: "owner_authorized_exact_paused_public_v2_deployment",
+    auditAuthorizationKey: "independentAuditDeferredUntilAfterPublicLaunch",
+    factoryContract: PUBLIC_FACTORY,
+  });
 }
 
 export function validateReceiptLedger(plan, ledger, requestedStep) {
@@ -156,7 +218,9 @@ export function validatePreviewStep(planTransaction, previewTransaction) {
   if (previewTransaction?.dataSha256 !== planTransaction?.dataSha256) {
     errors.push("the rehearsal payload digest differs");
   }
-  if (BigInt(previewTransaction?.localGasLimit || 0) <= 0n) errors.push("the rehearsal gas limit is missing");
+  if (BigInt(previewTransaction?.localGasLimit || previewTransaction?.gasLimit || 0) <= 0n) {
+    errors.push("the rehearsal gas limit is missing");
+  }
   return errors;
 }
 
@@ -255,13 +319,13 @@ async function verifyBinding(primary, fallback, transaction) {
 }
 
 export async function verifyPausedZeroLaunchState(primary, fallback, plan, requireFullyBound = true) {
-  const factory = plan.transactions.find(transaction => transaction.contract === "DoomLaunchFactoryV2")?.predictedAddress;
+  const factory = plan.transactions.find(transaction => transaction.contract === profile.factoryContract)?.predictedAddress;
   const deployer = plan.transactions.find(transaction => transaction.contract === "DoomLaunchDeployerV2")?.predictedAddress;
   const locker = plan.transactions.find(transaction => transaction.contract === "PositionLockerV2")?.predictedAddress;
   const manager = plan.transactions.find(transaction => transaction.contract === "V3GraduationManagerV2")?.predictedAddress;
   const [paused, count] = await Promise.all([
-    readGetter(primary, fallback, "DoomLaunchFactoryV2", factory, "launchesPaused()"),
-    readGetter(primary, fallback, "DoomLaunchFactoryV2", factory, "launchCount()"),
+    readGetter(primary, fallback, profile.factoryContract, factory, "launchesPaused()"),
+    readGetter(primary, fallback, profile.factoryContract, factory, "launchCount()"),
   ]);
   const truthy = value => BigInt(value) === 1n;
   const errors = [];
@@ -269,7 +333,7 @@ export async function verifyPausedZeroLaunchState(primary, fallback, plan, requi
   if (BigInt(count) !== 0n) errors.push("the V2 factory already records a token launch");
   if (!requireFullyBound) return errors;
   const [valid, registrar, deployerFactory, managerFactory, managerNetwork] = await Promise.all([
-    readGetter(primary, fallback, "DoomLaunchFactoryV2", factory, "isLaunchConfigurationValid()"),
+    readGetter(primary, fallback, profile.factoryContract, factory, "isLaunchConfigurationValid()"),
     readGetter(primary, fallback, "PositionLockerV2", locker, "authorizedRegistrar()"),
     readGetter(primary, fallback, "DoomLaunchDeployerV2", deployer, "authorizedFactory()"),
     readGetter(primary, fallback, "V3GraduationManagerV2", manager, "authorizedFactory()"),
@@ -343,7 +407,7 @@ async function preflight(primary, fallback, plan, step, preview, planSha256) {
   }
   const remainingGas = preview.transactions
     .slice(step)
-    .reduce((sum, transaction) => sum + BigInt(transaction.localGasLimit), 0n);
+    .reduce((sum, transaction) => sum + BigInt(transaction.localGasLimit || transaction.gasLimit), 0n);
   const feeCeilingWei = BigInt(combineFeeCeilings(primaryFees.feeCeilingWei, fallbackFees.feeCeilingWei));
   const maxPriorityFeeWei = [primaryFees.maxPriorityFeeWei, fallbackFees.maxPriorityFeeWei]
     .map(value => BigInt(value))
@@ -399,7 +463,7 @@ export async function main(argv = process.argv.slice(2)) {
     readFile(planPath, "utf8"),
     readFile(approvalPath, "utf8"),
     readFile(previewPath, "utf8"),
-    readFile(resolve(projectRoot, "config/v2-mainnet-deployment-manifest.json"), "utf8"),
+    readFile(profile.manifestPath, "utf8"),
   ]);
   const plan = JSON.parse(planBody);
   const approval = JSON.parse(approvalBody);
@@ -407,20 +471,23 @@ export async function main(argv = process.argv.slice(2)) {
   const manifest = JSON.parse(manifestBody);
   const planSha256 = sha256(planBody);
   const errors = [
-    ...validatePlan(plan),
-    ...validateDependencyWiring(plan),
-    ...validateV2MainnetApproval(approval, plan, planBody),
+    ...profile.validatePlan(plan),
+    ...profile.validateWiring(plan),
+    ...(publicProfile
+      ? validatePublicV2MainnetApproval(approval, plan, planBody)
+      : validateV2MainnetApproval(approval, plan, planBody)),
     ...await verifyArtifactsMatchPlan(plan),
   ];
   if (approval.contractDigest !== manifest?.source?.contractDigest) {
     errors.push("the owner authorization contract digest differs from the frozen V2 manifest");
   }
   if (errors.length) throw new Error(errors.join("; "));
-  if (process.env.DOOM_V2_MAINNET_EXECUTION_ACK !== planSha256) {
-    throw new Error("the V2 execution acknowledgement does not match the approved plan digest");
+  if (process.env[profile.executionAckVariable] !== planSha256) {
+    throw new Error(`the ${profile.name} execution acknowledgement does not match the approved plan digest`);
   }
-  if (preview.status !== "v2_localhost_preview_passed" || preview.deployer?.pendingNonce !== plan.startingNonce) {
-    throw new Error("the V2 localhost rehearsal does not match the locked starting nonce");
+  const previewNonce = preview.deployer?.pendingNonce ?? preview.planStartingNonce;
+  if (preview.status !== profile.previewStatus || previewNonce !== plan.startingNonce) {
+    throw new Error(`the ${profile.name} localhost rehearsal does not match the locked starting nonce`);
   }
   await assertApprovedInputsUnchanged(approval.sourceCommit);
 
@@ -468,7 +535,8 @@ export async function main(argv = process.argv.slice(2)) {
           completed: ledger.receipts.length,
           factoryMustRemainPaused: true,
           tokenLaunchAuthorized: false,
-          warning: "Robinhood Mainnet. This page can submit only this single approved V2 transaction.",
+          deploymentLabel: profile.name,
+          warning: `Robinhood Mainnet. This page can submit only this single approved ${profile.name} transaction.`,
         });
         return;
       }
@@ -536,7 +604,7 @@ export async function main(argv = process.argv.slice(2)) {
     server.once("error", rejectPromise);
     server.listen(PORT, HOST, resolvePromise);
   });
-  console.log(`Locked V2 Robinhood mainnet step ${step + 1} ready: http://${HOST}:${PORT}`);
+  console.log(`Locked ${profile.name} Robinhood mainnet step ${step + 1} ready: http://${HOST}:${PORT}`);
   console.log(`Plan SHA-256: ${planSha256}`);
   console.log(`Transaction: nonce ${transaction.nonce}, ${transaction.label}, value 0`);
   console.log(`Live buffered balance requirement for this and remaining steps: ${state.remainingRequiredBalanceWei} wei`);
@@ -546,7 +614,7 @@ export async function main(argv = process.argv.slice(2)) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch(error => {
-    console.error(`V2 mainnet step server refused to start: ${error.message}`);
+    console.error(`${profile.name} mainnet step server refused to start: ${error.message}`);
     process.exitCode = 1;
   });
 }
