@@ -17,27 +17,49 @@ const PLACEHOLDER_ADDRESS = "0x0000000000000000000000000000000000000000";
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 const directory = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(directory, "../..");
-const outputRoot = resolve(directory, "output/verification");
+const publicProfile = process.argv.includes("--public-v2");
+const profile = publicProfile
+  ? {
+      label: "Public V2",
+      outputRoot: resolve(projectRoot, "tools/public-v2/output/verification"),
+      plan: resolve(projectRoot, "tools/public-v2/output/transaction-plan.json"),
+      record: resolve(projectRoot, "config/public-v2-mainnet-deployment-record.json"),
+      manifest: resolve(projectRoot, "config/public-v2-mainnet-deployment-manifest.json"),
+      recordStatus: "public_v2_mainnet_deployment_verified_paused",
+      bundleStatus: "public_v2_verification_bundle_ready_for_owner_review",
+      factoryContract: "DoomPublicLaunchFactoryV2",
+    }
+  : {
+      label: "V2",
+      outputRoot: resolve(directory, "output/verification"),
+      plan: resolve(directory, "output/transaction-plan.json"),
+      record: resolve(projectRoot, "config/v2-mainnet-deployment-record.json"),
+      manifest: resolve(projectRoot, "config/v2-mainnet-deployment-manifest.json"),
+      recordStatus: "v2_mainnet_deployment_verified_paused",
+      bundleStatus: "v2_verification_bundle_ready_for_owner_review",
+      factoryContract: "DoomLaunchFactoryV2",
+    };
+export const outputRoot = profile.outputRoot;
 
 export const CONTRACTS = [
   { name: "DoomLaunchDeployerV2", addressKey: "curveDeployer" },
   { name: "PositionLockerV2", addressKey: "positionLocker" },
   { name: "V3GraduationManagerV2", addressKey: "graduationManager" },
-  { name: "DoomLaunchFactoryV2", addressKey: "launchFactory" },
+  { name: profile.factoryContract, addressKey: "launchFactory" },
 ];
 
 const sha256 = value => createHash("sha256").update(value).digest("hex");
 const lower = value => String(value || "").toLowerCase();
 const readJson = async path => JSON.parse(await readFile(path, "utf8"));
 
-export function validateDeploymentEvidence(plan, record, manifest) {
+export function validateDeploymentEvidence(plan, record, manifest, expected = profile) {
   const errors = [];
   const requireValue = (condition, message) => {
     if (!condition) errors.push(message);
   };
   requireValue(plan?.chainId === CHAIN_ID, "transaction plan chain ID must be 4663");
   requireValue(record?.chainId === CHAIN_ID, "deployment record chain ID must be 4663");
-  requireValue(record?.status === "v2_mainnet_deployment_verified_paused", "deployment record must be verified and paused");
+  requireValue(record?.status === expected.recordStatus, "deployment record must be verified and paused");
   requireValue(record?.verification?.allRuntimeBytecodesMatch === true, "deployment record must confirm all runtime bytecodes");
   requireValue(record?.verification?.factoryPaused === true, "factory must still be recorded as paused");
   requireValue(record?.verification?.factoryLaunchCount === 0, "factory launch count must still be zero");
@@ -47,7 +69,15 @@ export function validateDeploymentEvidence(plan, record, manifest) {
     (plan?.transactions || []).filter(transaction => transaction.kind === "CREATE" || transaction.type === "CREATE")
       .map(transaction => [transaction.contract, transaction]),
   );
-  for (const contract of CONTRACTS) {
+  const contracts = expected.factoryContract === "DoomPublicLaunchFactoryV2"
+    ? [
+        { name: "DoomLaunchDeployerV2", addressKey: "curveDeployer" },
+        { name: "PositionLockerV2", addressKey: "positionLocker" },
+        { name: "V3GraduationManagerV2", addressKey: "graduationManager" },
+        { name: "DoomPublicLaunchFactoryV2", addressKey: "launchFactory" },
+      ]
+    : CONTRACTS;
+  for (const contract of contracts) {
     const transaction = creates.get(contract.name);
     const address = record?.addresses?.[contract.addressKey];
     requireValue(Boolean(transaction), `${contract.name} CREATE transaction is missing`);
@@ -139,9 +169,9 @@ async function generateStandardInput(forge, contractName) {
 
 export async function main() {
   const [plan, record, manifest] = await Promise.all([
-    readJson(resolve(directory, "output/transaction-plan.json")),
-    readJson(resolve(projectRoot, "config/v2-mainnet-deployment-record.json")),
-    readJson(resolve(projectRoot, "config/v2-mainnet-deployment-manifest.json")),
+    readJson(profile.plan),
+    readJson(profile.record),
+    readJson(profile.manifest),
   ]);
   const evidenceErrors = validateDeploymentEvidence(plan, record, manifest);
   if (evidenceErrors.length) throw new Error(evidenceErrors.join("; "));
@@ -197,10 +227,10 @@ export async function main() {
   const privacyWarning = contracts.some(contract => contract.localPathRemappingCount > 0);
   const bundle = {
     schemaVersion: 1,
-    status: "v2_verification_bundle_ready_for_owner_review",
+    status: profile.bundleStatus,
     generatedAt,
     chainId: CHAIN_ID,
-    sourceCommit: manifest.source.candidateCommit,
+    sourceCommit: record.sourceCommit || manifest.source.candidateCommit,
     contractDigest: record.contractDigest,
     deploymentRecordStatus: record.status,
     safety: {
@@ -228,7 +258,7 @@ export async function main() {
   };
   const bundlePath = resolve(outputRoot, "bundle-manifest.json");
   await writeFile(bundlePath, `${JSON.stringify(bundle, null, 2)}\n`, "utf8");
-  console.log("V2 Blockscout verification bundle generated locally.");
+  console.log(`${profile.label} Blockscout verification bundle generated locally.`);
   console.log(`Compiler: v${EXPECTED_COMPILER}`);
   console.log(`Contracts: ${contracts.length}`);
   console.log(`Local-path remappings present: ${privacyWarning ? "yes — review before submission" : "no"}`);
@@ -239,7 +269,7 @@ export async function main() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch(error => {
-    console.error(`V2 verification bundle failed: ${error.message}`);
+    console.error(`${profile.label} verification bundle failed: ${error.message}`);
     process.exitCode = 1;
   });
 }

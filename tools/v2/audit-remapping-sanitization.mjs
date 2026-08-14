@@ -2,13 +2,11 @@ import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
-import { CONTRACTS, localPathRemappingCount, sanitizeLocalRemappings } from "./verification-bundle.mjs";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import { CONTRACTS, localPathRemappingCount, outputRoot, sanitizeLocalRemappings } from "./verification-bundle.mjs";
 
-const directory = dirname(fileURLToPath(import.meta.url));
-const projectRoot = resolve(directory, "../..");
-const bundleRoot = resolve(directory, "output/verification");
+const bundleRoot = outputRoot;
 const sha256 = value => createHash("sha256").update(value).digest("hex");
 
 function solcPath() {

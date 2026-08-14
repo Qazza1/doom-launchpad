@@ -1,16 +1,15 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import {
   CONTRACTS,
   localPathRemappingCount,
+  outputRoot,
   sanitizeLocalRemappings,
   validateCompilerInput,
 } from "./verification-bundle.mjs";
 
 const EXPLORER = "https://robinhoodchain.blockscout.com";
-const directory = dirname(fileURLToPath(import.meta.url));
-const outputRoot = resolve(directory, "output/verification");
 const sleep = milliseconds => new Promise(resolvePromise => setTimeout(resolvePromise, milliseconds));
 
 async function responseBody(response) {

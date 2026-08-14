@@ -45,6 +45,16 @@ test("frozen V2 deployment evidence is accepted and address drift is rejected", 
   assert.ok(validateDeploymentEvidence(valid.plan, valid.record, valid.manifest).some(error => error.includes("DoomLaunchFactoryV2 address")));
 });
 
+test("frozen public V2 deployment evidence accepts the permissionless factory", () => {
+  const valid = evidence();
+  valid.plan.transactions[3].contract = "DoomPublicLaunchFactoryV2";
+  valid.record.status = "public_v2_mainnet_deployment_verified_paused";
+  assert.deepEqual(validateDeploymentEvidence(valid.plan, valid.record, valid.manifest, {
+    recordStatus: "public_v2_mainnet_deployment_verified_paused",
+    factoryContract: "DoomPublicLaunchFactoryV2",
+  }), []);
+});
+
 function compilerInput() {
   return {
     language: "Solidity",

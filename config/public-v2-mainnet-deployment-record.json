@@ -91,8 +91,12 @@
     "firstLaunchId": 2,
     "finalLaunchId": 100,
     "blockscoutSourceVerification": {
-      "submitted": false,
-      "verified": false
+      "submitted": true,
+      "verified": true,
+      "fullyVerified": false,
+      "partiallyVerified": true,
+      "verifiedAt": "2026-08-14T11:49:00.046815Z",
+      "evidence": "docs/public-v2-blockscout-verification-2026-08-14.md"
     }
   },
   "safety": {

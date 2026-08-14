@@ -27,6 +27,10 @@ test("public deployment record remains paused, empty, provider-agreed, and unact
   assert.equal(record.verification.factoryLaunchCount, 0);
   assert.equal(record.verification.firstLaunchId, 2);
   assert.equal(record.verification.finalLaunchId, 100);
+  assert.equal(record.verification.blockscoutSourceVerification.submitted, true);
+  assert.equal(record.verification.blockscoutSourceVerification.verified, true);
+  assert.equal(record.verification.blockscoutSourceVerification.fullyVerified, false);
+  assert.equal(record.verification.blockscoutSourceVerification.partiallyVerified, true);
   assert.equal(record.safety.factoryResumeAuthorized, false);
   assert.equal(record.safety.tokenLaunchAuthorized, false);
 });
