@@ -43,14 +43,14 @@ test("legacy live monitoring expects the completed public-cutover pause", () => 
   assert.deepEqual(liveConfig, config);
 });
 
-test("public successor keeper is pinned to the verified paused deployment", () => {
+test("public successor keeper is pinned to the verified active deployment", () => {
   assert.equal(publicConfig.enabled, true);
   assert.equal(publicConfig.creatorPolicy, "permissionless_eoa");
   assert.equal(publicConfig.expectedCanaryLimits.firstLaunchId, "2");
   assert.equal(publicConfig.expectedCanaryLimits.finalLaunchId, "100");
   assert.equal(publicConfig.factoryDeploymentBlock, "36216119");
   assert.equal(publicConfig.contracts.factory, "0x8f8c948A6558C79531317b4AD7CfdBa4e9728f24");
-  assert.equal(publicConfig.expectedFactoryPaused, true);
+  assert.equal(publicConfig.expectedFactoryPaused, false);
 });
 
 test("permissionless successor does not expect an allowlisted creator", () => {

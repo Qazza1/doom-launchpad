@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "status": "public_v2_factory_activation_verified_success",
+  "activatedAt": "2026-08-14T14:24:33.800Z",
+  "chainId": 4663,
+  "transactionHash": "0x58c274165e5026c102a5ae13636515a68085d2807c0603980ab2c4227a87994e",
+  "transaction": {
+    "from": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "to": "0x8f8c948A6558C79531317b4AD7CfdBa4e9728f24",
+    "value": "0x0",
+    "data": "0xd255d203",
+    "nonce": 28,
+    "gasLimit": "50000",
+    "function": "resumeLaunches()"
+  },
+  "receipt": {
+    "blockNumber": 36322248,
+    "blockHash": "0x412ef861e212ecfc617eae3d93c59fc3cd48fa13c1175a9267795d4e31c02c08",
+    "gasUsed": "24456",
+    "status": 1
+  },
+  "verification": {
+    "providersAgreed": true,
+    "publicFactoryPaused": false,
+    "publicFactoryLaunchCount": 0,
+    "publicFactoryConfigurationValid": true,
+    "legacyFactoryPaused": true,
+    "legacyFactoryLaunchCount": 1,
+    "operatorPendingNonce": 29
+  },
+  "safety": {
+    "tokenLaunchAuthorized": false,
+    "tokenLaunched": false,
+    "ethTransferAuthorized": false,
+    "legacyFactoryResumeAuthorized": false,
+    "contractDeploymentAuthorized": false,
+    "tokenApprovalAuthorized": false,
+    "otherContractCallAuthorized": false,
+    "localhostSigningGateStopped": true
+  },
+  "nextGates": {
+    "keeperPublicActivePolicyRequired": true,
+    "websitePublicTransactionsRemainDisabled": true,
+    "userLaunchesRequireWebsiteGate": true
+  }
+}

@@ -30,7 +30,7 @@
     "emergencyGuardian": "0x3EeF0a7Ee9420a1035a4541582B384bc4405A439",
     "treasury": "0x9038C3AB7caE02a8aae730E705fdF7a15945eb7E"
   },
-  "expectedFactoryPaused": true,
+  "expectedFactoryPaused": false,
   "thresholds": {
     "rpcStaleSeconds": 180,
     "rpcFutureToleranceSeconds": 60,
