@@ -1,0 +1,32 @@
+{
+  "schema": "doom.keeper-config.v2",
+  "enabled": false,
+  "creatorPolicy": "permissionless_eoa",
+  "chainId": 4663,
+  "networkName": "Robinhood Chain Mainnet",
+  "explorerUrl": "https://robinhoodchain.blockscout.com",
+  "rpcUrlEnvironmentVariable": "ROBINHOOD_RPC_URL",
+  "fallbackRpcUrlEnvironmentVariable": "ROBINHOOD_FALLBACK_RPC_URL",
+  "factoryDeploymentBlock": "0",
+  "contracts": {},
+  "expectedCanaryLimits": {
+    "maxLaunches": "99",
+    "firstLaunchId": "2",
+    "finalLaunchId": "100",
+    "launchFee": "1000000000000000",
+    "graduationTarget": "50000000000000000"
+  },
+  "expectedRoles": {},
+  "expectedFactoryPaused": true,
+  "thresholds": {
+    "rpcStaleSeconds": 180,
+    "rpcFutureToleranceSeconds": 60,
+    "gmReminderLeadSeconds": 3600,
+    "gmCriticalLeadSeconds": 900,
+    "feeCollectionReminderSeconds": 86400,
+    "feeLogLookbackBlocks": 100000,
+    "warningRepeatSeconds": 1800,
+    "criticalRepeatSeconds": 300,
+    "infoRepeatSeconds": 21600
+  }
+}

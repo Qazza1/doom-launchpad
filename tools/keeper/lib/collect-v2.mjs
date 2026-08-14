@@ -20,7 +20,16 @@ export async function collectKeeperStateV2(client, config, observedAt) {
   const values = [];
   for (const name of names) values.push(await read(client, factoryAddress, factoryV2Abi, name));
   const [operator, emergencyGuardian, treasury, doomRewards, wrappedNative, graduationManager, curveDeployer, launchesPaused, launchCount, configurationValid, launchFee, maxLaunches] = values;
-  const initialCreatorAllowed = await read(client, factoryAddress, factoryV2Abi, "creatorAllowed", [config.expectedRoles.approvedCreator]);
+  const permissionless = config.creatorPolicy === "permissionless_eoa";
+  const initialCreatorAllowed = permissionless
+    ? null
+    : await read(client, factoryAddress, factoryV2Abi, "creatorAllowed", [config.expectedRoles.approvedCreator]);
+  const firstLaunchId = permissionless
+    ? await read(client, factoryAddress, factoryV2Abi, "FIRST_LAUNCH_ID")
+    : 1n;
+  const finalLaunchId = permissionless
+    ? await read(client, factoryAddress, factoryV2Abi, "FINAL_LAUNCH_ID")
+    : maxLaunches;
 
   const componentCode = {};
   for (const [name, address] of Object.entries(config.contracts)) componentCode[name] = await code(client, address);
@@ -35,7 +44,8 @@ export async function collectKeeperStateV2(client, config, observedAt) {
   } : {};
 
   const launches = [];
-  for (let id = 1n; id <= launchCount; id += 1n) {
+  const lastCreatedId = firstLaunchId + launchCount - 1n;
+  for (let id = firstLaunchId; id <= lastCreatedId; id += 1n) {
     const record = await read(client, factoryAddress, factoryV2Abi, "getLaunch", [id]);
     if ([record.token, record.curve, record.escrow, record.initializedPool].some(address => address === zeroAddress || !address)) {
       throw new Error(`V2 launch ${id} contains a zero address`);
@@ -83,8 +93,16 @@ export async function collectKeeperStateV2(client, config, observedAt) {
         wrappedNative: config.contracts.wrappedNative, graduationManager: config.contracts.graduationManager,
         curveDeployer: config.contracts.curveDeployer, launchFee: config.expectedCanaryLimits.launchFee,
         maxLaunches: config.expectedCanaryLimits.maxLaunches,
+        ...(permissionless ? {
+          firstLaunchId: config.expectedCanaryLimits.firstLaunchId,
+          finalLaunchId: config.expectedCanaryLimits.finalLaunchId,
+        } : {}),
       },
-      actual: { operator, emergencyGuardian, treasury, doomRewards, wrappedNative, graduationManager, curveDeployer, launchFee: launchFee.toString(), maxLaunches: maxLaunches.toString() },
+      actual: {
+        operator, emergencyGuardian, treasury, doomRewards, wrappedNative, graduationManager, curveDeployer,
+        launchFee: launchFee.toString(), maxLaunches: maxLaunches.toString(),
+        ...(permissionless ? { firstLaunchId: firstLaunchId.toString(), finalLaunchId: finalLaunchId.toString() } : {}),
+      },
       initialCreatorAllowed,
     },
     components: {

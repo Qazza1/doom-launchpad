@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 1,
+  "status": "public_v2_dual_rpc_localhost_preview_passed",
+  "generatedAt": "2026-08-14T10:30:23.229Z",
+  "chainId": 4663,
+  "deployer": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+  "planStartingNonce": 19,
+  "planSafety": {
+    "signerLoaded": false,
+    "signed": false,
+    "broadcast": false,
+    "mainnetDeploymentApproved": false,
+    "factoryMustRemainPaused": true,
+    "tokenLaunchAuthorized": false
+  },
+  "safety": {
+    "signerLoaded": false,
+    "privateKeyLoaded": false,
+    "upstreamWrites": false,
+    "localImpersonationOnly": true
+  },
+  "reports": [
+    {
+      "label": "primary",
+      "forkBlock": 36181960,
+      "pendingNonce": 19,
+      "balanceWei": "11379360467166110",
+      "transactions": [
+        {
+          "order": 0,
+          "nonce": 19,
+          "label": "Deploy DoomLaunchDeployerV2",
+          "dataSha256": "c8aa62bf16c17dec954e114bb65ea9391f407c1fd99354f9c0ec4766dcf07ed3",
+          "estimatedGas": "5008670",
+          "gasLimit": "6260838",
+          "gasUsed": "5008670"
+        },
+        {
+          "order": 1,
+          "nonce": 20,
+          "label": "Deploy PositionLockerV2",
+          "dataSha256": "3e741ff0db5e84e5fcb7f6dc3464caac633d643910e9970643f91cb5d2854580",
+          "estimatedGas": "1657440",
+          "gasLimit": "2071800",
+          "gasUsed": "1657440"
+        },
+        {
+          "order": 2,
+          "nonce": 21,
+          "label": "Deploy V3GraduationManagerV2",
+          "dataSha256": "6c982db60a98486841fd0afa530f20c29538e5e087e9e3dc9b39603a95d7fd0e",
+          "estimatedGas": "2237386",
+          "gasLimit": "2796733",
+          "gasUsed": "2237386"
+        },
+        {
+          "order": 3,
+          "nonce": 22,
+          "label": "PositionLockerV2.bindRegistrar(address)",
+          "dataSha256": "78b9bb4cea6cdeef8c30866bcda8df5dd81d7d00af3d5144288f0255f8c6d41a",
+          "estimatedGas": "49382",
+          "gasLimit": "61728",
+          "gasUsed": "49382"
+        },
+        {
+          "order": 4,
+          "nonce": 23,
+          "label": "Deploy DoomPublicLaunchFactoryV2",
+          "dataSha256": "5751127e4d23c34d5bf7bc466265b4b49795a10d480a7c34183eb5901997f4d7",
+          "estimatedGas": "1635980",
+          "gasLimit": "2044975",
+          "gasUsed": "1635980"
+        },
+        {
+          "order": 5,
+          "nonce": 24,
+          "label": "DoomLaunchDeployerV2.bindFactory(address)",
+          "dataSha256": "06c4df59db2046020980b79d9ac704a6fa8a5eb67246bdea271a0096e40a3620",
+          "estimatedGas": "49066",
+          "gasLimit": "61333",
+          "gasUsed": "49066"
+        },
+        {
+          "order": 6,
+          "nonce": 25,
+          "label": "V3GraduationManagerV2.bindFactory(address)",
+          "dataSha256": "06c4df59db2046020980b79d9ac704a6fa8a5eb67246bdea271a0096e40a3620",
+          "estimatedGas": "49138",
+          "gasLimit": "61423",
+          "gasUsed": "49138"
+        }
+      ],
+      "postconditions": {
+        "factoryPaused": true,
+        "launchConfigurationValid": true,
+        "firstLaunchId": 2,
+        "finalLaunchId": 100,
+        "launchCount": 0,
+        "registrarBound": true,
+        "deployerBound": true,
+        "managerBound": true,
+        "managerNetworkValid": true
+      },
+      "feeCeilingWei": "83576000",
+      "requiredBalanceWei": "1395596970100000",
+      "sufficientAtSnapshot": true
+    },
+    {
+      "label": "fallback",
+      "forkBlock": 36181978,
+      "pendingNonce": 19,
+      "balanceWei": "11379360467166110",
+      "transactions": [
+        {
+          "order": 0,
+          "nonce": 19,
+          "label": "Deploy DoomLaunchDeployerV2",
+          "dataSha256": "c8aa62bf16c17dec954e114bb65ea9391f407c1fd99354f9c0ec4766dcf07ed3",
+          "estimatedGas": "5008670",
+          "gasLimit": "6260838",
+          "gasUsed": "5008670"
+        },
+        {
+          "order": 1,
+          "nonce": 20,
+          "label": "Deploy PositionLockerV2",
+          "dataSha256": "3e741ff0db5e84e5fcb7f6dc3464caac633d643910e9970643f91cb5d2854580",
+          "estimatedGas": "1657440",
+          "gasLimit": "2071800",
+          "gasUsed": "1657440"
+        },
+        {
+          "order": 2,
+          "nonce": 21,
+          "label": "Deploy V3GraduationManagerV2",
+          "dataSha256": "6c982db60a98486841fd0afa530f20c29538e5e087e9e3dc9b39603a95d7fd0e",
+          "estimatedGas": "2237386",
+          "gasLimit": "2796733",
+          "gasUsed": "2237386"
+        },
+        {
+          "order": 3,
+          "nonce": 22,
+          "label": "PositionLockerV2.bindRegistrar(address)",
+          "dataSha256": "78b9bb4cea6cdeef8c30866bcda8df5dd81d7d00af3d5144288f0255f8c6d41a",
+          "estimatedGas": "49382",
+          "gasLimit": "61728",
+          "gasUsed": "49382"
+        },
+        {
+          "order": 4,
+          "nonce": 23,
+          "label": "Deploy DoomPublicLaunchFactoryV2",
+          "dataSha256": "5751127e4d23c34d5bf7bc466265b4b49795a10d480a7c34183eb5901997f4d7",
+          "estimatedGas": "1635980",
+          "gasLimit": "2044975",
+          "gasUsed": "1635980"
+        },
+        {
+          "order": 5,
+          "nonce": 24,
+          "label": "DoomLaunchDeployerV2.bindFactory(address)",
+          "dataSha256": "06c4df59db2046020980b79d9ac704a6fa8a5eb67246bdea271a0096e40a3620",
+          "estimatedGas": "49066",
+          "gasLimit": "61333",
+          "gasUsed": "49066"
+        },
+        {
+          "order": 6,
+          "nonce": 25,
+          "label": "V3GraduationManagerV2.bindFactory(address)",
+          "dataSha256": "06c4df59db2046020980b79d9ac704a6fa8a5eb67246bdea271a0096e40a3620",
+          "estimatedGas": "49138",
+          "gasLimit": "61423",
+          "gasUsed": "49138"
+        }
+      ],
+      "postconditions": {
+        "factoryPaused": true,
+        "launchConfigurationValid": true,
+        "firstLaunchId": 2,
+        "finalLaunchId": 100,
+        "launchCount": 0,
+        "registrarBound": true,
+        "deployerBound": true,
+        "managerBound": true,
+        "managerNetworkValid": true
+      },
+      "feeCeilingWei": "83300000",
+      "requiredBalanceWei": "1390988173750000",
+      "sufficientAtSnapshot": true
+    }
+  ]
+}

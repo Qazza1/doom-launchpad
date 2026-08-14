@@ -30,6 +30,15 @@ const statePath = resolve(
   invocationDirectory,
   process.env.KEEPER_STATE_PATH?.trim() || args.state || "tools/keeper/state/alerts.json",
 );
+const secondaryConfigPath = process.env.KEEPER_SECONDARY_CONFIG_PATH?.trim()
+  ? resolve(invocationDirectory, process.env.KEEPER_SECONDARY_CONFIG_PATH.trim())
+  : null;
+const secondaryStatePath = secondaryConfigPath
+  ? resolve(
+    invocationDirectory,
+    process.env.KEEPER_SECONDARY_STATE_PATH?.trim() || `${statePath}.secondary`,
+  )
+  : null;
 const intervalSeconds = parseIntervalSeconds(process.env.KEEPER_INTERVAL_SECONDS);
 const port = Number(process.env.PORT || "8080");
 if (!Number.isSafeInteger(port) || port < 1 || port > 65535) throw new Error("PORT must be valid");
@@ -37,12 +46,27 @@ if (!Number.isSafeInteger(port) || port < 1 || port > 65535) throw new Error("PO
 const keeperDirectory = dirname(fileURLToPath(import.meta.url));
 const monitorPath = resolve(keeperDirectory, "monitor.mjs");
 const keeperConfig = await readKeeperConfig(configPath);
+const secondaryKeeperConfig = secondaryConfigPath ? await readKeeperConfig(secondaryConfigPath) : null;
 let health = addPolicyHealth(initialDaemonHealth(Math.floor(Date.now() / 1000), intervalSeconds), {
   configFile: basename(configPath),
   chainId: keeperConfig.chainId,
   factory: keeperConfig.contracts.factory,
   expectedFactoryPaused: keeperConfig.expectedFactoryPaused,
 });
+health.monitored_factories = [
+  {
+    config: basename(configPath),
+    enabled: keeperConfig.enabled,
+    factory: keeperConfig.contracts?.factory || null,
+    expected_factory_paused: keeperConfig.expectedFactoryPaused,
+  },
+  ...(secondaryKeeperConfig ? [{
+    config: basename(secondaryConfigPath),
+    enabled: secondaryKeeperConfig.enabled,
+    factory: secondaryKeeperConfig.contracts?.factory || null,
+    expected_factory_paused: secondaryKeeperConfig.expectedFactoryPaused,
+  }] : []),
+];
 let stopping = false;
 let child = null;
 let resolveWait = null;
@@ -63,11 +87,9 @@ const server = createServer((request, response) => {
   response.end(`${JSON.stringify(health)}\n`);
 });
 
-function runCheck() {
+function runMonitor(checkConfigPath, checkStatePath) {
   return new Promise((resolveCheck) => {
-    const startedAt = Math.floor(Date.now() / 1000);
-    health = { ...health, status: "running", last_started_at: startedAt };
-    child = spawn(process.execPath, [monitorPath, "--config", configPath, "--state", statePath], {
+    child = spawn(process.execPath, [monitorPath, "--config", checkConfigPath, "--state", checkStatePath], {
       cwd: invocationDirectory,
       env: process.env,
       stdio: "inherit",
@@ -78,17 +100,29 @@ function runCheck() {
     });
     child.once("exit", (code, signal) => {
       child = null;
-      const completedAt = Math.floor(Date.now() / 1000);
       const exitCode = Number.isInteger(code) ? code : 1;
-      const nextRunAt = stopping ? null : Math.max(completedAt, startedAt + intervalSeconds);
-      health = recordCheckResult(health, { startedAt, completedAt, exitCode, nextRunAt });
-      console.log(
-        `Keeper cycle ${health.checks_completed} ${exitCode === 0 ? "passed" : "failed"}`
-          + `${signal ? ` (${signal})` : ""}; next run ${nextRunAt ?? "disabled"}.`,
-      );
-      resolveCheck();
+      if (signal) console.log(`Keeper monitor ${basename(checkConfigPath)} stopped with ${signal}.`);
+      resolveCheck(exitCode);
     });
   });
+}
+
+async function runCheck() {
+  const startedAt = Math.floor(Date.now() / 1000);
+  health = { ...health, status: "running", last_started_at: startedAt };
+  const exitCodes = [await runMonitor(configPath, statePath)];
+  if (!stopping && secondaryConfigPath) {
+    exitCodes.push(await runMonitor(secondaryConfigPath, secondaryStatePath));
+  }
+  const completedAt = Math.floor(Date.now() / 1000);
+  const exitCode = exitCodes.every(value => value === 0) ? 0 : 1;
+  const nextRunAt = stopping ? null : Math.max(completedAt, startedAt + intervalSeconds);
+  health = recordCheckResult(health, { startedAt, completedAt, exitCode, nextRunAt });
+  health.last_monitor_exit_codes = exitCodes;
+  console.log(
+    `Keeper cycle ${health.checks_completed} ${exitCode === 0 ? "passed" : "failed"}`
+      + `; next run ${nextRunAt ?? "disabled"}.`,
+  );
 }
 
 async function maybeSendStartupNotice() {

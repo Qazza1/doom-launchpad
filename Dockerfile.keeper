@@ -10,6 +10,7 @@ COPY tools/keeper ./tools/keeper
 COPY tools/lib ./tools/lib
 COPY config/keeper-v2.mainnet.json \
   config/keeper-v2-live.mainnet.json \
+  config/keeper-public-v2.mainnet.json \
   config/keeper.mainnet.json \
   config/robinhood-mainnet-stage4-deployment.json \
   config/stage4-deployment-manifest.json \
@@ -19,6 +20,7 @@ RUN npm test --prefix tools/keeper
 
 ENV NODE_ENV=production
 ENV KEEPER_CONFIG_PATH=config/keeper-v2.mainnet.json
+ENV KEEPER_SECONDARY_CONFIG_PATH=config/keeper-public-v2.mainnet.json
 ENV KEEPER_STATE_PATH=/data/keeper-v2-alerts.json
 EXPOSE 8080
 

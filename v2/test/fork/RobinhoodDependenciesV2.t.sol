@@ -7,6 +7,7 @@ import {IUniswapV3Factory} from "@uniswap/v3-core/interfaces/IUniswapV3Factory.s
 import {DoomBondingCurve} from "../../src/DoomBondingCurve.sol";
 import {DoomLaunchDeployerV2} from "../../src/DoomLaunchDeployerV2.sol";
 import {DoomLaunchFactoryV2} from "../../src/DoomLaunchFactoryV2.sol";
+import {DoomPublicLaunchFactoryV2} from "../../src/DoomPublicLaunchFactoryV2.sol";
 import {DoomTokenV2} from "../../src/DoomTokenV2.sol";
 import {PositionLockerV2} from "../../src/PositionLockerV2.sol";
 import {V3GraduationManagerV2} from "../../src/V3GraduationManagerV2.sol";
@@ -31,6 +32,14 @@ contract RobinhoodDependenciesV2Test is Test {
 
     function testFallbackRpcDependenciesAndV2Wiring() external {
         _run("ROBINHOOD_FALLBACK_RPC_URL");
+    }
+
+    function testPrimaryRpcDependenciesAndPublicV2Wiring() external {
+        _runPublic("ROBINHOOD_RPC_URL");
+    }
+
+    function testFallbackRpcDependenciesAndPublicV2Wiring() external {
+        _runPublic("ROBINHOOD_FALLBACK_RPC_URL");
     }
 
     function _run(string memory variableName) internal {
@@ -101,5 +110,57 @@ contract RobinhoodDependenciesV2Test is Test {
         assertEq(curve.pool(), manager.launchPoolByCurve(curveAddress));
         assertEq(positionManager.ownerOf(curve.positionId()), address(locker));
         assertEq(IERC20(tokenAddress).balanceOf(address(manager)), 0);
+    }
+
+    function _runPublic(string memory variableName) internal {
+        if (!vm.envOr("RUN_ROBINHOOD_V2_FORK_TESTS", false)) {
+            vm.skip(true, "set RUN_ROBINHOOD_V2_FORK_TESTS=true after configuring both V2 RPC variables");
+        }
+        vm.createSelectFork(vm.envString(variableName));
+        assertEq(block.chainid, CHAIN_ID);
+
+        ICanonicalV3PositionManagerV2 positionManager = ICanonicalV3PositionManagerV2(NPM);
+        vm.startPrank(DEPLOYER_AND_OPERATOR, DEPLOYER_AND_OPERATOR);
+        DoomLaunchDeployerV2 deployer = new DoomLaunchDeployerV2(DEPLOYER_AND_OPERATOR);
+        PositionLockerV2 locker = new PositionLockerV2(NPM, WETH, DOOM_REWARDS, TREASURY, DEPLOYER_AND_OPERATOR);
+        V3GraduationManagerV2 manager =
+            new V3GraduationManagerV2(CHAIN_ID, DEPLOYER_AND_OPERATOR, V3_FACTORY, NPM, WETH, address(locker));
+        locker.bindRegistrar(address(manager));
+        DoomPublicLaunchFactoryV2 factory = new DoomPublicLaunchFactoryV2(
+            DoomPublicLaunchFactoryV2.FactoryConfig({
+                operator: DEPLOYER_AND_OPERATOR,
+                emergencyGuardian: EMERGENCY_GUARDIAN,
+                treasury: TREASURY,
+                doomRewards: DOOM_REWARDS,
+                wrappedNative: WETH,
+                graduationManager: address(manager),
+                curveDeployer: address(deployer)
+            })
+        );
+        deployer.bindFactory(address(factory));
+        manager.bindFactory(address(factory));
+        factory.resumeLaunches();
+        vm.stopPrank();
+
+        assertTrue(factory.isLaunchConfigurationValid());
+        assertTrue(manager.isNetworkConfigurationValid());
+        assertEq(factory.FIRST_LAUNCH_ID(), 2);
+        assertEq(factory.FINAL_LAUNCH_ID(), 100);
+        assertEq(factory.launchCount(), 0);
+
+        address publicCreator = makeAddr(string.concat("public-", variableName));
+        vm.deal(publicCreator, 2 ether);
+        vm.startPrank(publicCreator, publicCreator);
+        (uint256 launchId, address tokenAddress, address curveAddress,) = factory.launch{value: 0.001 ether}(
+            DoomPublicLaunchFactoryV2.LaunchParams("Public Fork", "PUBLIC", SUPPLY, "ipfs://public-fork")
+        );
+        DoomBondingCurve curve = DoomBondingCurve(payable(curveAddress));
+        curve.buy{value: 1 ether}(0, block.timestamp);
+        vm.stopPrank();
+
+        assertEq(launchId, 2);
+        assertTrue(curve.graduated());
+        assertTrue(DoomTokenV2(tokenAddress).transfersUnrestricted());
+        assertEq(positionManager.ownerOf(curve.positionId()), address(locker));
     }
 }

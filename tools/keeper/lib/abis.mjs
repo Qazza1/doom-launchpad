@@ -115,6 +115,8 @@ export const factoryV2Abi = [
     "function isLaunchConfigurationValid() view returns (bool)",
     "function LAUNCH_FEE() view returns (uint256)",
     "function MAX_LAUNCHES() view returns (uint256)",
+    "function FIRST_LAUNCH_ID() view returns (uint256)",
+    "function FINAL_LAUNCH_ID() view returns (uint256)",
   ]),
   {
     type: "function", name: "getLaunch", stateMutability: "view",

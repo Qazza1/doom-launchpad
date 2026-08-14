@@ -22,6 +22,9 @@ export async function readKeeperConfig(path) {
   if (typeof input.enabled !== "boolean") throw new Error("enabled must be boolean");
   if (!Number.isSafeInteger(input.chainId) || input.chainId <= 0) throw new Error("chainId must be a positive integer");
   if (typeof input.expectedFactoryPaused !== "boolean") throw new Error("expectedFactoryPaused must be boolean");
+  if (input.schema === "doom.keeper-config.v2" && !["allowlisted_eoa", "permissionless_eoa"].includes(input.creatorPolicy || "allowlisted_eoa")) {
+    throw new Error("creatorPolicy must be allowlisted_eoa or permissionless_eoa");
+  }
   if (typeof input.rpcUrlEnvironmentVariable !== "string") throw new Error("Missing primary RPC environment name");
   if (typeof input.fallbackRpcUrlEnvironmentVariable !== "string") throw new Error("Missing fallback RPC environment name");
   for (const field of POSITIVE_INTEGER_FIELDS) {

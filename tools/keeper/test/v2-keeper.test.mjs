@@ -5,6 +5,7 @@ import { evaluateKeeperState } from "../lib/rules.mjs";
 
 const config = JSON.parse(await readFile(new URL("../../../config/keeper-v2.mainnet.json", import.meta.url), "utf8"));
 const liveConfig = JSON.parse(await readFile(new URL("../../../config/keeper-v2-live.mainnet.json", import.meta.url), "utf8"));
+const publicConfig = JSON.parse(await readFile(new URL("../../../config/keeper-public-v2.mainnet.json", import.meta.url), "utf8"));
 
 function state(overrides = {}) {
   return {
@@ -40,6 +41,30 @@ test("V2 keeper config is pinned to the verified paused deployment", () => {
 test("live monitoring changes only the expected pause state", () => {
   assert.equal(liveConfig.expectedFactoryPaused, false);
   assert.deepEqual({ ...liveConfig, expectedFactoryPaused: true }, config);
+});
+
+test("public successor keeper is fail-closed until exact addresses are recorded", () => {
+  assert.equal(publicConfig.enabled, false);
+  assert.equal(publicConfig.creatorPolicy, "permissionless_eoa");
+  assert.equal(publicConfig.expectedCanaryLimits.firstLaunchId, "2");
+  assert.equal(publicConfig.expectedCanaryLimits.finalLaunchId, "100");
+  assert.deepEqual(publicConfig.contracts, {});
+});
+
+test("permissionless successor does not expect an allowlisted creator", () => {
+  const permissionless = {
+    ...config,
+    creatorPolicy: "permissionless_eoa",
+    expectedRoles: {
+      operator: config.expectedRoles.operator,
+      emergencyGuardian: config.expectedRoles.emergencyGuardian,
+      treasury: config.expectedRoles.treasury,
+    },
+  };
+  const publicState = state({
+    factory: { ...state().factory, initialCreatorAllowed: null },
+  });
+  assert.equal(evaluateKeeperState(publicState, permissionless).some(alert => alert.id === "factory:creator-disabled"), false);
 });
 
 test("healthy paused V2 pre-launch state emits no alerts", () => {

@@ -21,7 +21,7 @@ export function evaluateKeeperStateV2(state, config) {
     }
   }
   if (!state.factory.configurationValid) alerts.push(alert("factory:configuration-invalid", "critical", "V2 factory binding health failed", "isLaunchConfigurationValid() returned false.", [], "Keep launches paused and inspect all one-time bindings."));
-  if (!state.factory.initialCreatorAllowed) alerts.push(alert("factory:creator-disabled", "critical", "Initial V2 creator is not allowlisted", "The approved beta creator is disabled.", [config.expectedRoles.approvedCreator], "Do not launch until the operator intentionally restores the expected permission."));
+  if (config.creatorPolicy !== "permissionless_eoa" && !state.factory.initialCreatorAllowed) alerts.push(alert("factory:creator-disabled", "critical", "Initial V2 creator is not allowlisted", "The approved beta creator is disabled.", [config.expectedRoles.approvedCreator], "Do not launch until the operator intentionally restores the expected permission."));
   if (state.factory.launchesPaused !== config.expectedFactoryPaused) alerts.push(alert("factory:pause-state", "critical", "Unexpected V2 factory pause state", `Expected launchesPaused=${config.expectedFactoryPaused}, observed ${state.factory.launchesPaused}.`, [], config.expectedFactoryPaused ? "Ask the guardian or operator to pause immediately." : "Confirm whether an emergency pause was intentional."));
 
   for (const [name, hasCode] of Object.entries(state.components?.code || {})) {
