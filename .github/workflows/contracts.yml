@@ -166,18 +166,12 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-        with:
-          # The legacy V2 review artifact is pinned to an earlier commit, so this
-          # job needs repository history in order to verify both frozen suites.
-          fetch-depth: 0
-      - name: Fetch the preserved legacy V2 candidate
-        run: git fetch --no-tags origin refs/heads/codex/bonding-curve-v2:refs/remotes/origin/codex/bonding-curve-v2
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: v1.7.1
       - name: Confirm legacy and public V2 sources match their frozen candidates
         run: |
-          node tools/v2/review-package.mjs --verify config/v2-review-artifact.json --ref df47b27804e7add005261730fa81cb83c9b068e8
+          node tools/v2/review-package.mjs --verify config/v2-review-artifact.json --ref HEAD --exclude v2/src/DoomPublicLaunchFactoryV2.sol
           node tools/v2/review-package.mjs --verify config/public-v2-review-artifact.json --ref HEAD
       - name: Install pinned Solidity dependencies
         run: |

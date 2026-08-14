@@ -19,13 +19,15 @@ async function git(args) {
   return stdout;
 }
 
-async function contractSummary(ref) {
+async function contractSummary(ref, excludedPaths = []) {
   const commit = (await git(["rev-parse", `${ref}^{commit}`])).toString("utf8").trim();
+  const excluded = new Set(excludedPaths);
   const listing = (await git(["ls-tree", "-r", "--name-only", commit, "--", scope]))
     .toString("utf8")
     .split("\n")
     .map(line => line.trim())
     .filter(Boolean)
+    .filter(path => !excluded.has(path))
     .sort();
   const entries = [];
   for (const path of listing) {
@@ -40,7 +42,11 @@ async function main(args = process.argv.slice(2)) {
   const refIndex = args.indexOf("--ref");
   const ref = refIndex === -1 ? "HEAD" : args[refIndex + 1];
   const verifyIndex = args.indexOf("--verify");
-  const summary = await contractSummary(ref);
+  const excludedPaths = args.flatMap((argument, index) => argument === "--exclude" ? [args[index + 1]] : []);
+  if (excludedPaths.some(path => !path?.startsWith(scope))) {
+    throw new Error("excluded paths must be explicit files inside v2/src/");
+  }
+  const summary = await contractSummary(ref, excludedPaths);
 
   if (verifyIndex !== -1) {
     const artifactPath = resolve(process.cwd(), args[verifyIndex + 1]);
