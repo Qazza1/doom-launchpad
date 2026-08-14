@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "status": "owner_authorized_exact_public_v2_activation",
+  "authorizedAt": "2026-08-14",
+  "chainId": 4663,
+  "transaction": {
+    "from": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "to": "0x8f8c948A6558C79531317b4AD7CfdBa4e9728f24",
+    "value": "0x0",
+    "data": "0xd255d203",
+    "nonce": 28,
+    "gasLimit": "50000",
+    "maximumGasLimit": "75000",
+    "function": "resumeLaunches()"
+  },
+  "scope": {
+    "transactionCount": 1,
+    "factoryResume": true,
+    "tokenLaunch": false,
+    "ethTransfer": false,
+    "legacyFactoryResume": false,
+    "contractDeployment": false,
+    "tokenApproval": false,
+    "otherContractCall": false
+  },
+  "validity": {
+    "pendingNonceMustRemain": 28,
+    "publicFactoryMustRemainPaused": true,
+    "publicFactoryLaunchCountMustRemain": 0,
+    "legacyFactoryMustRemainPaused": true,
+    "reauthorizationRequiredAfterNonceOrStateDrift": true
+  }
+}

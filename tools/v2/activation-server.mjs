@@ -86,6 +86,7 @@ export function validateAuthorization(authorization, preflight, operation = oper
   require(authorization?.scope?.transactionCount === 1, "authorization must cover one transaction");
   require(authorization?.scope?.[profile.scopeField] === true, `${profile.scopeField} was not authorized`);
   require(authorization?.scope?.factoryResume === (profile.scopeField === "factoryResume"), "factory resume scope differs");
+  require(authorization?.scope?.legacyFactoryResume !== true, "legacy factory resume must remain unauthorized");
   for (const field of ["tokenLaunch", "ethTransfer", "contractDeployment", "tokenApproval", "otherContractCall"]) {
     require(authorization?.scope?.[field] === false, `${field} must remain unauthorized`);
   }

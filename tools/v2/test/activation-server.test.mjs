@@ -86,3 +86,38 @@ test("a narrowly bounded wallet gas adjustment is accepted but an open-ended one
   authorization.transaction.maximumGasLimit = "100001";
   assert.ok(validateAuthorization(authorization, preflight).some(error => error.includes("safety bound")));
 });
+
+test("public activation authorization is exact and cannot resume the legacy factory", () => {
+  const operation = CUTOVER_OPERATIONS.publicResume;
+  const transaction = {
+    from: "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    to: operation.factory,
+    value: "0x0",
+    data: operation.calldata,
+    nonce: 28,
+    gasLimit: "50000",
+  };
+  const authorization = {
+    status: "owner_authorized_exact_public_v2_activation",
+    chainId: 4663,
+    transaction: {
+      ...transaction,
+      maximumGasLimit: "75000",
+      function: "resumeLaunches()",
+    },
+    scope: {
+      transactionCount: 1,
+      factoryResume: true,
+      tokenLaunch: false,
+      ethTransfer: false,
+      legacyFactoryResume: false,
+      contractDeployment: false,
+      tokenApproval: false,
+      otherContractCall: false,
+    },
+  };
+  const preflight = { transaction, safety: { signed: false, broadcast: false } };
+  assert.deepEqual(validateAuthorization(authorization, preflight, operation), []);
+  authorization.scope.legacyFactoryResume = true;
+  assert.ok(validateAuthorization(authorization, preflight, operation).length > 0);
+});
