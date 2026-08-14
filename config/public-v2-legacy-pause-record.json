@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "status": "legacy_factory_pause_verified_success",
+  "verifiedAt": "2026-08-14T14:07:00.000Z",
+  "chainId": 4663,
+  "operator": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+  "factory": "0x142760D2C865537c063492933FB71ddefA2372C6",
+  "successfulTransaction": {
+    "transactionHash": "0x8f66aa286eb9c5029198a4f9bd240ea5a846b6c3dd57ffa8ba5fff6108b20be6",
+    "nonce": 26,
+    "value": "0",
+    "calldata": "0xe79b502e",
+    "function": "pauseLaunches()",
+    "blockNumber": 36310875,
+    "gasLimit": "68663",
+    "gasUsed": "45394",
+    "feeWei": "1836732028000",
+    "receiptStatus": 1,
+    "walletAdjustedGasLimitFromAuthorization": "58000"
+  },
+  "duplicateRevertedTransaction": {
+    "transactionHash": "0xd7b228b22ba20ba0866922a3474ddc0974cedaebced0759bc9af0ce32980a790",
+    "nonce": 27,
+    "value": "0",
+    "calldata": "0xe79b502e",
+    "function": "pauseLaunches()",
+    "blockNumber": 36311340,
+    "gasLimit": "58000",
+    "gasUsed": "23979",
+    "feeWei": "957865134000",
+    "receiptStatus": 0,
+    "reason": "LaunchesAlreadyPaused"
+  },
+  "verification": {
+    "providersAgreed": true,
+    "legacyFactoryPaused": true,
+    "legacyFactoryLaunchCount": 1,
+    "operatorPendingNonce": 28,
+    "genesisLaunchPreserved": true,
+    "publicFactoryRemainsPaused": true,
+    "publicFactoryLaunchCount": 0
+  },
+  "safety": {
+    "publicFactoryResumeAuthorized": false,
+    "tokenLaunchAuthorized": false,
+    "ethTransferAuthorized": false,
+    "contractDeploymentAuthorized": false,
+    "tokenApprovalAuthorized": false,
+    "localhostSigningGateStopped": true
+  }
+}

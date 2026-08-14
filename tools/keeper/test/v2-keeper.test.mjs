@@ -38,9 +38,9 @@ test("V2 keeper config is pinned to the verified paused deployment", () => {
   assert.equal(config.expectedCanaryLimits.maxLaunches, "100");
 });
 
-test("live monitoring changes only the expected pause state", () => {
-  assert.equal(liveConfig.expectedFactoryPaused, false);
-  assert.deepEqual({ ...liveConfig, expectedFactoryPaused: true }, config);
+test("legacy live monitoring expects the completed public-cutover pause", () => {
+  assert.equal(liveConfig.expectedFactoryPaused, true);
+  assert.deepEqual(liveConfig, config);
 });
 
 test("public successor keeper is pinned to the verified paused deployment", () => {
