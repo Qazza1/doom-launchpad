@@ -2,12 +2,10 @@ import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { main as runPreflight } from "./activation-preflight.mjs";
+import { main as runPreflight, operationForArguments } from "./activation-preflight.mjs";
 
 const directory = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(directory, "../..");
-const authorizationPath = resolve(projectRoot, "config/v2-mainnet-activation-authorization.json");
-const receiptPath = resolve(directory, "output/activation-receipt.json");
 const host = "127.0.0.1";
 const port = 4183;
 const hashPattern = /^0x[0-9a-fA-F]{64}$/;
@@ -28,21 +26,63 @@ async function rpc(url, method, params = []) {
   return body.result;
 }
 
-export function validateAuthorization(authorization, preflight) {
+function serverProfile(operation) {
+  if (operation.key === "legacy-pause") {
+    return {
+      authorizationPath: resolve(projectRoot, "config/public-v2-legacy-pause-authorization.json"),
+      receiptPath: resolve(directory, "output/legacy-pause-receipt.json"),
+      authorizationStatus: "owner_authorized_exact_legacy_pause",
+      scopeField: "legacyFactoryPause",
+      expectedPausedAfter: true,
+      completedStatus: "legacy_factory_pause_verified_success",
+      title: "Pause Legacy Launches",
+      warning: "One zero-value transaction only. This blocks new legacy launches; Genesis trading and GM stay available.",
+      button: "CONNECT RABBY & SEND EXACT LEGACY PAUSE",
+    };
+  }
+  if (operation.key === "public-resume") {
+    return {
+      authorizationPath: resolve(projectRoot, "config/public-v2-mainnet-activation-authorization.json"),
+      receiptPath: resolve(directory, "output/public-v2-activation-receipt.json"),
+      authorizationStatus: "owner_authorized_exact_public_v2_activation",
+      scopeField: "factoryResume",
+      expectedPausedAfter: false,
+      completedStatus: "public_v2_factory_activation_verified_success",
+      title: "Activate Public Doom Launcher",
+      warning: "One zero-value transaction only. This resumes public launches; it does not launch a token.",
+      button: "CONNECT RABBY & SEND EXACT PUBLIC ACTIVATION",
+    };
+  }
+  return {
+    authorizationPath: resolve(projectRoot, "config/v2-mainnet-activation-authorization.json"),
+    receiptPath: resolve(directory, "output/activation-receipt.json"),
+    authorizationStatus: "owner_authorized_exact_v2_activation",
+    scopeField: "factoryResume",
+    expectedPausedAfter: false,
+    completedStatus: "v2_factory_activation_verified_success",
+    title: "Activate Doom Launcher V2",
+    warning: "One zero-value transaction only. This resumes the factory; it does not launch a token.",
+    button: "CONNECT RABBY & SEND EXACT ACTIVATION",
+  };
+}
+
+export function validateAuthorization(authorization, preflight, operation = operationForArguments([])) {
+  const profile = serverProfile(operation);
   const errors = [];
   const expected = preflight?.transaction || {};
   const actual = authorization?.transaction || {};
   const require = (condition, message) => { if (!condition) errors.push(message); };
-  require(authorization?.status === "owner_authorized_exact_v2_activation", "exact activation authorization is missing");
+  require(authorization?.status === profile.authorizationStatus, "exact cutover authorization is missing");
   require(authorization?.chainId === 4663, "authorization chain ID differs");
   for (const field of ["from", "to", "value", "data"]) {
     require(lower(actual[field]) === lower(expected[field]), `authorization ${field} differs`);
   }
   require(actual.nonce === expected.nonce, "authorization nonce differs");
   require(String(actual.gasLimit) === String(expected.gasLimit), "authorization gas limit differs");
-  require(actual.function === "resumeLaunches()", "authorization function differs");
+  require(actual.function === operation.function, "authorization function differs");
   require(authorization?.scope?.transactionCount === 1, "authorization must cover one transaction");
-  require(authorization?.scope?.factoryResume === true, "factory resume was not authorized");
+  require(authorization?.scope?.[profile.scopeField] === true, `${profile.scopeField} was not authorized`);
+  require(authorization?.scope?.factoryResume === (profile.scopeField === "factoryResume"), "factory resume scope differs");
   for (const field of ["tokenLaunch", "ethTransfer", "contractDeployment", "tokenApproval", "otherContractCall"]) {
     require(authorization?.scope?.[field] === false, `${field} must remain unauthorized`);
   }
@@ -119,11 +159,13 @@ function json(response, status, body) {
 }
 
 export async function main() {
+  const operation = operationForArguments();
+  const profile = serverProfile(operation);
   const [authorization, preflight] = await Promise.all([
-    readFile(authorizationPath, "utf8").then(JSON.parse),
+    readFile(profile.authorizationPath, "utf8").then(JSON.parse),
     runPreflight(),
   ]);
-  const authorizationErrors = validateAuthorization(authorization, preflight);
+  const authorizationErrors = validateAuthorization(authorization, preflight, operation);
   if (authorizationErrors.length) throw new Error(authorizationErrors.join("; "));
   const walletTransaction = transactionForWallet(preflight.transaction);
   const primaryUrl = process.env.ROBINHOOD_RPC_URL;
@@ -146,7 +188,11 @@ export async function main() {
         return;
       }
       if (request.method === "GET" && request.url === "/api/intent") {
-        json(response, 200, { status: completed ? "completed" : "authorized", transaction: walletTransaction });
+        json(response, 200, {
+          status: completed ? "completed" : "authorized",
+          transaction: walletTransaction,
+          presentation: { title: profile.title, warning: profile.warning, button: profile.button },
+        });
         return;
       }
       if (request.method === "POST" && request.url === "/api/verify") {
@@ -166,14 +212,14 @@ export async function main() {
           verifyPostconditions(fallbackUrl, preflight.transaction),
         ]);
         for (const post of [primaryPost, fallbackPost]) {
-          if (post.factoryPaused !== false) errors.push("factory is still paused after activation");
-          if (post.factoryLaunchCount !== 0) errors.push("launch count changed during activation");
+          if (post.factoryPaused !== profile.expectedPausedAfter) errors.push("factory pause state differs after cutover");
+          if (post.factoryLaunchCount !== operation.expectedLaunchCount) errors.push("launch count changed during cutover");
           if (post.pendingNonce !== preflight.transaction.nonce + 1) errors.push("operator nonce did not advance exactly once");
         }
         if (errors.length) throw new Error(errors.join("; "));
         completed = true;
         const report = {
-          status: "v2_factory_activation_verified_success",
+          status: profile.completedStatus,
           verifiedAt: new Date().toISOString(),
           chainId: 4663,
           transactionHash,
@@ -188,8 +234,8 @@ export async function main() {
           providersAgreed: true,
           tokenLaunchAuthorized: false,
         };
-        await mkdir(dirname(receiptPath), { recursive: true });
-        await writeFile(receiptPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+        await mkdir(dirname(profile.receiptPath), { recursive: true });
+        await writeFile(profile.receiptPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
         json(response, 200, report);
         return;
       }
@@ -202,14 +248,14 @@ export async function main() {
     server.once("error", reject);
     server.listen(port, host, resolvePromise);
   });
-  console.log(`V2 activation gate ready at http://${host}:${port}`);
+  console.log(`${profile.title} gate ready at http://${host}:${port}`);
   console.log("Exact authorized transaction only. No token launch path exists.");
   return server;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch(error => {
-    console.error(`V2 activation gate failed: ${error.message}`);
+    console.error(`V2 cutover gate failed: ${error.message}`);
     process.exitCode = 1;
   });
 }

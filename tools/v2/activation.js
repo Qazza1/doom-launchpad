@@ -1,8 +1,13 @@
 const details = document.getElementById("details");
 const button = document.getElementById("send");
 const status = document.getElementById("status");
+const title = document.getElementById("title");
+const warning = document.getElementById("warning");
 const intent = await fetch("/api/intent", { cache: "no-store" }).then(response => response.json());
 const transaction = intent.transaction;
+title.textContent = intent.presentation.title;
+warning.textContent = intent.presentation.warning;
+button.textContent = intent.presentation.button;
 details.innerHTML = Object.entries({
   chainId: "4663 (Robinhood Chain mainnet)",
   from: transaction.from,
