@@ -78,3 +78,11 @@ test("legacy pause authorization cannot be expanded into resume or launch", () =
   authorization.scope.factoryResume = true;
   assert.ok(validateAuthorization(authorization, preflight, CUTOVER_OPERATIONS.legacyPause).length > 0);
 });
+
+test("a narrowly bounded wallet gas adjustment is accepted but an open-ended one is refused", () => {
+  const { authorization, preflight } = values();
+  authorization.transaction.maximumGasLimit = "75000";
+  assert.deepEqual(validateAuthorization(authorization, preflight), []);
+  authorization.transaction.maximumGasLimit = "100001";
+  assert.ok(validateAuthorization(authorization, preflight).some(error => error.includes("safety bound")));
+});

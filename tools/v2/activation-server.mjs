@@ -79,6 +79,9 @@ export function validateAuthorization(authorization, preflight, operation = oper
   }
   require(actual.nonce === expected.nonce, "authorization nonce differs");
   require(String(actual.gasLimit) === String(expected.gasLimit), "authorization gas limit differs");
+  const maximumGasLimit = BigInt(actual.maximumGasLimit || actual.gasLimit || 0);
+  require(maximumGasLimit >= BigInt(expected.gasLimit), "maximum gas limit is below the requested gas limit");
+  require(maximumGasLimit <= BigInt(expected.gasLimit) * 2n, "maximum gas limit exceeds the safety bound");
   require(actual.function === operation.function, "authorization function differs");
   require(authorization?.scope?.transactionCount === 1, "authorization must cover one transaction");
   require(authorization?.scope?.[profile.scopeField] === true, `${profile.scopeField} was not authorized`);
@@ -114,7 +117,7 @@ async function waitForReceipt(url, transactionHash) {
   throw new Error("activation transaction was not mined within the verification window");
 }
 
-function validateMined(observed, expected) {
+function validateMined(observed, expected, maximumGasLimit = expected.gasLimit) {
   const errors = [];
   const transaction = observed.transaction;
   const receipt = observed.receipt;
@@ -124,7 +127,8 @@ function validateMined(observed, expected) {
   require(lower(transaction.input) === lower(expected.data), "mined calldata differs");
   require(BigInt(transaction.value) === 0n, "mined value is not zero");
   require(number(transaction.nonce) === expected.nonce, "mined nonce differs");
-  require(BigInt(transaction.gas) === BigInt(expected.gasLimit), "mined gas limit differs");
+  require(BigInt(transaction.gas) >= BigInt(expected.gasLimit), "mined gas limit is below the authorized request");
+  require(BigInt(transaction.gas) <= BigInt(maximumGasLimit), "mined gas limit exceeds the authorized maximum");
   require(number(receipt.status) === 1, "activation receipt failed");
   require(lower(receipt.from) === lower(expected.from), "receipt sender differs");
   require(lower(receipt.to) === lower(expected.to), "receipt target differs");
@@ -205,7 +209,11 @@ export async function main() {
           waitForReceipt(primaryUrl, transactionHash),
           waitForReceipt(fallbackUrl, transactionHash),
         ]);
-        const errors = [...validateMined(primary, preflight.transaction), ...validateMined(fallback, preflight.transaction)];
+        const maximumGasLimit = authorization.transaction.maximumGasLimit || preflight.transaction.gasLimit;
+        const errors = [
+          ...validateMined(primary, preflight.transaction, maximumGasLimit),
+          ...validateMined(fallback, preflight.transaction, maximumGasLimit),
+        ];
         if (lower(primary.receipt.blockHash) !== lower(fallback.receipt.blockHash)) errors.push("providers disagree on receipt block");
         const [primaryPost, fallbackPost] = await Promise.all([
           verifyPostconditions(primaryUrl, preflight.transaction),
@@ -228,6 +236,7 @@ export async function main() {
             blockNumber: number(primary.receipt.blockNumber),
             blockHash: primary.receipt.blockHash,
             gasUsed: BigInt(primary.receipt.gasUsed).toString(),
+            submittedGasLimit: BigInt(primary.transaction.gas).toString(),
             status: number(primary.receipt.status),
           },
           postconditions: primaryPost,

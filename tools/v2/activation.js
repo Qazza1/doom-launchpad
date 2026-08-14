@@ -21,6 +21,7 @@ button.disabled = intent.status !== "authorized";
 
 button.addEventListener("click", async () => {
   button.disabled = true;
+  let transactionHash = null;
   try {
     if (!window.ethereum) throw new Error("Rabby-compatible wallet provider not found");
     const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
@@ -29,7 +30,7 @@ button.addEventListener("click", async () => {
     if (Number.parseInt(chainId, 16) !== 4663) throw new Error("wallet is not on Robinhood Chain mainnet (4663)");
     status.textContent = "Review Rabby carefully. Sign only if every displayed field matches this page.";
     status.className = "";
-    const transactionHash = await window.ethereum.request({ method: "eth_sendTransaction", params: [transaction] });
+    transactionHash = await window.ethereum.request({ method: "eth_sendTransaction", params: [transaction] });
     status.textContent = `Submitted ${transactionHash}. Verifying through both RPC providers…`;
     const verification = await fetch("/api/verify", {
       method: "POST",
@@ -43,8 +44,10 @@ button.addEventListener("click", async () => {
     status.textContent = `VERIFIED SUCCESS — ${verification.transactionHash}. Return to Codex before any next step.`;
     status.className = "ok";
   } catch (error) {
-    status.textContent = error.message;
+    status.textContent = transactionHash
+      ? `Submitted ${transactionHash}, but automatic verification did not finish: ${error.message}. Return to Codex; do not click again.`
+      : error.message;
     status.className = "error";
-    button.disabled = false;
+    button.disabled = transactionHash !== null;
   }
 });
