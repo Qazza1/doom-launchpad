@@ -166,6 +166,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+        with:
+          # The legacy V2 review artifact is pinned to an earlier commit, so this
+          # job needs repository history in order to verify both frozen suites.
+          fetch-depth: 0
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: v1.7.1
