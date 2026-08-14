@@ -122,6 +122,7 @@ async function previewProvider(label, upstream, plan, foundry) {
         order: transaction.order,
         nonce: transaction.nonce,
         label: transaction.label,
+        predictedAddress: transaction.predictedAddress,
         dataSha256: transaction.dataSha256,
         estimatedGas: estimatedGas.toString(),
         gasLimit: gasLimit.toString(),
