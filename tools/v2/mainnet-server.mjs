@@ -224,6 +224,29 @@ export function validatePreviewStep(planTransaction, previewTransaction) {
   return errors;
 }
 
+export function normalizePreviewReport(preview) {
+  if (Array.isArray(preview?.transactions)) return preview;
+  if (!Array.isArray(preview?.reports) || preview.reports.length !== 2) {
+    throw new Error("the dual-provider rehearsal report is malformed");
+  }
+  const [primary, fallback] = preview.reports;
+  if (!Array.isArray(primary?.transactions) || !Array.isArray(fallback?.transactions)) {
+    throw new Error("the dual-provider rehearsal transactions are missing");
+  }
+  if (primary.transactions.length !== fallback.transactions.length) {
+    throw new Error("the rehearsal providers returned different transaction counts");
+  }
+  for (const [index, transaction] of primary.transactions.entries()) {
+    const other = fallback.transactions[index];
+    for (const field of ["order", "nonce", "dataSha256", "gasLimit", "gasUsed"]) {
+      if (transaction?.[field] !== other?.[field]) {
+        throw new Error(`the rehearsal providers disagree on transaction ${index} ${field}`);
+      }
+    }
+  }
+  return { ...preview, transactions: primary.transactions };
+}
+
 async function rpc(url, method, params = []) {
   const response = await fetch(url, {
     method: "POST",
@@ -467,7 +490,7 @@ export async function main(argv = process.argv.slice(2)) {
   ]);
   const plan = JSON.parse(planBody);
   const approval = JSON.parse(approvalBody);
-  const preview = JSON.parse(previewBody);
+  const preview = normalizePreviewReport(JSON.parse(previewBody));
   const manifest = JSON.parse(manifestBody);
   const planSha256 = sha256(planBody);
   const errors = [

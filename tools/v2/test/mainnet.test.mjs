@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   buildWalletFeePolicy,
   compareMinedProviders,
+  normalizePreviewReport,
   validatePreviewStep,
   validateReceiptLedger,
   validatePublicV2MainnetApproval,
@@ -159,6 +160,14 @@ test("the localhost rehearsal must match address, nonce, digest, and gas limit",
   assert.deepEqual(validatePreviewStep(planned, preview), []);
   preview.nonce = 11;
   assert.ok(validatePreviewStep(planned, preview).some(error => error.includes("nonce")));
+});
+
+test("the public dual-provider rehearsal is accepted only when both gas reports agree", () => {
+  const transaction = { order: 0, nonce: 19, dataSha256: "a".repeat(64), gasLimit: "100", gasUsed: "80" };
+  const preview = { reports: [{ transactions: [transaction] }, { transactions: [structuredClone(transaction)] }] };
+  assert.deepEqual(normalizePreviewReport(preview).transactions, [transaction]);
+  preview.reports[1].transactions[0].gasLimit = "101";
+  assert.throws(() => normalizePreviewReport(preview), /providers disagree/);
 });
 
 test("provider comparison catches transaction and receipt disagreement", () => {
