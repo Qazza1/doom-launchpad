@@ -11,6 +11,7 @@ COPY tools/lib ./tools/lib
 COPY config/keeper-v2.mainnet.json \
   config/keeper-v2-live.mainnet.json \
   config/keeper-public-v2.mainnet.json \
+  config/keeper-fullscale-v3.template.json \
   config/keeper.mainnet.json \
   config/robinhood-mainnet-stage4-deployment.json \
   config/stage4-deployment-manifest.json \
