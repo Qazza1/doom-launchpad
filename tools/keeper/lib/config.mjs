@@ -25,6 +25,12 @@ export async function readKeeperConfig(path) {
   if (input.schema === "doom.keeper-config.v2" && !["allowlisted_eoa", "permissionless_eoa"].includes(input.creatorPolicy || "allowlisted_eoa")) {
     throw new Error("creatorPolicy must be allowlisted_eoa or permissionless_eoa");
   }
+  if (input.unboundedLaunches !== undefined && typeof input.unboundedLaunches !== "boolean") {
+    throw new Error("unboundedLaunches must be boolean when provided");
+  }
+  if (input.unboundedLaunches && input.creatorPolicy !== "permissionless_eoa") {
+    throw new Error("unbounded launches require the permissionless_eoa creator policy");
+  }
   if (typeof input.rpcUrlEnvironmentVariable !== "string") throw new Error("Missing primary RPC environment name");
   if (typeof input.fallbackRpcUrlEnvironmentVariable !== "string") throw new Error("Missing fallback RPC environment name");
   for (const field of POSITIVE_INTEGER_FIELDS) {

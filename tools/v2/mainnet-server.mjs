@@ -22,11 +22,31 @@ import {
   PUBLIC_FACTORY,
   validatePlan as validatePublicPlan,
 } from "../public-v2/transaction-plan.mjs";
+import {
+  FULLSCALE_FACTORY,
+  validatePlan as validateFullScalePlan,
+} from "../fullscale-v3/transaction-plan.mjs";
 
 const directory = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(directory, "../..");
-const publicProfile = process.env.DOOM_PUBLIC_V2_MAINNET === "1";
-const profile = publicProfile ? {
+const fullScaleProfile = process.env.DOOM_FULLSCALE_V3_MAINNET === "1";
+const publicProfile = !fullScaleProfile && process.env.DOOM_PUBLIC_V2_MAINNET === "1";
+const profile = fullScaleProfile ? {
+  name: "Full-scale V3",
+  outputRoot: resolve(directory, "../fullscale-v3/output"),
+  approvalPath: resolve(projectRoot, "config/fullscale-v3-mainnet-deployment-authorization.json"),
+  manifestPath: resolve(projectRoot, "config/fullscale-v3-mainnet-deployment-manifest.json"),
+  receiptName: "mainnet-receipts.json",
+  port: 4184,
+  factoryContract: FULLSCALE_FACTORY,
+  previewStatus: "fullscale_v3_dual_rpc_localhost_preview_passed",
+  executionAckVariable: "DOOM_FULLSCALE_V3_MAINNET_EXECUTION_ACK",
+  approvalStatus: "owner_authorized_exact_paused_fullscale_v3_deployment",
+  auditAuthorizationKey: "independentAuditDeferredUntilAfterFullScaleLaunch",
+  contractInputPaths: ["v2/src", "v2/foundry.toml", "config/fullscale-v3-mainnet-deployment-manifest.json"],
+  validatePlan: validateFullScalePlan,
+  validateWiring: () => [],
+} : publicProfile ? {
   name: "Public V2",
   outputRoot: resolve(directory, "../public-v2/output"),
   approvalPath: resolve(projectRoot, "config/public-v2-mainnet-deployment-authorization.json"),
@@ -169,6 +189,15 @@ export function validatePublicV2MainnetApproval(approval, plan, planBody) {
     approvalStatus: "owner_authorized_exact_paused_public_v2_deployment",
     auditAuthorizationKey: "independentAuditDeferredUntilAfterPublicLaunch",
     factoryContract: PUBLIC_FACTORY,
+  });
+}
+
+export function validateFullScaleV3MainnetApproval(approval, plan, planBody) {
+  return validateMainnetApproval(approval, plan, planBody, {
+    name: "Full-scale V3",
+    approvalStatus: "owner_authorized_exact_paused_fullscale_v3_deployment",
+    auditAuthorizationKey: "independentAuditDeferredUntilAfterFullScaleLaunch",
+    factoryContract: FULLSCALE_FACTORY,
   });
 }
 
@@ -496,9 +525,11 @@ export async function main(argv = process.argv.slice(2)) {
   const errors = [
     ...profile.validatePlan(plan),
     ...profile.validateWiring(plan),
-    ...(publicProfile
-      ? validatePublicV2MainnetApproval(approval, plan, planBody)
-      : validateV2MainnetApproval(approval, plan, planBody)),
+    ...(fullScaleProfile
+      ? validateFullScaleV3MainnetApproval(approval, plan, planBody)
+      : publicProfile
+        ? validatePublicV2MainnetApproval(approval, plan, planBody)
+        : validateV2MainnetApproval(approval, plan, planBody)),
     ...await verifyArtifactsMatchPlan(plan),
   ];
   if (approval.contractDigest !== manifest?.source?.contractDigest) {
@@ -560,6 +591,7 @@ export async function main(argv = process.argv.slice(2)) {
           tokenLaunchAuthorized: false,
           deploymentLabel: profile.name,
           warning: `Robinhood Mainnet. This page can submit only this single approved ${profile.name} transaction.`,
+          sessionMode: process.env.DOOM_DEPLOYMENT_SESSION === "1",
         });
         return;
       }
@@ -615,6 +647,9 @@ export async function main(argv = process.argv.slice(2)) {
         ledger.receipts.push(record);
         await writeFile(receiptPath, `${JSON.stringify(ledger, null, 2)}\n`, "utf8");
         sendJson(response, 200, { ok: true, record, remaining: plan.transactions.length - ledger.receipts.length });
+        if (process.env.DOOM_DEPLOYMENT_SESSION === "1") {
+          setTimeout(() => server.close(() => process.exit(0)), 250);
+        }
         return;
       }
       sendJson(response, 404, { ok: false, error: "not found" });

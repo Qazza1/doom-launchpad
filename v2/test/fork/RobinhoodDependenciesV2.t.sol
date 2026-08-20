@@ -5,6 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/interfaces/IUniswapV3Factory.sol";
 import {DoomBondingCurve} from "../../src/DoomBondingCurve.sol";
+import {DoomFullScaleLaunchFactoryV3} from "../../src/DoomFullScaleLaunchFactoryV3.sol";
 import {DoomLaunchDeployerV2} from "../../src/DoomLaunchDeployerV2.sol";
 import {DoomLaunchFactoryV2} from "../../src/DoomLaunchFactoryV2.sol";
 import {DoomPublicLaunchFactoryV2} from "../../src/DoomPublicLaunchFactoryV2.sol";
@@ -40,6 +41,14 @@ contract RobinhoodDependenciesV2Test is Test {
 
     function testFallbackRpcDependenciesAndPublicV2Wiring() external {
         _runPublic("ROBINHOOD_FALLBACK_RPC_URL");
+    }
+
+    function testPrimaryRpcDependenciesAndFullScaleV3Wiring() external {
+        _runFullScale("ROBINHOOD_RPC_URL");
+    }
+
+    function testFallbackRpcDependenciesAndFullScaleV3Wiring() external {
+        _runFullScale("ROBINHOOD_FALLBACK_RPC_URL");
     }
 
     function _run(string memory variableName) internal {
@@ -159,6 +168,58 @@ contract RobinhoodDependenciesV2Test is Test {
         vm.stopPrank();
 
         assertEq(launchId, 2);
+        assertTrue(curve.graduated());
+        assertTrue(DoomTokenV2(tokenAddress).transfersUnrestricted());
+        assertEq(positionManager.ownerOf(curve.positionId()), address(locker));
+    }
+
+    function _runFullScale(string memory variableName) internal {
+        if (!vm.envOr("RUN_ROBINHOOD_V2_FORK_TESTS", false)) {
+            vm.skip(true, "set RUN_ROBINHOOD_V2_FORK_TESTS=true after configuring both V2 RPC variables");
+        }
+        vm.createSelectFork(vm.envString(variableName));
+        assertEq(block.chainid, CHAIN_ID);
+
+        ICanonicalV3PositionManagerV2 positionManager = ICanonicalV3PositionManagerV2(NPM);
+        vm.startPrank(DEPLOYER_AND_OPERATOR, DEPLOYER_AND_OPERATOR);
+        DoomLaunchDeployerV2 deployer = new DoomLaunchDeployerV2(DEPLOYER_AND_OPERATOR);
+        PositionLockerV2 locker = new PositionLockerV2(NPM, WETH, DOOM_REWARDS, TREASURY, DEPLOYER_AND_OPERATOR);
+        V3GraduationManagerV2 manager =
+            new V3GraduationManagerV2(CHAIN_ID, DEPLOYER_AND_OPERATOR, V3_FACTORY, NPM, WETH, address(locker));
+        locker.bindRegistrar(address(manager));
+        DoomFullScaleLaunchFactoryV3 factory = new DoomFullScaleLaunchFactoryV3(
+            DoomFullScaleLaunchFactoryV3.FactoryConfig({
+                operator: DEPLOYER_AND_OPERATOR,
+                emergencyGuardian: EMERGENCY_GUARDIAN,
+                treasury: TREASURY,
+                doomRewards: DOOM_REWARDS,
+                wrappedNative: WETH,
+                graduationManager: address(manager),
+                curveDeployer: address(deployer)
+            })
+        );
+        deployer.bindFactory(address(factory));
+        manager.bindFactory(address(factory));
+        factory.resumeLaunches();
+        vm.stopPrank();
+
+        assertTrue(factory.isLaunchConfigurationValid());
+        assertTrue(manager.isNetworkConfigurationValid());
+        assertTrue(factory.UNBOUNDED_LAUNCHES());
+        assertEq(factory.FIRST_LAUNCH_ID(), 101);
+        assertEq(factory.launchCount(), 0);
+
+        address publicCreator = makeAddr(string.concat("fullscale-", variableName));
+        vm.deal(publicCreator, 2 ether);
+        vm.startPrank(publicCreator, publicCreator);
+        (uint256 launchId, address tokenAddress, address curveAddress,) = factory.launch{value: 0.001 ether}(
+            DoomFullScaleLaunchFactoryV3.LaunchParams("Full Scale Fork", "SCALE", SUPPLY, "ipfs://fullscale-fork")
+        );
+        DoomBondingCurve curve = DoomBondingCurve(payable(curveAddress));
+        curve.buy{value: 1 ether}(0, block.timestamp);
+        vm.stopPrank();
+
+        assertEq(launchId, 101);
         assertTrue(curve.graduated());
         assertTrue(DoomTokenV2(tokenAddress).transfersUnrestricted());
         assertEq(positionManager.ownerOf(curve.positionId()), address(locker));

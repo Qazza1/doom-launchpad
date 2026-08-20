@@ -117,6 +117,7 @@ export const factoryV2Abi = [
     "function MAX_LAUNCHES() view returns (uint256)",
     "function FIRST_LAUNCH_ID() view returns (uint256)",
     "function FINAL_LAUNCH_ID() view returns (uint256)",
+    "function UNBOUNDED_LAUNCHES() view returns (bool)",
   ]),
   {
     type: "function", name: "getLaunch", stateMutability: "view",

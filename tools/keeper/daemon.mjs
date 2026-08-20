@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { access, mkdir, rename, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { basename, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,6 +7,7 @@ import { addPolicyHealth, initialDaemonHealth, parseIntervalSeconds, recordCheck
 import { readKeeperConfig } from "./lib/config.mjs";
 import { loadKeeperEnv, requireEnvironment } from "./lib/env.mjs";
 import { sendTelegramAlert } from "./lib/telegram.mjs";
+import { buildFullScaleKeeperConfig } from "./lib/fullscale-runtime.mjs";
 
 function parseArgs(argv) {
   const result = {};
@@ -39,6 +40,23 @@ const secondaryStatePath = secondaryConfigPath
     process.env.KEEPER_SECONDARY_STATE_PATH?.trim() || `${statePath}.secondary`,
   )
   : null;
+let tertiaryConfigPath = process.env.KEEPER_TERTIARY_CONFIG_PATH?.trim()
+  ? resolve(invocationDirectory, process.env.KEEPER_TERTIARY_CONFIG_PATH.trim())
+  : null;
+if (!tertiaryConfigPath && process.env.DOOM_FULLSCALE_V3_ENABLED === "1") {
+  const templatePath = resolve(invocationDirectory, "config/keeper-fullscale-v3.template.json");
+  const template = JSON.parse(await readFile(templatePath, "utf8"));
+  const runtimeConfig = buildFullScaleKeeperConfig(template, process.env);
+  tertiaryConfigPath = resolve(dirname(statePath), "keeper-fullscale-v3.runtime.json");
+  await mkdir(dirname(tertiaryConfigPath), { recursive: true });
+  await writeFile(tertiaryConfigPath, `${JSON.stringify(runtimeConfig, null, 2)}\n`, "utf8");
+}
+const tertiaryStatePath = tertiaryConfigPath
+  ? resolve(
+    invocationDirectory,
+    process.env.KEEPER_TERTIARY_STATE_PATH?.trim() || `${statePath}.tertiary`,
+  )
+  : null;
 const intervalSeconds = parseIntervalSeconds(process.env.KEEPER_INTERVAL_SECONDS);
 const port = Number(process.env.PORT || "8080");
 if (!Number.isSafeInteger(port) || port < 1 || port > 65535) throw new Error("PORT must be valid");
@@ -47,6 +65,7 @@ const keeperDirectory = dirname(fileURLToPath(import.meta.url));
 const monitorPath = resolve(keeperDirectory, "monitor.mjs");
 const keeperConfig = await readKeeperConfig(configPath);
 const secondaryKeeperConfig = secondaryConfigPath ? await readKeeperConfig(secondaryConfigPath) : null;
+const tertiaryKeeperConfig = tertiaryConfigPath ? await readKeeperConfig(tertiaryConfigPath) : null;
 let health = addPolicyHealth(initialDaemonHealth(Math.floor(Date.now() / 1000), intervalSeconds), {
   configFile: basename(configPath),
   chainId: keeperConfig.chainId,
@@ -65,6 +84,12 @@ health.monitored_factories = [
     enabled: secondaryKeeperConfig.enabled,
     factory: secondaryKeeperConfig.contracts?.factory || null,
     expected_factory_paused: secondaryKeeperConfig.expectedFactoryPaused,
+  }] : []),
+  ...(tertiaryKeeperConfig ? [{
+    config: basename(tertiaryConfigPath),
+    enabled: tertiaryKeeperConfig.enabled,
+    factory: tertiaryKeeperConfig.contracts?.factory || null,
+    expected_factory_paused: tertiaryKeeperConfig.expectedFactoryPaused,
   }] : []),
 ];
 let stopping = false;
@@ -113,6 +138,9 @@ async function runCheck() {
   const exitCodes = [await runMonitor(configPath, statePath)];
   if (!stopping && secondaryConfigPath) {
     exitCodes.push(await runMonitor(secondaryConfigPath, secondaryStatePath));
+  }
+  if (!stopping && tertiaryConfigPath) {
+    exitCodes.push(await runMonitor(tertiaryConfigPath, tertiaryStatePath));
   }
   const completedAt = Math.floor(Date.now() / 1000);
   const exitCode = exitCodes.every(value => value === 0) ? 0 : 1;

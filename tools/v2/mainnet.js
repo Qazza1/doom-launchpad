@@ -48,10 +48,33 @@ function render() {
     <details><summary>Raw transaction data</summary><pre>${tx.data}</pre></details>`;
   confirmation.dataset.phrase = phrase;
   submit.textContent = `Send only ${deploymentLabel} step ${locked.step + 1} in Rabby`;
-  confirmation.addEventListener("input", () => {
+  confirmation.oninput = () => {
     submit.disabled = confirmation.value !== phrase || Boolean(submittedHash);
-  });
+  };
   submit.disabled = true;
+}
+
+async function waitForNextSessionStep(previousStep) {
+  confirmation.value = "";
+  confirmation.disabled = true;
+  for (let attempt = 0; attempt < 120; attempt += 1) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+      const response = await fetch("/plan", { cache: "no-store" });
+      if (!response.ok) continue;
+      const next = await response.json();
+      if (next.step <= previousStep) continue;
+      locked = next;
+      submittedHash = null;
+      confirmation.disabled = false;
+      render();
+      setStatus(`Step ${locked.step + 1} is independently preflighted and ready. Review it before signing.`);
+      return;
+    } catch {
+      // The local supervisor is replacing the verified step server.
+    }
+  }
+  throw new Error("The next guarded step did not become ready. The verified receipt is saved; restart the session command.");
 }
 
 async function submitStep() {
@@ -80,12 +103,18 @@ async function submitStep() {
     });
     const result = await response.json();
     if (!response.ok || !result.ok) throw new Error(result.error || "receipt verification failed");
-    setStatus(
-      `VERIFIED SUCCESS — ${result.record.transactionHash}. Stop here and return to Codex before the next step.`,
-      "ok",
-    );
-    confirmation.disabled = true;
-    submit.textContent = "VERIFIED — STOP";
+    if (locked.sessionMode && result.remaining > 0) {
+      setStatus(`VERIFIED SUCCESS — ${result.record.transactionHash}. Preparing the next independently checked step…`, "ok");
+      submit.textContent = "VERIFIED";
+      await waitForNextSessionStep(locked.step);
+    } else {
+      setStatus(
+        `VERIFIED SUCCESS — ${result.record.transactionHash}. ${result.remaining === 0 ? "All deployment steps are complete; the factory remains paused." : "Stop here and return to Codex before the next step."}`,
+        "ok",
+      );
+      confirmation.disabled = true;
+      submit.textContent = "VERIFIED — STOP";
+    }
   } catch (error) {
     setStatus(error.message || String(error), "error");
     if (!submittedHash) submit.disabled = confirmation.value !== confirmation.dataset.phrase;

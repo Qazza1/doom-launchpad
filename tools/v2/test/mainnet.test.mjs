@@ -8,6 +8,7 @@ import {
   normalizePreviewReport,
   validatePreviewStep,
   validateReceiptLedger,
+  validateFullScaleV3MainnetApproval,
   validatePublicV2MainnetApproval,
   validateV2MainnetApproval,
 } from "../mainnet-server.mjs";
@@ -137,6 +138,19 @@ test("the public owner authorization is exact, paused, and audit-deferral aware"
   assert.deepEqual(validatePublicV2MainnetApproval(approval, value, body), []);
   approval.authorization.independentAuditDeferredUntilAfterPublicLaunch = false;
   assert.ok(validatePublicV2MainnetApproval(approval, value, body).some(error => error.includes("audit-deferral")));
+});
+
+test("the full-scale owner authorization is exact, paused, and cannot authorize activation", () => {
+  const value = plan();
+  value.transactions[4].contract = "DoomFullScaleLaunchFactoryV3";
+  const body = `${JSON.stringify(value, null, 2)}\n`;
+  const approval = approvalFor(value, body);
+  approval.status = "owner_authorized_exact_paused_fullscale_v3_deployment";
+  approval.authorization.independentAuditDeferredUntilAfterFullScaleLaunch = true;
+  delete approval.authorization.independentAuditDeferredUntilAfterInitialBetaLaunch;
+  assert.deepEqual(validateFullScaleV3MainnetApproval(approval, value, body), []);
+  approval.authorization.factoryResume = true;
+  assert.ok(validateFullScaleV3MainnetApproval(approval, value, body).some(error => error.includes("resume")));
 });
 
 test("every server step requires all earlier receipts and no later receipt", () => {

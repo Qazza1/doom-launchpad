@@ -3,11 +3,26 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { calculateFunding, findFoundryBinaries } from "../deployment/localhost-preview.mjs";
-import { buildPlan, CHAIN_ID, DEPLOYER, PUBLIC_FACTORY, validatePlan } from "./transaction-plan.mjs";
+import {
+  buildPlan as buildPublicPlan,
+  CHAIN_ID,
+  DEPLOYER,
+  PUBLIC_FACTORY,
+  validatePlan as validatePublicPlan,
+} from "./transaction-plan.mjs";
+import {
+  buildPlan as buildFullScalePlan,
+  FULLSCALE_FACTORY,
+  validatePlan as validateFullScalePlan,
+} from "../fullscale-v3/transaction-plan.mjs";
 
 const directory = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(directory, "../..");
-const outputRoot = resolve(directory, "output");
+const fullScaleProfile = process.env.DOOM_FULLSCALE_V3_MAINNET === "1";
+const factoryContract = fullScaleProfile ? FULLSCALE_FACTORY : PUBLIC_FACTORY;
+const buildPlan = fullScaleProfile ? buildFullScalePlan : buildPublicPlan;
+const validatePlan = fullScaleProfile ? validateFullScalePlan : validatePublicPlan;
+const outputRoot = fullScaleProfile ? resolve(directory, "../fullscale-v3/output") : resolve(directory, "output");
 const LOCAL_URL = "http://127.0.0.1:18548";
 const SENTINEL_BALANCE_WEI = 123_456_789_012_345_678_901n;
 const quantity = value => Number(BigInt(value));
@@ -134,12 +149,12 @@ async function previewProvider(label, upstream, plan, foundry) {
       plan.transactions.filter(transaction => transaction.kind === "CREATE")
         .map(transaction => [transaction.contract, transaction.predictedAddress]),
     );
-    const [paused, valid, firstId, finalId, count, registrar, deployerFactory, managerFactory, networkValid] = await Promise.all([
-      call(PUBLIC_FACTORY, created[PUBLIC_FACTORY], "launchesPaused()"),
-      call(PUBLIC_FACTORY, created[PUBLIC_FACTORY], "isLaunchConfigurationValid()"),
-      call(PUBLIC_FACTORY, created[PUBLIC_FACTORY], "FIRST_LAUNCH_ID()"),
-      call(PUBLIC_FACTORY, created[PUBLIC_FACTORY], "FINAL_LAUNCH_ID()"),
-      call(PUBLIC_FACTORY, created[PUBLIC_FACTORY], "launchCount()"),
+    const [paused, valid, firstId, bound, count, registrar, deployerFactory, managerFactory, networkValid] = await Promise.all([
+      call(factoryContract, created[factoryContract], "launchesPaused()"),
+      call(factoryContract, created[factoryContract], "isLaunchConfigurationValid()"),
+      call(factoryContract, created[factoryContract], "FIRST_LAUNCH_ID()"),
+      call(factoryContract, created[factoryContract], fullScaleProfile ? "UNBOUNDED_LAUNCHES()" : "FINAL_LAUNCH_ID()"),
+      call(factoryContract, created[factoryContract], "launchCount()"),
       call("PositionLockerV2", created.PositionLockerV2, "authorizedRegistrar()"),
       call("DoomLaunchDeployerV2", created.DoomLaunchDeployerV2, "authorizedFactory()"),
       call("V3GraduationManagerV2", created.V3GraduationManagerV2, "authorizedFactory()"),
@@ -149,16 +164,19 @@ async function previewProvider(label, upstream, plan, foundry) {
       factoryPaused: asBool(paused),
       launchConfigurationValid: asBool(valid),
       firstLaunchId: quantity(firstId),
-      finalLaunchId: quantity(finalId),
+      finalLaunchId: fullScaleProfile ? null : quantity(bound),
+      unboundedLaunches: fullScaleProfile ? asBool(bound) : false,
       launchCount: quantity(count),
       registrarBound: lower(asAddress(registrar)) === lower(created.V3GraduationManagerV2),
-      deployerBound: lower(asAddress(deployerFactory)) === lower(created[PUBLIC_FACTORY]),
-      managerBound: lower(asAddress(managerFactory)) === lower(created[PUBLIC_FACTORY]),
+      deployerBound: lower(asAddress(deployerFactory)) === lower(created[factoryContract]),
+      managerBound: lower(asAddress(managerFactory)) === lower(created[factoryContract]),
       managerNetworkValid: asBool(networkValid),
     };
     if (
       !postconditions.factoryPaused || !postconditions.launchConfigurationValid
-      || postconditions.firstLaunchId !== 2 || postconditions.finalLaunchId !== 100 || postconditions.launchCount !== 0
+      || postconditions.firstLaunchId !== (fullScaleProfile ? 101 : 2)
+      || (fullScaleProfile ? !postconditions.unboundedLaunches : postconditions.finalLaunchId !== 100)
+      || postconditions.launchCount !== 0
       || !postconditions.registrarBound || !postconditions.deployerBound
       || !postconditions.managerBound || !postconditions.managerNetworkValid
     ) throw new Error(`${label} postconditions failed`);
@@ -197,7 +215,9 @@ export async function main() {
   if (reports.some(report => !report.sufficientAtSnapshot)) throw new Error("deployer balance is below the buffered gas requirement");
   const result = {
     schemaVersion: 1,
-    status: "public_v2_dual_rpc_localhost_preview_passed",
+    status: fullScaleProfile
+      ? "fullscale_v3_dual_rpc_localhost_preview_passed"
+      : "public_v2_dual_rpc_localhost_preview_passed",
     generatedAt: new Date().toISOString(),
     chainId: CHAIN_ID,
     deployer: DEPLOYER,
@@ -208,7 +228,7 @@ export async function main() {
   };
   await mkdir(outputRoot, { recursive: true });
   await writeFile(resolve(outputRoot, "localhost-preview-report.json"), `${JSON.stringify(result, null, 2)}\n`, "utf8");
-  console.log(`Public V2 exact plan passed on both RPC forks at nonce ${plan.startingNonce}.`);
+  console.log(`${fullScaleProfile ? "Full-scale V3" : "Public V2"} exact plan passed on both RPC forks at nonce ${plan.startingNonce}.`);
   for (const report of reports) {
     console.log(`${report.label}: block ${report.forkBlock}; buffered requirement ${report.requiredBalanceWei} wei; balance sufficient.`);
     for (const transaction of report.transactions) console.log(`  nonce ${transaction.nonce}: ${transaction.label}; gas ${transaction.gasUsed}`);
@@ -219,7 +239,7 @@ export async function main() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch(error => {
-    console.error(`Public V2 localhost preview failed: ${error.message}`);
+    console.error(`${fullScaleProfile ? "Full-scale V3" : "Public V2"} localhost preview failed: ${error.message}`);
     process.exitCode = 1;
   });
 }

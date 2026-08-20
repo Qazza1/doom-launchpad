@@ -55,6 +55,16 @@ test("frozen public V2 deployment evidence accepts the permissionless factory", 
   }), []);
 });
 
+test("full-scale deployment evidence accepts the uncapped factory", () => {
+  const valid = evidence();
+  valid.plan.transactions[3].contract = "DoomFullScaleLaunchFactoryV3";
+  valid.record.status = "fullscale_v3_mainnet_deployment_verified_paused";
+  assert.deepEqual(validateDeploymentEvidence(valid.plan, valid.record, valid.manifest, {
+    recordStatus: "fullscale_v3_mainnet_deployment_verified_paused",
+    factoryContract: "DoomFullScaleLaunchFactoryV3",
+  }), []);
+});
+
 function compilerInput() {
   return {
     language: "Solidity",

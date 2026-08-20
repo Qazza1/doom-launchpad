@@ -16,10 +16,13 @@ export async function collectKeeperStateV2(client, config, observedAt) {
     return { protocolVersion: "v2", observedAt, chainId, headNumber: head.number.toString(), headTimestamp: Number(head.timestamp), factory: { address: factoryAddress, hasCode: false }, launches: [] };
   }
 
-  const names = ["operator", "emergencyGuardian", "treasury", "doomRewards", "wrappedNative", "graduationManager", "curveDeployer", "launchesPaused", "launchCount", "isLaunchConfigurationValid", "LAUNCH_FEE", "MAX_LAUNCHES"];
+  const unbounded = config.unboundedLaunches === true;
+  const names = ["operator", "emergencyGuardian", "treasury", "doomRewards", "wrappedNative", "graduationManager", "curveDeployer", "launchesPaused", "launchCount", "isLaunchConfigurationValid", "LAUNCH_FEE"];
+  if (!unbounded) names.push("MAX_LAUNCHES");
   const values = [];
   for (const name of names) values.push(await read(client, factoryAddress, factoryV2Abi, name));
-  const [operator, emergencyGuardian, treasury, doomRewards, wrappedNative, graduationManager, curveDeployer, launchesPaused, launchCount, configurationValid, launchFee, maxLaunches] = values;
+  const [operator, emergencyGuardian, treasury, doomRewards, wrappedNative, graduationManager, curveDeployer, launchesPaused, launchCount, configurationValid, launchFee, boundedMaxLaunches] = values;
+  const maxLaunches = unbounded ? null : boundedMaxLaunches;
   const permissionless = config.creatorPolicy === "permissionless_eoa";
   const initialCreatorAllowed = permissionless
     ? null
@@ -27,9 +30,12 @@ export async function collectKeeperStateV2(client, config, observedAt) {
   const firstLaunchId = permissionless
     ? await read(client, factoryAddress, factoryV2Abi, "FIRST_LAUNCH_ID")
     : 1n;
-  const finalLaunchId = permissionless
+  const finalLaunchId = permissionless && !unbounded
     ? await read(client, factoryAddress, factoryV2Abi, "FINAL_LAUNCH_ID")
-    : maxLaunches;
+    : permissionless ? null : maxLaunches;
+  const unboundedFlag = unbounded
+    ? await read(client, factoryAddress, factoryV2Abi, "UNBOUNDED_LAUNCHES")
+    : false;
 
   const componentCode = {};
   for (const [name, address] of Object.entries(config.contracts)) componentCode[name] = await code(client, address);
@@ -92,16 +98,22 @@ export async function collectKeeperStateV2(client, config, observedAt) {
         treasury: config.expectedRoles.treasury, doomRewards: config.contracts.doomRewards,
         wrappedNative: config.contracts.wrappedNative, graduationManager: config.contracts.graduationManager,
         curveDeployer: config.contracts.curveDeployer, launchFee: config.expectedCanaryLimits.launchFee,
-        maxLaunches: config.expectedCanaryLimits.maxLaunches,
+        ...(unbounded
+          ? { unboundedLaunches: true }
+          : { maxLaunches: config.expectedCanaryLimits.maxLaunches }),
         ...(permissionless ? {
           firstLaunchId: config.expectedCanaryLimits.firstLaunchId,
-          finalLaunchId: config.expectedCanaryLimits.finalLaunchId,
+          ...(!unbounded ? { finalLaunchId: config.expectedCanaryLimits.finalLaunchId } : {}),
         } : {}),
       },
       actual: {
         operator, emergencyGuardian, treasury, doomRewards, wrappedNative, graduationManager, curveDeployer,
-        launchFee: launchFee.toString(), maxLaunches: maxLaunches.toString(),
-        ...(permissionless ? { firstLaunchId: firstLaunchId.toString(), finalLaunchId: finalLaunchId.toString() } : {}),
+        launchFee: launchFee.toString(),
+        ...(unbounded ? { unboundedLaunches: Boolean(unboundedFlag) } : { maxLaunches: maxLaunches.toString() }),
+        ...(permissionless ? {
+          firstLaunchId: firstLaunchId.toString(),
+          ...(!unbounded ? { finalLaunchId: finalLaunchId.toString() } : {}),
+        } : {}),
       },
       initialCreatorAllowed,
     },

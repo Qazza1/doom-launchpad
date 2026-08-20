@@ -28,6 +28,7 @@ jobs:
           node --test tools/deathwatch/test/*.test.mjs
           node --test tools/v2/test/*.test.mjs
           node --test tools/public-v2/test/*.test.mjs
+          node --test tools/fullscale-v3/test/*.test.mjs
           node tools/deployment/verify-manifest.mjs config/stage4-deployment-manifest.json
           node tools/v2/verify-manifest.mjs config/v2-mainnet-deployment-manifest.json
 
@@ -171,8 +172,8 @@ jobs:
           version: v1.7.1
       - name: Confirm legacy and public V2 sources match their frozen candidates
         run: |
-          node tools/v2/review-package.mjs --verify config/v2-review-artifact.json --ref HEAD --exclude v2/src/DoomPublicLaunchFactoryV2.sol
-          node tools/v2/review-package.mjs --verify config/public-v2-review-artifact.json --ref HEAD
+          node tools/v2/review-package.mjs --verify config/v2-review-artifact.json --ref HEAD --exclude v2/src/DoomPublicLaunchFactoryV2.sol --exclude v2/src/DoomFullScaleLaunchFactoryV3.sol
+          node tools/v2/review-package.mjs --verify config/public-v2-review-artifact.json --ref HEAD --exclude v2/src/DoomFullScaleLaunchFactoryV3.sol
       - name: Install pinned Solidity dependencies
         run: |
           forge install --no-git OpenZeppelin/openzeppelin-contracts@v5.6.1

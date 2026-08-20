@@ -53,3 +53,16 @@ alert if the factory becomes paused unexpectedly. `KEEPER_STATE_PATH` defaults
 to `/data/keeper-v2-alerts.json`.
 Set `KEEPER_STARTUP_NOTIFY=1` for one persistent-volume-deduplicated Telegram
 message proving that the production host can reach the bot.
+
+`KEEPER_SECONDARY_CONFIG_PATH` and `KEEPER_TERTIARY_CONFIG_PATH` may point to
+the capped-public and permanent full-scale configuration files. The daemon
+runs all three read-only checks sequentially and exposes every monitored
+factory in `/health`; no signer or transaction path is added.
+
+For the permanent generation, the preferred production setup is to set
+`DOOM_FULLSCALE_V3_ENABLED=1` together with `DOOM_FULLSCALE_V3_FACTORY`,
+`DOOM_FULLSCALE_V3_FACTORY_DEPLOYMENT_BLOCK`, `DOOM_FULLSCALE_V3_POSITION_LOCKER`,
+`DOOM_FULLSCALE_V3_GRADUATION_MANAGER`, and `DOOM_FULLSCALE_V3_CURVE_DEPLOYER`.
+The daemon builds the third read-only configuration at startup. Installing the
+final deployment addresses therefore requires Railway variables only, not a
+source change or another contract deployment.

@@ -17,8 +17,20 @@ const PLACEHOLDER_ADDRESS = "0x0000000000000000000000000000000000000000";
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 const directory = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(directory, "../..");
-const publicProfile = process.argv.includes("--public-v2");
-const profile = publicProfile
+const fullScaleProfile = process.argv.includes("--fullscale-v3");
+const publicProfile = !fullScaleProfile && process.argv.includes("--public-v2");
+const profile = fullScaleProfile
+  ? {
+      label: "Full-scale V3",
+      outputRoot: resolve(projectRoot, "tools/fullscale-v3/output/verification"),
+      plan: resolve(projectRoot, "tools/fullscale-v3/output/transaction-plan.json"),
+      record: resolve(projectRoot, "config/fullscale-v3-mainnet-deployment-record.json"),
+      manifest: resolve(projectRoot, "config/fullscale-v3-mainnet-deployment-manifest.json"),
+      recordStatus: "fullscale_v3_mainnet_deployment_verified_paused",
+      bundleStatus: "fullscale_v3_verification_bundle_ready_for_owner_review",
+      factoryContract: "DoomFullScaleLaunchFactoryV3",
+    }
+  : publicProfile
   ? {
       label: "Public V2",
       outputRoot: resolve(projectRoot, "tools/public-v2/output/verification"),
@@ -69,14 +81,12 @@ export function validateDeploymentEvidence(plan, record, manifest, expected = pr
     (plan?.transactions || []).filter(transaction => transaction.kind === "CREATE" || transaction.type === "CREATE")
       .map(transaction => [transaction.contract, transaction]),
   );
-  const contracts = expected.factoryContract === "DoomPublicLaunchFactoryV2"
-    ? [
-        { name: "DoomLaunchDeployerV2", addressKey: "curveDeployer" },
-        { name: "PositionLockerV2", addressKey: "positionLocker" },
-        { name: "V3GraduationManagerV2", addressKey: "graduationManager" },
-        { name: "DoomPublicLaunchFactoryV2", addressKey: "launchFactory" },
-      ]
-    : CONTRACTS;
+  const contracts = [
+    { name: "DoomLaunchDeployerV2", addressKey: "curveDeployer" },
+    { name: "PositionLockerV2", addressKey: "positionLocker" },
+    { name: "V3GraduationManagerV2", addressKey: "graduationManager" },
+    { name: expected.factoryContract, addressKey: "launchFactory" },
+  ];
   for (const contract of contracts) {
     const transaction = creates.get(contract.name);
     const address = record?.addresses?.[contract.addressKey];

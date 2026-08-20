@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "status": "draft_fail_closed",
+  "purpose": "Permanent permissionless uncapped successor beginning at globally unique launch ID 101.",
+  "network": {
+    "name": "Robinhood Chain Mainnet",
+    "chainId": 4663,
+    "explorer": "https://robinhoodchain.blockscout.com",
+    "rpcEnvironmentVariable": "ROBINHOOD_RPC_URL",
+    "fallbackRpcEnvironmentVariable": "ROBINHOOD_FALLBACK_RPC_URL"
+  },
+  "source": {
+    "candidateCommit": null,
+    "contractDigest": null,
+    "compiler": "0.8.36",
+    "foundry": "1.7.1",
+    "evmVersion": "cancun",
+    "viaIr": true
+  },
+  "safety": {
+    "broadcast": false,
+    "deploymentAuthorized": false,
+    "factoryResumeAuthorized": false,
+    "factoryMustRemainPaused": true,
+    "tokenLaunchAuthorized": false,
+    "privateKeysAllowedInManifest": false
+  },
+  "auditPolicy": {
+    "independentAuditComplete": false,
+    "ownerAcceptedUnauditedPublicLaunchRisk": true,
+    "ownerDecisionRecordedDate": "2026-08-20",
+    "plannedAuditTiming": "after_public_launch_when_capital_is_available",
+    "decisionDoesNotAuthorizeDeploymentResumeOrTokenLaunch": true
+  },
+  "roles": {
+    "deployer": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "operator": "0xcaB166ed15e63b846Ec8D1a2d6762a33392c796F",
+    "treasury": "0x9038C3AB7caE02a8aae730E705fdF7a15945eb7E",
+    "emergencyGuardian": "0x3EeF0a7Ee9420a1035a4541582B384bc4405A439"
+  },
+  "dependencies": {
+    "wrappedNative": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+    "uniswapV3Factory": "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
+    "nonfungiblePositionManager": "0x73991a25C818Bf1f1128dEAaB1492D45638DE0D3",
+    "doomRewards": "0x615f6E6B0AEA7Ac94F4391424aF601F9290dd9dC",
+    "legacyGenesisFactory": "0x142760D2C865537c063492933FB71ddefA2372C6",
+    "cappedPublicFactory": "0x8f8c948A6558C79531317b4AD7CfdBa4e9728f24"
+  },
+  "economics": {
+    "launchFeeWei": "1000000000000000",
+    "graduationTargetWei": "50000000000000000",
+    "poolFee": 10000,
+    "tickSpacing": 200,
+    "firstLaunchId": 101,
+    "unboundedLaunches": true,
+    "curveTokenBps": 3000,
+    "graduationTokenBps": 1000,
+    "gmEscrowTokenBps": 6000
+  },
+  "creatorPolicy": {
+    "permissionlessEoaWallets": true,
+    "allowlist": false,
+    "contractWallets": false,
+    "reasonContractWalletsExcluded": "The creator escrow and wallet-signature upload flow are EOA-oriented; contract-wallet support requires a separately tested EIP-1271 path."
+  },
+  "deploymentOrder": [
+    "DoomLaunchDeployerV2",
+    "PositionLockerV2",
+    "V3GraduationManagerV2",
+    "PositionLockerV2.bindRegistrar",
+    "DoomFullScaleLaunchFactoryV3",
+    "DoomLaunchDeployerV2.bindFactory",
+    "V3GraduationManagerV2.bindFactory"
+  ],
+  "outputs": {
+    "curveDeployer": null,
+    "positionLocker": null,
+    "graduationManager": null,
+    "launchFactory": null,
+    "deploymentBlock": null
+  },
+  "gates": {
+    "internalTestsPassed": true,
+    "dualRpcForkWiringPassed": true,
+    "bytecodeSizesWithinLimits": true,
+    "dualRpcNoBroadcastDeploymentRehearsalPassed": false,
+    "exactTransactionPlanPrepared": false,
+    "explicitBroadcastApproval": false,
+    "indexerThreeFactorySupportReady": true,
+    "keeperThreeFactorySupportReady": true,
+    "websiteFullScaleFactorySupportReady": true
+  }
+}
