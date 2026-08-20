@@ -24,3 +24,4 @@ tools/deathwatch/state/
 tools/v2/output/
 tools/public-v2/output/mainnet-receipts.json
 tools/public-v2/output/verification/
+tools/fullscale-v3/output/

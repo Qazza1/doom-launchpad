@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "status": "frozen_internal_fullscale_candidate",
+  "candidateCommit": "845decc31629ad8c9449989945e58d2e43eafaac",
+  "contractDigest": "082b13af8e273d2ee4aac06c4eeefa0ffd1f6d0376b611a2157e948da2ceb166",
+  "contractFileCount": 16,
+  "contractScope": "v2/src/",
+  "frozenAt": "2026-08-20",
+  "independentAuditComplete": false,
+  "independentAuditDeferredByOwner": true,
+  "note": "The digest covers every V2/V3 source including DoomFullScaleLaunchFactoryV3. CI rejects source drift. This internal freeze is not an independent audit and does not authorize deployment, activation or a token launch."
+}
